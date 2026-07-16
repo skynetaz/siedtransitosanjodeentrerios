@@ -52,7 +52,8 @@ export const iniciarExamen = createServerFn({ method: "POST" })
     const maxErrores = cfg?.max_errores ?? 4;
 
     // Traer preguntas activas de la clase + comunes (UNICA)
-    const clases = exam.clase === "UNICA" ? ["UNICA"] : [exam.clase, "UNICA"];
+    type Clase = "A"|"B"|"C"|"D"|"E"|"UNICA";
+    const clases: Clase[] = exam.clase === "UNICA" ? ["UNICA"] : [exam.clase as Clase, "UNICA"];
     const { data: pool, error: qErr } = await supabaseAdmin
       .from("questions")
       .select("id, pregunta, eliminatoria, respuesta_correcta, respuestas_aceptadas, peso")
