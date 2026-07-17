@@ -247,4 +247,3 @@ function ResultCard({ exam }: { exam: any }) {
     </Card>
   );
 }
-}
