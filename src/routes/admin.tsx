@@ -9,6 +9,9 @@ export const Route = createFileRoute("/admin")({ component: AdminLayout });
 const tabs = [
   { to: "/admin", label: "Inicio", exact: true },
   { to: "/admin/preguntas", label: "Banco de preguntas" },
+  { to: "/admin/importar", label: "Importar" },
+  { to: "/admin/emulador", label: "Emulador" },
+  { to: "/admin/archivo", label: "Archivo" },
   { to: "/admin/usuarios", label: "Usuarios" },
   { to: "/admin/configuracion", label: "Configuración" },
   { to: "/admin/estadisticas", label: "Estadísticas" },

@@ -177,13 +177,19 @@ export type Database = {
           config_snapshot: Json | null
           correctas: number
           created_at: string
+          datos_aspirante: Json | null
           eliminado_por_pregunta: string | null
           finished_at: string | null
           focus_lost_count: number
           id: string
           incorrectas: number
           inspector_id: string | null
+          is_emulation: boolean
           puntaje: number
+          signature_aspirante: string | null
+          signature_inspector: string | null
+          signed_aspirante_at: string | null
+          signed_inspector_at: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["exam_status"]
           total_preguntas: number
@@ -195,13 +201,19 @@ export type Database = {
           config_snapshot?: Json | null
           correctas?: number
           created_at?: string
+          datos_aspirante?: Json | null
           eliminado_por_pregunta?: string | null
           finished_at?: string | null
           focus_lost_count?: number
           id?: string
           incorrectas?: number
           inspector_id?: string | null
+          is_emulation?: boolean
           puntaje?: number
+          signature_aspirante?: string | null
+          signature_inspector?: string | null
+          signed_aspirante_at?: string | null
+          signed_inspector_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["exam_status"]
           total_preguntas?: number
@@ -213,13 +225,19 @@ export type Database = {
           config_snapshot?: Json | null
           correctas?: number
           created_at?: string
+          datos_aspirante?: Json | null
           eliminado_por_pregunta?: string | null
           finished_at?: string | null
           focus_lost_count?: number
           id?: string
           incorrectas?: number
           inspector_id?: string | null
+          is_emulation?: boolean
           puntaje?: number
+          signature_aspirante?: string | null
+          signature_inspector?: string | null
+          signed_aspirante_at?: string | null
+          signed_inspector_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["exam_status"]
           total_preguntas?: number

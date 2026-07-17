@@ -2,15 +2,18 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useCurrentRole } from "@/lib/use-current-user";
 import { AppShell } from "@/components/AppShell";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyExam, iniciarExamen, responderPregunta, finalizarExamen, registrarFocusLoss } from "@/lib/exam.functions";
+import { confirmarDatosPrevios, firmarAspirante } from "@/lib/exam-extra.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertTriangle, CheckCircle2, XCircle, Clock, Send } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { SignaturePad } from "@/components/SignaturePad";
+import { Loader2, AlertTriangle, CheckCircle2, XCircle, Clock, Send, Signature } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/aspirante")({ component: AspirantePanel });
@@ -51,23 +54,7 @@ function ExamFlow() {
   const exam = my.data;
   if (!exam) return <EmptyState msg="Todavía no tenés un examen habilitado. Acercate al inspector." />;
 
-  if (exam.status === "habilitado") {
-    return (
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader><CardTitle>Examen habilitado</CardTitle><CardDescription>Clase {exam.clase}. Cuando estés listo, comenzá.</CardDescription></CardHeader>
-        <CardContent className="space-y-4">
-          <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
-            <li>Vas a rendir un examen escrito con tiempo limitado.</li>
-            <li>Algunas preguntas son <b>eliminatorias</b>: responderlas mal desaprueba el examen en el acto.</li>
-            <li>Si salís de la pantalla, quedará registrado.</li>
-          </ul>
-          <Button size="lg" className="w-full" onClick={() => start.mutate()} disabled={start.isPending}>
-            {start.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Comenzar examen
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
+  if (exam.status === "habilitado") return <PreExamStep exam={exam} onReady={() => start.mutate()} loading={start.isPending} />;
 
   if (exam.status === "rindiendo" && session) return <ExamRunner exam={session.exam} questions={session.questions} onFinish={() => { setSession(null); qc.invalidateQueries({ queryKey: ["my-exam"] }); }} />;
   if (exam.status === "rindiendo") return <Loader2 className="h-6 w-6 animate-spin" />;
@@ -173,9 +160,56 @@ function ExamRunner({ exam, questions, onFinish }: { exam: any; questions: any[]
   );
 }
 
+function PreExamStep({ exam, onReady, loading }: { exam: any; onReady: () => void; loading: boolean }) {
+  const d = exam.datos_aspirante ?? {};
+  const [form, setForm] = useState({
+    nombre: d.nombre ?? "", apellido: d.apellido ?? "",
+    dni: d.dni ?? "", email: d.email ?? "", telefono: d.telefono ?? "",
+  });
+  const confirmFn = useServerFn(confirmarDatosPrevios);
+  const mut = useMutation({
+    mutationFn: async () => await confirmFn({ data: { examId: exam.id, datos: form } }),
+    onSuccess: () => onReady(),
+    onError: (e) => toast.error((e as Error).message),
+  });
+  const canSubmit = form.nombre.trim() && form.apellido.trim() && form.dni.trim().length >= 6;
+  return (
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Confirmá tus datos</CardTitle>
+        <CardDescription>Antes de comenzar, verificá que estos datos sean correctos. Clase {exam.clase}.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div><Label>Nombre</Label><Input value={form.nombre} onChange={(e)=>setForm({...form, nombre: e.target.value})} /></div>
+          <div><Label>Apellido</Label><Input value={form.apellido} onChange={(e)=>setForm({...form, apellido: e.target.value})} /></div>
+          <div><Label>DNI</Label><Input value={form.dni} onChange={(e)=>setForm({...form, dni: e.target.value})} /></div>
+          <div><Label>Teléfono</Label><Input value={form.telefono} onChange={(e)=>setForm({...form, telefono: e.target.value})} /></div>
+          <div className="sm:col-span-2"><Label>Correo</Label><Input type="email" value={form.email} onChange={(e)=>setForm({...form, email: e.target.value})} /></div>
+        </div>
+        <ul className="text-xs text-muted-foreground list-disc pl-5 space-y-1">
+          <li>Tiempo limitado. Preguntas eliminatorias desaprueban en el acto.</li>
+          <li>Salir de la pantalla queda registrado.</li>
+          <li>Al finalizar deberás firmar digitalmente el examen.</li>
+        </ul>
+        <Button size="lg" className="w-full" onClick={() => mut.mutate()} disabled={!canSubmit || mut.isPending || loading}>
+          {(mut.isPending || loading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Confirmar datos y comenzar
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ResultCard({ exam }: { exam: any }) {
   const aprobado = exam.status === "aprobado";
   const desap = exam.status === "desaprobado";
+  const qc = useQueryClient();
+  const firmarFn = useServerFn(firmarAspirante);
+  const firmar = useMutation({
+    mutationFn: async (firma: string) => await firmarFn({ data: { examId: exam.id, firma } }),
+    onSuccess: () => { toast.success("Firma registrada. Gracias."); qc.invalidateQueries({ queryKey: ["my-exam"] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
   return (
     <Card className="max-w-xl mx-auto">
       <CardHeader>
@@ -186,7 +220,7 @@ function ResultCard({ exam }: { exam: any }) {
         </CardTitle>
         <CardDescription>Clase {exam.clase} · {exam.finished_at ? new Date(exam.finished_at).toLocaleString("es-AR") : "—"}</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3">
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="rounded border p-3"><div className="text-2xl font-bold">{exam.correctas}</div><div className="text-xs text-muted-foreground">Correctas</div></div>
           <div className="rounded border p-3"><div className="text-2xl font-bold">{exam.incorrectas}</div><div className="text-xs text-muted-foreground">Incorrectas</div></div>
@@ -198,7 +232,19 @@ function ResultCard({ exam }: { exam: any }) {
           </div>
         )}
         {desap && <p className="text-sm text-muted-foreground">Para volver a rendir, el inspector debe habilitarte un nuevo intento.</p>}
+        <div className="pt-2 border-t">
+          <p className="text-sm font-medium flex items-center gap-1 mb-2"><Signature className="h-4 w-4" />Firma del aspirante</p>
+          {exam.signature_aspirante ? (
+            <div>
+              <img src={exam.signature_aspirante} alt="Firma" className="border rounded bg-white max-h-40" />
+              <p className="text-xs text-muted-foreground mt-1">Firmado el {new Date(exam.signed_aspirante_at).toLocaleString("es-AR")}</p>
+            </div>
+          ) : (
+            <SignaturePad label="Firmá para dejar registro del examen" onSave={(url) => firmar.mutate(url)} />
+          )}
+        </div>
       </CardContent>
     </Card>
   );
+}
 }
