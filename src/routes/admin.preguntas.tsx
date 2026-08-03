@@ -169,6 +169,11 @@ function QuestionDialog({ topics, question, trigger }: { topics: any[]; question
             <Label>Respuestas también aceptadas (una por línea)</Label>
             <Textarea rows={3} value={aceptadasText} onChange={(e) => setAceptadasText(e.target.value)} placeholder="Variantes válidas..." />
           </div>
+          <div>
+            <Label>Opciones incorrectas para multiple choice (una por línea, hasta 3)</Label>
+            <Textarea rows={3} value={incorrectasText} onChange={(e) => setIncorrectasText(e.target.value)} placeholder="Distractores que verá el aspirante..." />
+            <p className="mt-1 text-xs text-muted-foreground">Se mezclan con la respuesta correcta al armar el examen.</p>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="flex items-center justify-between rounded border p-3">
               <div><Label className="font-medium">Eliminatoria</Label><p className="text-xs text-muted-foreground">Si se equivoca, desaprueba.</p></div>
