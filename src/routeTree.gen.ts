@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PanelRouteImport } from './routes/panel'
 import { Route as InspectorRouteImport } from './routes/inspector'
+import { Route as ExamenRouteImport } from './routes/examen'
 import { Route as BootstrapRouteImport } from './routes/bootstrap'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AspiranteRouteImport } from './routes/aspirante'
@@ -33,6 +34,11 @@ const PanelRoute = PanelRouteImport.update({
 const InspectorRoute = InspectorRouteImport.update({
   id: '/inspector',
   path: '/inspector',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExamenRoute = ExamenRouteImport.update({
+  id: '/examen',
+  path: '/examen',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BootstrapRoute = BootstrapRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/aspirante': typeof AspiranteRoute
   '/auth': typeof AuthRoute
   '/bootstrap': typeof BootstrapRoute
+  '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
   '/admin/archivo': typeof AdminArchivoRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/aspirante': typeof AspiranteRoute
   '/auth': typeof AuthRoute
   '/bootstrap': typeof BootstrapRoute
+  '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
   '/admin/archivo': typeof AdminArchivoRoute
@@ -141,6 +149,7 @@ export interface FileRoutesById {
   '/aspirante': typeof AspiranteRoute
   '/auth': typeof AuthRoute
   '/bootstrap': typeof BootstrapRoute
+  '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
   '/admin/archivo': typeof AdminArchivoRoute
@@ -160,6 +169,7 @@ export interface FileRouteTypes {
     | '/aspirante'
     | '/auth'
     | '/bootstrap'
+    | '/examen'
     | '/inspector'
     | '/panel'
     | '/admin/archivo'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/aspirante'
     | '/auth'
     | '/bootstrap'
+    | '/examen'
     | '/inspector'
     | '/panel'
     | '/admin/archivo'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/aspirante'
     | '/auth'
     | '/bootstrap'
+    | '/examen'
     | '/inspector'
     | '/panel'
     | '/admin/archivo'
@@ -211,6 +223,7 @@ export interface RootRouteChildren {
   AspiranteRoute: typeof AspiranteRoute
   AuthRoute: typeof AuthRoute
   BootstrapRoute: typeof BootstrapRoute
+  ExamenRoute: typeof ExamenRoute
   InspectorRoute: typeof InspectorRoute
   PanelRoute: typeof PanelRoute
 }
@@ -229,6 +242,13 @@ declare module '@tanstack/react-router' {
       path: '/inspector'
       fullPath: '/inspector'
       preLoaderRoute: typeof InspectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/examen': {
+      id: '/examen'
+      path: '/examen'
+      fullPath: '/examen'
+      preLoaderRoute: typeof ExamenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bootstrap': {
@@ -355,6 +375,7 @@ const rootRouteChildren: RootRouteChildren = {
   AspiranteRoute: AspiranteRoute,
   AuthRoute: AuthRoute,
   BootstrapRoute: BootstrapRoute,
+  ExamenRoute: ExamenRoute,
   InspectorRoute: InspectorRoute,
   PanelRoute: PanelRoute,
 }
