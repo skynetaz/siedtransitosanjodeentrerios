@@ -24,6 +24,7 @@ import { Route as AdminImportarRouteImport } from './routes/admin.importar'
 import { Route as AdminEstadisticasRouteImport } from './routes/admin.estadisticas'
 import { Route as AdminEmuladorRouteImport } from './routes/admin.emulador'
 import { Route as AdminConfiguracionRouteImport } from './routes/admin.configuracion'
+import { Route as AdminCodigosRouteImport } from './routes/admin.codigos'
 import { Route as AdminArchivoRouteImport } from './routes/admin.archivo'
 
 const PanelRoute = PanelRouteImport.update({
@@ -101,6 +102,11 @@ const AdminConfiguracionRoute = AdminConfiguracionRouteImport.update({
   path: '/configuracion',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCodigosRoute = AdminCodigosRouteImport.update({
+  id: '/codigos',
+  path: '/codigos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminArchivoRoute = AdminArchivoRouteImport.update({
   id: '/archivo',
   path: '/archivo',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
   '/admin/archivo': typeof AdminArchivoRoute
+  '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/emulador': typeof AdminEmuladorRoute
   '/admin/estadisticas': typeof AdminEstadisticasRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
   '/admin/archivo': typeof AdminArchivoRoute
+  '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/emulador': typeof AdminEmuladorRoute
   '/admin/estadisticas': typeof AdminEstadisticasRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
   '/admin/archivo': typeof AdminArchivoRoute
+  '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/emulador': typeof AdminEmuladorRoute
   '/admin/estadisticas': typeof AdminEstadisticasRoute
@@ -173,6 +182,7 @@ export interface FileRouteTypes {
     | '/inspector'
     | '/panel'
     | '/admin/archivo'
+    | '/admin/codigos'
     | '/admin/configuracion'
     | '/admin/emulador'
     | '/admin/estadisticas'
@@ -190,6 +200,7 @@ export interface FileRouteTypes {
     | '/inspector'
     | '/panel'
     | '/admin/archivo'
+    | '/admin/codigos'
     | '/admin/configuracion'
     | '/admin/emulador'
     | '/admin/estadisticas'
@@ -208,6 +219,7 @@ export interface FileRouteTypes {
     | '/inspector'
     | '/panel'
     | '/admin/archivo'
+    | '/admin/codigos'
     | '/admin/configuracion'
     | '/admin/emulador'
     | '/admin/estadisticas'
@@ -335,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminConfiguracionRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/codigos': {
+      id: '/admin/codigos'
+      path: '/codigos'
+      fullPath: '/admin/codigos'
+      preLoaderRoute: typeof AdminCodigosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/archivo': {
       id: '/admin/archivo'
       path: '/archivo'
@@ -347,6 +366,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminArchivoRoute: typeof AdminArchivoRoute
+  AdminCodigosRoute: typeof AdminCodigosRoute
   AdminConfiguracionRoute: typeof AdminConfiguracionRoute
   AdminEmuladorRoute: typeof AdminEmuladorRoute
   AdminEstadisticasRoute: typeof AdminEstadisticasRoute
@@ -358,6 +378,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminArchivoRoute: AdminArchivoRoute,
+  AdminCodigosRoute: AdminCodigosRoute,
   AdminConfiguracionRoute: AdminConfiguracionRoute,
   AdminEmuladorRoute: AdminEmuladorRoute,
   AdminEstadisticasRoute: AdminEstadisticasRoute,
