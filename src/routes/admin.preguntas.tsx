@@ -123,10 +123,10 @@ function QuestionDialog({ topics, question, trigger }: { topics: any[]; question
   const [open, setOpen] = useState(false);
   const [f, setF] = useState<Partial<Q>>(question ?? { clase: "B", eliminatoria: false, peso: 1, nivel: "medio", activa: true, respuestas_aceptadas: [] });
   const [aceptadasText, setAceptadasText] = useState((question?.respuestas_aceptadas ?? []).join("\n"));
-  const [incorrectasText, setIncorrectasText] = useState(((question as any)?.opciones_incorrectas ?? []).join("\n"));
+  const [incorrectasText, setIncorrectasText] = useState<string>((((question as any)?.opciones_incorrectas ?? []) as string[]).join("\n"));
   const mut = useMutation({
     mutationFn: async () => {
-      const incorrectas = incorrectasText.split("\n").map((s) => s.trim()).filter(Boolean).slice(0, 3);
+      const incorrectas = incorrectasText.split("\n").map((s: string) => s.trim()).filter(Boolean).slice(0, 3);
       const payload = {
         ...f,
         respuestas_aceptadas: aceptadasText.split("\n").map((s) => s.trim()).filter(Boolean),
