@@ -12,7 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertTriangle, Sparkles, Loader2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { generarOpcionesIA } from "@/lib/ia-opciones.functions";
 
 export const Route = createFileRoute("/admin/preguntas")({ component: Preguntas });
 
@@ -202,5 +204,25 @@ function QuestionDialog({ topics, question, trigger }: { topics: any[]; question
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Genera con IA un borrador de las 3 opciones incorrectas de cada pregunta. */
+function GenerarOpcionesIA() {
+  const qc = useQueryClient();
+  const fn = useServerFn(generarOpcionesIA);
+  const mut = useMutation({
+    mutationFn: async () => await fn({ data: { clase: "TODAS", limite: 15, soloFaltantes: true } }),
+    onSuccess: (r: any) => {
+      toast.success(r.generadas > 0 ? `${r.generadas} pregunta(s) con opciones generadas. Revisalas y guardá.` : "No quedan preguntas sin opciones.");
+      qc.invalidateQueries({ queryKey: ["questions"] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  return (
+    <Button variant="outline" className="h-11" disabled={mut.isPending} onClick={() => mut.mutate()}>
+      {mut.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1 h-4 w-4" />}
+      Generar opciones con IA
+    </Button>
   );
 }
