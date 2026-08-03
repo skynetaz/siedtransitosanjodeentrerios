@@ -83,9 +83,12 @@ function Preguntas() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-between items-center">
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between">
         <div className="text-sm text-muted-foreground">{filtered.length} pregunta(s)</div>
-        <QuestionDialog topics={topics.data ?? []} trigger={<Button><Plus className="mr-1 h-4 w-4" />Nueva pregunta</Button>} />
+        <div className="flex flex-wrap gap-2">
+          <GenerarOpcionesIA />
+          <QuestionDialog topics={topics.data ?? []} trigger={<Button className="h-11"><Plus className="mr-1 h-4 w-4" />Nueva pregunta</Button>} />
+        </div>
       </div>
 
       <div className="space-y-2">
