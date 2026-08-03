@@ -6,6 +6,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { answersMatch } from "@/lib/normalize";
+import { buildOptions } from "@/lib/mc";
 
 // ---------------------------------------------------------------
 // Obtener el examen habilitado actual del aspirante autenticado
@@ -56,7 +57,7 @@ export const iniciarExamen = createServerFn({ method: "POST" })
     const clases: Clase[] = exam.clase === "UNICA" ? ["UNICA"] : [exam.clase as Clase, "UNICA"];
     const { data: pool, error: qErr } = await supabaseAdmin
       .from("questions")
-      .select("id, pregunta, eliminatoria, respuesta_correcta, respuestas_aceptadas, peso")
+      .select("id, pregunta, eliminatoria, respuesta_correcta, respuestas_aceptadas, peso, opciones_incorrectas")
       .in("clase", clases).eq("activa", true);
     if (qErr) throw qErr;
     if (!pool || pool.length === 0) throw new Error("No hay preguntas disponibles para esta clase.");
@@ -70,7 +71,7 @@ export const iniciarExamen = createServerFn({ method: "POST" })
       exam_id: data.examId,
       question_id: q.id,
       orden: i + 1,
-      snapshot: { pregunta: q.pregunta, eliminatoria: q.eliminatoria, peso: q.peso },
+      snapshot: { pregunta: q.pregunta, eliminatoria: q.eliminatoria, peso: q.peso, opciones: buildOptions(q.respuesta_correcta, q.opciones_incorrectas ?? []) },
     }));
     await supabaseAdmin.from("exam_questions").delete().eq("exam_id", data.examId); // limpio por si acaso
     const { error: iErr } = await supabaseAdmin.from("exam_questions").insert(rows);
