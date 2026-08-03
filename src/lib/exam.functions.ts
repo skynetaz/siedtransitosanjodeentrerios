@@ -151,9 +151,15 @@ export const finalizarExamen = createServerFn({ method: "POST" })
     const cfg = exam.config_snapshot as { max_errores?: number } | null;
     const maxErr = cfg?.max_errores ?? 4;
     const status = incorrectas <= maxErr ? "aprobado" : "desaprobado";
+    const finished = new Date();
+    const started = exam.started_at ? new Date(exam.started_at) : finished;
+    const total = exam.total_preguntas || (allEq ?? []).length || 1;
     await supabaseAdmin.from("exams").update({
-      status, finished_at: new Date().toISOString(),
+      status, finished_at: finished.toISOString(),
       correctas, incorrectas, puntaje: correctas,
+      porcentaje: Math.round((correctas / total) * 100),
+      tiempo_utilizado_seg: Math.round((finished.getTime() - started.getTime()) / 1000),
+      motivo_finalizacion: exam.motivo_finalizacion ?? "finalizado por el aspirante",
     }).eq("id", data.examId);
     return { ok: true, status, correctas, incorrectas };
   });
