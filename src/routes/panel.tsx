@@ -11,6 +11,6 @@ function Redirector() {
   if (!user) return <Navigate to="/auth" replace />;
   if (isAdmin) return <Navigate to="/admin" replace />;
   if (isInspector) return <Navigate to="/inspector" replace />;
-  if (isAspirante) return <Navigate to="/aspirante" replace />;
+  if (isAspirante) return <Navigate to="/examen" replace />;
   return <div className="min-h-screen flex items-center justify-center p-6 text-center text-muted-foreground">Tu cuenta aún no tiene un rol asignado. Contactá al administrador.</div>;
 }

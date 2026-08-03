@@ -18,8 +18,8 @@ function Landing() {
               <div className="text-xs opacity-80">Dirección de Tránsito y Transporte</div>
             </div>
           </div>
-          <Link to="/auth">
-            <Button variant="secondary" size="sm">Iniciar sesión</Button>
+          <Link to="/examen">
+            <Button variant="secondary" size="sm">Rendir examen</Button>
           </Link>
         </div>
       </header>
@@ -38,7 +38,8 @@ function Landing() {
               control de exámenes por parte del inspector e historial completo.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/auth"><Button size="lg">Ingresar al sistema</Button></Link>
+              <Link to="/examen"><Button size="lg" className="h-14 px-8 text-base">Rendir examen</Button></Link>
+              <Link to="/auth"><Button size="lg" variant="outline" className="h-14 px-8 text-base">Acceso del personal</Button></Link>
             </div>
           </div>
 
