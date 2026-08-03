@@ -50,9 +50,12 @@ export type Database = {
           clase: Database["public"]["Enums"]["license_class"]
           codigo: string
           created_at: string
+          created_by: string | null
+          dni: string | null
+          exam_id: string | null
           expires_at: string | null
           id: string
-          inspector_id: string
+          inspector_id: string | null
           status: string
           used_at: string | null
         }
@@ -61,9 +64,12 @@ export type Database = {
           clase: Database["public"]["Enums"]["license_class"]
           codigo: string
           created_at?: string
+          created_by?: string | null
+          dni?: string | null
+          exam_id?: string | null
           expires_at?: string | null
           id?: string
-          inspector_id: string
+          inspector_id?: string | null
           status?: string
           used_at?: string | null
         }
@@ -72,9 +78,12 @@ export type Database = {
           clase?: Database["public"]["Enums"]["license_class"]
           codigo?: string
           created_at?: string
+          created_by?: string | null
+          dni?: string | null
+          exam_id?: string | null
           expires_at?: string | null
           id?: string
-          inspector_id?: string
+          inspector_id?: string | null
           status?: string
           used_at?: string | null
         }
@@ -84,6 +93,20 @@ export type Database = {
             columns: ["aspirante_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_access_codes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_access_codes_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
             referencedColumns: ["id"]
           },
           {
@@ -121,6 +144,41 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      exam_events: {
+        Row: {
+          created_at: string
+          exam_id: string
+          id: string
+          meta: Json | null
+          motivo: string | null
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          exam_id: string
+          id?: string
+          meta?: Json | null
+          motivo?: string | null
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string
+          id?: string
+          meta?: Json | null
+          motivo?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_events_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exam_questions: {
         Row: {
@@ -174,6 +232,7 @@ export type Database = {
         Row: {
           aspirante_id: string
           clase: Database["public"]["Enums"]["license_class"]
+          codigo_utilizado: string | null
           config_snapshot: Json | null
           correctas: number
           created_at: string
@@ -185,6 +244,8 @@ export type Database = {
           incorrectas: number
           inspector_id: string | null
           is_emulation: boolean
+          motivo_finalizacion: string | null
+          porcentaje: number | null
           puntaje: number
           signature_aspirante: string | null
           signature_inspector: string | null
@@ -192,12 +253,14 @@ export type Database = {
           signed_inspector_at: string | null
           started_at: string | null
           status: Database["public"]["Enums"]["exam_status"]
+          tiempo_utilizado_seg: number | null
           total_preguntas: number
           updated_at: string
         }
         Insert: {
           aspirante_id: string
           clase: Database["public"]["Enums"]["license_class"]
+          codigo_utilizado?: string | null
           config_snapshot?: Json | null
           correctas?: number
           created_at?: string
@@ -209,6 +272,8 @@ export type Database = {
           incorrectas?: number
           inspector_id?: string | null
           is_emulation?: boolean
+          motivo_finalizacion?: string | null
+          porcentaje?: number | null
           puntaje?: number
           signature_aspirante?: string | null
           signature_inspector?: string | null
@@ -216,12 +281,14 @@ export type Database = {
           signed_inspector_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["exam_status"]
+          tiempo_utilizado_seg?: number | null
           total_preguntas?: number
           updated_at?: string
         }
         Update: {
           aspirante_id?: string
           clase?: Database["public"]["Enums"]["license_class"]
+          codigo_utilizado?: string | null
           config_snapshot?: Json | null
           correctas?: number
           created_at?: string
@@ -233,6 +300,8 @@ export type Database = {
           incorrectas?: number
           inspector_id?: string | null
           is_emulation?: boolean
+          motivo_finalizacion?: string | null
+          porcentaje?: number | null
           puntaje?: number
           signature_aspirante?: string | null
           signature_inspector?: string | null
@@ -240,6 +309,7 @@ export type Database = {
           signed_inspector_at?: string | null
           started_at?: string | null
           status?: Database["public"]["Enums"]["exam_status"]
+          tiempo_utilizado_seg?: number | null
           total_preguntas?: number
           updated_at?: string
         }
@@ -312,6 +382,8 @@ export type Database = {
           fuente: string | null
           id: string
           nivel: string
+          opciones_incorrectas: string[]
+          opciones_revisadas: boolean
           peso: number
           pregunta: string
           respuesta_correcta: string
@@ -327,6 +399,8 @@ export type Database = {
           fuente?: string | null
           id?: string
           nivel?: string
+          opciones_incorrectas?: string[]
+          opciones_revisadas?: boolean
           peso?: number
           pregunta: string
           respuesta_correcta: string
@@ -342,6 +416,8 @@ export type Database = {
           fuente?: string | null
           id?: string
           nivel?: string
+          opciones_incorrectas?: string[]
+          opciones_revisadas?: boolean
           peso?: number
           pregunta?: string
           respuesta_correcta?: string
