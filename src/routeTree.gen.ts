@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PanelRouteImport } from './routes/panel'
 import { Route as InspectorRouteImport } from './routes/inspector'
+import { Route as ExamenRouteImport } from './routes/examen'
 import { Route as BootstrapRouteImport } from './routes/bootstrap'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AspiranteRouteImport } from './routes/aspirante'
@@ -23,6 +24,7 @@ import { Route as AdminImportarRouteImport } from './routes/admin.importar'
 import { Route as AdminEstadisticasRouteImport } from './routes/admin.estadisticas'
 import { Route as AdminEmuladorRouteImport } from './routes/admin.emulador'
 import { Route as AdminConfiguracionRouteImport } from './routes/admin.configuracion'
+import { Route as AdminCodigosRouteImport } from './routes/admin.codigos'
 import { Route as AdminArchivoRouteImport } from './routes/admin.archivo'
 
 const PanelRoute = PanelRouteImport.update({
@@ -33,6 +35,11 @@ const PanelRoute = PanelRouteImport.update({
 const InspectorRoute = InspectorRouteImport.update({
   id: '/inspector',
   path: '/inspector',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExamenRoute = ExamenRouteImport.update({
+  id: '/examen',
+  path: '/examen',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BootstrapRoute = BootstrapRouteImport.update({
@@ -95,6 +102,11 @@ const AdminConfiguracionRoute = AdminConfiguracionRouteImport.update({
   path: '/configuracion',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCodigosRoute = AdminCodigosRouteImport.update({
+  id: '/codigos',
+  path: '/codigos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminArchivoRoute = AdminArchivoRouteImport.update({
   id: '/archivo',
   path: '/archivo',
@@ -107,9 +119,11 @@ export interface FileRoutesByFullPath {
   '/aspirante': typeof AspiranteRoute
   '/auth': typeof AuthRoute
   '/bootstrap': typeof BootstrapRoute
+  '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
   '/admin/archivo': typeof AdminArchivoRoute
+  '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/emulador': typeof AdminEmuladorRoute
   '/admin/estadisticas': typeof AdminEstadisticasRoute
@@ -123,9 +137,11 @@ export interface FileRoutesByTo {
   '/aspirante': typeof AspiranteRoute
   '/auth': typeof AuthRoute
   '/bootstrap': typeof BootstrapRoute
+  '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
   '/admin/archivo': typeof AdminArchivoRoute
+  '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/emulador': typeof AdminEmuladorRoute
   '/admin/estadisticas': typeof AdminEstadisticasRoute
@@ -141,9 +157,11 @@ export interface FileRoutesById {
   '/aspirante': typeof AspiranteRoute
   '/auth': typeof AuthRoute
   '/bootstrap': typeof BootstrapRoute
+  '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
   '/admin/archivo': typeof AdminArchivoRoute
+  '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/emulador': typeof AdminEmuladorRoute
   '/admin/estadisticas': typeof AdminEstadisticasRoute
@@ -160,9 +178,11 @@ export interface FileRouteTypes {
     | '/aspirante'
     | '/auth'
     | '/bootstrap'
+    | '/examen'
     | '/inspector'
     | '/panel'
     | '/admin/archivo'
+    | '/admin/codigos'
     | '/admin/configuracion'
     | '/admin/emulador'
     | '/admin/estadisticas'
@@ -176,9 +196,11 @@ export interface FileRouteTypes {
     | '/aspirante'
     | '/auth'
     | '/bootstrap'
+    | '/examen'
     | '/inspector'
     | '/panel'
     | '/admin/archivo'
+    | '/admin/codigos'
     | '/admin/configuracion'
     | '/admin/emulador'
     | '/admin/estadisticas'
@@ -193,9 +215,11 @@ export interface FileRouteTypes {
     | '/aspirante'
     | '/auth'
     | '/bootstrap'
+    | '/examen'
     | '/inspector'
     | '/panel'
     | '/admin/archivo'
+    | '/admin/codigos'
     | '/admin/configuracion'
     | '/admin/emulador'
     | '/admin/estadisticas'
@@ -211,6 +235,7 @@ export interface RootRouteChildren {
   AspiranteRoute: typeof AspiranteRoute
   AuthRoute: typeof AuthRoute
   BootstrapRoute: typeof BootstrapRoute
+  ExamenRoute: typeof ExamenRoute
   InspectorRoute: typeof InspectorRoute
   PanelRoute: typeof PanelRoute
 }
@@ -229,6 +254,13 @@ declare module '@tanstack/react-router' {
       path: '/inspector'
       fullPath: '/inspector'
       preLoaderRoute: typeof InspectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/examen': {
+      id: '/examen'
+      path: '/examen'
+      fullPath: '/examen'
+      preLoaderRoute: typeof ExamenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bootstrap': {
@@ -315,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminConfiguracionRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/codigos': {
+      id: '/admin/codigos'
+      path: '/codigos'
+      fullPath: '/admin/codigos'
+      preLoaderRoute: typeof AdminCodigosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/archivo': {
       id: '/admin/archivo'
       path: '/archivo'
@@ -327,6 +366,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminArchivoRoute: typeof AdminArchivoRoute
+  AdminCodigosRoute: typeof AdminCodigosRoute
   AdminConfiguracionRoute: typeof AdminConfiguracionRoute
   AdminEmuladorRoute: typeof AdminEmuladorRoute
   AdminEstadisticasRoute: typeof AdminEstadisticasRoute
@@ -338,6 +378,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminArchivoRoute: AdminArchivoRoute,
+  AdminCodigosRoute: AdminCodigosRoute,
   AdminConfiguracionRoute: AdminConfiguracionRoute,
   AdminEmuladorRoute: AdminEmuladorRoute,
   AdminEstadisticasRoute: AdminEstadisticasRoute,
@@ -355,19 +396,10 @@ const rootRouteChildren: RootRouteChildren = {
   AspiranteRoute: AspiranteRoute,
   AuthRoute: AuthRoute,
   BootstrapRoute: BootstrapRoute,
+  ExamenRoute: ExamenRoute,
   InspectorRoute: InspectorRoute,
   PanelRoute: PanelRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

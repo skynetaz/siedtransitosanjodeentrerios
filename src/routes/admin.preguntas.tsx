@@ -12,7 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertTriangle, Sparkles, Loader2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { generarOpcionesIA } from "@/lib/ia-opciones.functions";
 
 export const Route = createFileRoute("/admin/preguntas")({ component: Preguntas });
 
@@ -83,9 +85,12 @@ function Preguntas() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-between items-center">
+      <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between">
         <div className="text-sm text-muted-foreground">{filtered.length} pregunta(s)</div>
-        <QuestionDialog topics={topics.data ?? []} trigger={<Button><Plus className="mr-1 h-4 w-4" />Nueva pregunta</Button>} />
+        <div className="flex flex-wrap gap-2">
+          <GenerarOpcionesIA />
+          <QuestionDialog topics={topics.data ?? []} trigger={<Button className="h-11"><Plus className="mr-1 h-4 w-4" />Nueva pregunta</Button>} />
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -123,9 +128,16 @@ function QuestionDialog({ topics, question, trigger }: { topics: any[]; question
   const [open, setOpen] = useState(false);
   const [f, setF] = useState<Partial<Q>>(question ?? { clase: "B", eliminatoria: false, peso: 1, nivel: "medio", activa: true, respuestas_aceptadas: [] });
   const [aceptadasText, setAceptadasText] = useState((question?.respuestas_aceptadas ?? []).join("\n"));
+  const [incorrectasText, setIncorrectasText] = useState<string>((((question as any)?.opciones_incorrectas ?? []) as string[]).join("\n"));
   const mut = useMutation({
     mutationFn: async () => {
-      const payload = { ...f, respuestas_aceptadas: aceptadasText.split("\n").map((s) => s.trim()).filter(Boolean) };
+      const incorrectas = incorrectasText.split("\n").map((s: string) => s.trim()).filter(Boolean).slice(0, 3);
+      const payload = {
+        ...f,
+        respuestas_aceptadas: aceptadasText.split("\n").map((s) => s.trim()).filter(Boolean),
+        opciones_incorrectas: incorrectas,
+        opciones_revisadas: incorrectas.length >= 3,
+      };
       if (question?.id) {
         const { error } = await supabase.from("questions").update(payload as any).eq("id", question.id);
         if (error) throw error;
@@ -169,6 +181,11 @@ function QuestionDialog({ topics, question, trigger }: { topics: any[]; question
             <Label>Respuestas también aceptadas (una por línea)</Label>
             <Textarea rows={3} value={aceptadasText} onChange={(e) => setAceptadasText(e.target.value)} placeholder="Variantes válidas..." />
           </div>
+          <div>
+            <Label>Opciones incorrectas para multiple choice (una por línea, hasta 3)</Label>
+            <Textarea rows={3} value={incorrectasText} onChange={(e) => setIncorrectasText(e.target.value)} placeholder="Distractores que verá el aspirante..." />
+            <p className="mt-1 text-xs text-muted-foreground">Se mezclan con la respuesta correcta al armar el examen.</p>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="flex items-center justify-between rounded border p-3">
               <div><Label className="font-medium">Eliminatoria</Label><p className="text-xs text-muted-foreground">Si se equivoca, desaprueba.</p></div>
@@ -187,5 +204,25 @@ function QuestionDialog({ topics, question, trigger }: { topics: any[]; question
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Genera con IA un borrador de las 3 opciones incorrectas de cada pregunta. */
+function GenerarOpcionesIA() {
+  const qc = useQueryClient();
+  const fn = useServerFn(generarOpcionesIA);
+  const mut = useMutation({
+    mutationFn: async () => await fn({ data: { clase: "TODAS", limite: 15, soloFaltantes: true } }),
+    onSuccess: (r: any) => {
+      toast.success(r.generadas > 0 ? `${r.generadas} pregunta(s) con opciones generadas. Revisalas y guardá.` : "No quedan preguntas sin opciones.");
+      qc.invalidateQueries({ queryKey: ["questions"] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  return (
+    <Button variant="outline" className="h-11" disabled={mut.isPending} onClick={() => mut.mutate()}>
+      {mut.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Sparkles className="mr-1 h-4 w-4" />}
+      Generar opciones con IA
+    </Button>
   );
 }

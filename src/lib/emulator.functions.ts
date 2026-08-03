@@ -4,6 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { answersMatch } from "@/lib/normalize";
+import { buildOptions } from "@/lib/mc";
 
 async function assertAdmin(context: any) {
   const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
@@ -26,7 +27,7 @@ export const startEmulation = createServerFn({ method: "POST" })
     const clases = (data.clase === "UNICA" ? ["UNICA"] : [data.clase, "UNICA"]) as ("A"|"B"|"C"|"D"|"E"|"UNICA")[];
     const { data: pool } = await supabaseAdmin
       .from("questions")
-      .select("id, pregunta, eliminatoria, respuesta_correcta, respuestas_aceptadas, peso")
+      .select("id, pregunta, eliminatoria, respuesta_correcta, respuestas_aceptadas, peso, opciones_incorrectas")
       .in("clase", clases).eq("activa", true);
     if (!pool || pool.length === 0) throw new Error("No hay preguntas disponibles para esta clase.");
     const shuffled = pool.map((v) => ({ v, s: Math.random() })).sort((a,b)=>a.s-b.s).map((x) => x.v);
@@ -43,7 +44,7 @@ export const startEmulation = createServerFn({ method: "POST" })
 
     const rows = selected.map((q, i) => ({
       exam_id: exam.id, question_id: q.id, orden: i + 1,
-      snapshot: { pregunta: q.pregunta, eliminatoria: q.eliminatoria, peso: q.peso },
+      snapshot: { pregunta: q.pregunta, eliminatoria: q.eliminatoria, peso: q.peso, opciones: buildOptions(q.respuesta_correcta, q.opciones_incorrectas ?? []) },
     }));
     await supabaseAdmin.from("exam_questions").insert(rows);
     const { data: qs } = await supabaseAdmin.from("exam_questions")

@@ -5,6 +5,7 @@ import { startEmulation, responderEmulation, finalizarEmulation, eliminarEmulati
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { OptionCard } from "@/components/exam/ExamPieces";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -142,7 +143,22 @@ function EmulatorRunner({ session, onFinish }: { session: { exam: any; questions
           <CardTitle className="text-lg leading-relaxed">{q.snapshot?.pregunta}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Textarea rows={3} placeholder="Escribí tu respuesta…" value={answer} onChange={(e)=>setAnswer(e.target.value)} disabled={!!instantFeedback} />
+          {(q.snapshot?.opciones ?? []).length > 0 ? (
+            <div role="radiogroup" className="space-y-3">
+              {(q.snapshot.opciones as string[]).map((op, i) => (
+                <OptionCard
+                  key={op + i}
+                  texto={op}
+                  letra={["A", "B", "C", "D"][i] ?? String(i + 1)}
+                  selected={answer === op}
+                  disabled={!!instantFeedback}
+                  onSelect={() => setAnswer(op)}
+                />
+              ))}
+            </div>
+          ) : (
+            <Textarea rows={3} placeholder="Escribí tu respuesta…" value={answer} onChange={(e)=>setAnswer(e.target.value)} disabled={!!instantFeedback} />
+          )}
           {instantFeedback && (
             <div className={`mt-3 rounded p-3 text-sm border ${instantFeedback.correcta ? "border-success/40 bg-success/5" : "border-destructive/40 bg-destructive/5"}`}>
               <div className="flex items-center gap-2 font-medium">

@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listExamsArchive, getExamDetail, firmarInspector } from "@/lib/archivo.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -42,17 +43,30 @@ function ArchiveList({ estado }: { estado: "aprobado"|"desaprobado"|"pendiente_f
   const fn = useServerFn(listExamsArchive);
   const q = useQuery({ queryKey: ["archive", estado], queryFn: () => fn({ data: { estado } }) });
   const [openId, setOpenId] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
+  const [fecha, setFecha] = useState("");
 
   if (q.isLoading) return <Loader2 className="h-6 w-6 animate-spin" />;
-  const rows = q.data ?? [];
+  const all = q.data ?? [];
+  const term = busqueda.trim().toLowerCase();
+  const rows = all.filter((e: any) => {
+    const p = e.profiles ?? {};
+    const texto = `${p.dni ?? ""} ${p.nombre ?? ""} ${p.apellido ?? ""}`.toLowerCase();
+    const okTexto = !term || texto.includes(term);
+    const okFecha = !fecha || (e.finished_at ?? "").slice(0, 10) === fecha;
+    return okTexto && okFecha;
+  });
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-end">
-        <Button size="sm" variant="outline" disabled={rows.length === 0} onClick={()=>exportListExcel(rows, `examenes_${estado}.xlsx`)}>
-          <FileDown className="mr-1 h-4 w-4" />Exportar lista (Excel)
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+        <Input className="h-11" placeholder="Buscar por DNI, nombre o apellido" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+        <Input className="h-11" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+        <Button variant="outline" className="h-11" disabled={rows.length === 0} onClick={()=>exportListExcel(rows, `examenes_${estado}.xlsx`)}>
+          <FileDown className="mr-1 h-4 w-4" />Exportar lista
         </Button>
       </div>
+
       {rows.length === 0 && <p className="text-center text-sm text-muted-foreground py-6">Sin exámenes archivados en esta categoría.</p>}
       {rows.map((e: any) => {
         const p = e.profiles ?? {};
