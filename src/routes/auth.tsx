@@ -20,7 +20,7 @@ function AuthPage() {
   const navigate = useNavigate();
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      if (data.user) navigate({ to: "/_authenticated" as any });
+      if (data.user) navigate({ to: "/panel" });
     });
   }, [navigate]);
 

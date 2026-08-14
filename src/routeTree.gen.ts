@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PanelRouteImport } from './routes/panel'
 import { Route as InspectorRouteImport } from './routes/inspector'
 import { Route as ExamenRouteImport } from './routes/examen'
@@ -27,6 +28,11 @@ import { Route as AdminConfiguracionRouteImport } from './routes/admin.configura
 import { Route as AdminCodigosRouteImport } from './routes/admin.codigos'
 import { Route as AdminArchivoRouteImport } from './routes/admin.archivo'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PanelRoute = PanelRouteImport.update({
   id: '/panel',
   path: '/panel',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/archivo': typeof AdminArchivoRoute
   '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/archivo': typeof AdminArchivoRoute
   '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin/archivo': typeof AdminArchivoRoute
   '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/examen'
     | '/inspector'
     | '/panel'
+    | '/reset-password'
     | '/admin/archivo'
     | '/admin/codigos'
     | '/admin/configuracion'
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/examen'
     | '/inspector'
     | '/panel'
+    | '/reset-password'
     | '/admin/archivo'
     | '/admin/codigos'
     | '/admin/configuracion'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/examen'
     | '/inspector'
     | '/panel'
+    | '/reset-password'
     | '/admin/archivo'
     | '/admin/codigos'
     | '/admin/configuracion'
@@ -238,10 +250,18 @@ export interface RootRouteChildren {
   ExamenRoute: typeof ExamenRoute
   InspectorRoute: typeof InspectorRoute
   PanelRoute: typeof PanelRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/panel': {
       id: '/panel'
       path: '/panel'
@@ -399,6 +419,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExamenRoute: ExamenRoute,
   InspectorRoute: InspectorRoute,
   PanelRoute: PanelRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
