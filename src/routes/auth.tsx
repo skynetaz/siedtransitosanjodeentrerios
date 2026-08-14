@@ -96,6 +96,9 @@ function StaffForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [recuperando, setRecuperando] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -103,23 +106,66 @@ function StaffForm() {
     setLoading(false);
     if (error) { toast.error("Credenciales incorrectas"); return; }
     toast.success("Bienvenido");
-    navigate({ to: "/panel" as any });
+    navigate({ to: "/panel" });
   };
+
+  const recuperar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) { toast.error("Ingresá tu correo."); return; }
+    setEnviando(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setEnviando(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Te enviamos un correo para restablecer la contraseña.");
+    setRecuperando(false);
+  };
+
+  if (recuperando) {
+    return (
+      <CardContent>
+        <CardDescription className="mb-4">
+          Ingresá tu correo y te enviamos un enlace para crear una contraseña nueva.
+        </CardDescription>
+        <form onSubmit={recuperar} className="space-y-4">
+          <div>
+            <Label htmlFor="re">Correo</Label>
+            <Input id="re" type="email" required className="h-12" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <Button type="submit" className="h-12 w-full" disabled={enviando}>
+            {enviando && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Enviar enlace
+          </Button>
+          <Button type="button" variant="ghost" className="w-full" onClick={() => setRecuperando(false)}>
+            Volver
+          </Button>
+        </form>
+      </CardContent>
+    );
+  }
+
   return (
     <CardContent>
       <CardDescription className="mb-4">Acceso para administradores e inspectores.</CardDescription>
       <form onSubmit={handle} className="space-y-4">
         <div>
           <Label htmlFor="e">Correo</Label>
-          <Input id="e" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input id="e" type="email" required className="h-12" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div>
           <Label htmlFor="p">Contraseña</Label>
-          <Input id="p" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input id="p" type="password" required className="h-12" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="h-12 w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Ingresar
         </Button>
+        <button
+          type="button"
+          onClick={() => setRecuperando(true)}
+          className="w-full text-center text-sm text-muted-foreground hover:underline"
+        >
+          ¿Olvidaste tu contraseña?
+        </button>
       </form>
     </CardContent>
   );
