@@ -3,7 +3,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { shuffle, buildOptions } from "@/lib/mc";
 
 // ---------------------------------------------------------------
 // Valida el código del aspirante autenticado y arranca el examen
@@ -37,45 +36,29 @@ export const iniciarConCodigo = createServerFn({ method: "POST" })
     if (!exam || exam.aspirante_id !== context.userId) throw new Error("Examen no disponible.");
     if (!["habilitado", "esperando"].includes(exam.status)) throw new Error("Este examen ya no está disponible.");
 
-    const { data: cfg } = await supabaseAdmin.from("exam_configs").select("*").eq("clase", exam.clase).maybeSingle();
-    const cantidad = cfg?.cantidad_preguntas ?? 20;
-    const duracion = cfg?.duracion_minutos ?? 15;
-    const maxErrores = cfg?.max_errores ?? 4;
+    const { resolverCategoria, seleccionarPreguntas } = await import("@/lib/seleccion.server");
+    const cat = await resolverCategoria(supabaseAdmin, exam.categoria_slug, exam.clase);
+    const duracion = cat.duracion_minutos;
+    const maxErrores = cat.max_errores;
+    const rows = await seleccionarPreguntas(supabaseAdmin, cat);
 
-    type Clase = "A" | "B" | "C" | "D" | "E" | "UNICA";
-    const clases: Clase[] = exam.clase === "UNICA" ? ["UNICA"] : [exam.clase as Clase, "UNICA"];
-    const { data: pool } = await supabaseAdmin
-      .from("questions")
-      .select("id, pregunta, eliminatoria, peso, respuesta_correcta, opciones_incorrectas")
-      .in("clase", clases)
-      .eq("activa", true);
-    if (!pool || pool.length === 0) throw new Error("No hay preguntas disponibles para esta clase.");
-
-    const selected = shuffle(pool).slice(0, Math.min(cantidad, pool.length));
     const now = new Date().toISOString();
 
     await supabaseAdmin.from("exam_questions").delete().eq("exam_id", examId);
     const { error: iErr } = await supabaseAdmin.from("exam_questions").insert(
-      selected.map((q, i) => ({
-        exam_id: examId,
-        question_id: q.id,
-        orden: i + 1,
-        snapshot: {
-          pregunta: q.pregunta,
-          eliminatoria: q.eliminatoria,
-          peso: q.peso,
-          opciones: buildOptions(q.respuesta_correcta, q.opciones_incorrectas ?? []),
-        },
-      })),
+      rows.map((r) => ({ ...r, exam_id: examId })),
     );
     if (iErr) throw iErr;
 
     await supabaseAdmin.from("exams").update({
       status: "rindiendo",
       started_at: now,
-      total_preguntas: selected.length,
+      total_preguntas: rows.length,
       codigo_utilizado: codigo,
-      config_snapshot: { cantidad, duracion_minutos: duracion, max_errores: maxErrores },
+      config_snapshot: {
+        categoria: cat.slug, nombre: cat.nombre, cantidad: rows.length,
+        duracion_minutos: duracion, max_errores: maxErrores,
+      },
     }).eq("id", examId);
 
     await supabaseAdmin.from("exam_access_codes")

@@ -42,13 +42,16 @@ export const generarCodigo = createServerFn({ method: "POST" })
       apellido: z.string().trim().min(1).max(80),
       email: z.string().trim().email().max(255).optional().or(z.literal("")),
       telefono: z.string().trim().max(40).optional().or(z.literal("")),
-      clase: z.enum(["A", "B", "C", "D", "E", "UNICA"]),
+      categoria: z.string().trim().min(1),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
     await assertStaff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resolverCategoria } = await import("@/lib/seleccion.server");
     await expirarVencidos(supabaseAdmin);
+    const cat = await resolverCategoria(supabaseAdmin, data.categoria, "UNICA");
+    const clase = (cat.clases.find((c) => c !== "UNICA") ?? "UNICA") as "A"|"B"|"C"|"D"|"E"|"UNICA";
 
     const loginEmail = `${data.dni}@aspirante.local`;
     const { data: existing } = await supabaseAdmin.from("profiles").select("id").eq("dni", data.dni).maybeSingle();
@@ -71,7 +74,7 @@ export const generarCodigo = createServerFn({ method: "POST" })
       apellido: data.apellido,
       email: data.email || loginEmail,
       telefono: data.telefono || null,
-      license_class: data.clase,
+      license_class: clase,
     });
 
     // Un solo código vigente por aspirante
@@ -95,7 +98,9 @@ export const generarCodigo = createServerFn({ method: "POST" })
     const { data: exam, error: exErr } = await supabaseAdmin.from("exams").insert({
       aspirante_id: uid,
       inspector_id: context.userId,
-      clase: data.clase,
+      clase,
+      categoria_slug: cat.slug,
+      clases_incluidas: cat.clases,
       status: "habilitado",
       codigo_utilizado: codigo,
       datos_aspirante: {
@@ -108,17 +113,18 @@ export const generarCodigo = createServerFn({ method: "POST" })
     const expires_at = new Date(Date.now() + CODE_TTL_MIN * 60_000).toISOString();
     const { data: row, error: cErr } = await supabaseAdmin.from("exam_access_codes").insert({
       aspirante_id: uid, inspector_id: context.userId, created_by: context.userId,
-      clase: data.clase, codigo, dni: data.dni, status: "disponible",
+      clase, categoria_slug: cat.slug, clases_incluidas: cat.clases,
+      codigo, dni: data.dni, status: "disponible",
       expires_at, exam_id: exam.id,
     }).select("*").single();
     if (cErr) throw cErr;
 
     await supabaseAdmin.from("audit_log").insert({
       user_id: context.userId, accion: "generar_codigo", target_type: "exam", target_id: exam.id,
-      meta: { dni: data.dni, clase: data.clase },
+      meta: { dni: data.dni, categoria: cat.slug },
     });
 
-    return { codigo, expires_at, exam_id: exam.id, id: row.id, aspirante_id: uid };
+    return { codigo, expires_at, exam_id: exam.id, id: row.id, aspirante_id: uid, categoria: cat.nombre };
   });
 
 // ---------------------------------------------------------------
@@ -138,7 +144,7 @@ export const listarCodigos = createServerFn({ method: "POST" })
     await expirarVencidos(supabaseAdmin);
     let q = supabaseAdmin
       .from("exam_access_codes")
-      .select("id, codigo, dni, clase, status, created_at, expires_at, used_at, exam_id, aspirante_id, profiles!exam_access_codes_aspirante_id_fkey(nombre, apellido)")
+      .select("id, codigo, dni, clase, categoria_slug, status, created_at, expires_at, used_at, exam_id, aspirante_id, profiles!exam_access_codes_aspirante_id_fkey(nombre, apellido)")
       .order("created_at", { ascending: false })
       .limit(200);
     if (data.estado !== "todos") q = q.eq("status", data.estado);
@@ -146,7 +152,7 @@ export const listarCodigos = createServerFn({ method: "POST" })
     const { data: rows, error } = await q;
     if (error) throw error;
     return (rows ?? []).map((r: any) => ({
-      id: r.id, codigo: r.codigo, dni: r.dni, clase: r.clase, status: r.status,
+      id: r.id, codigo: r.codigo, dni: r.dni, clase: r.clase, categoria_slug: r.categoria_slug, status: r.status,
       created_at: r.created_at, expires_at: r.expires_at, used_at: r.used_at,
       exam_id: r.exam_id,
       nombre: [r.profiles?.nombre, r.profiles?.apellido].filter(Boolean).join(" ") || "—",
