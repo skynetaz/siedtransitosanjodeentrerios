@@ -47,7 +47,9 @@ export type Database = {
       exam_access_codes: {
         Row: {
           aspirante_id: string
+          categoria_slug: string | null
           clase: Database["public"]["Enums"]["license_class"]
+          clases_incluidas: string[] | null
           codigo: string
           created_at: string
           created_by: string | null
@@ -61,7 +63,9 @@ export type Database = {
         }
         Insert: {
           aspirante_id: string
+          categoria_slug?: string | null
           clase: Database["public"]["Enums"]["license_class"]
+          clases_incluidas?: string[] | null
           codigo: string
           created_at?: string
           created_by?: string | null
@@ -75,7 +79,9 @@ export type Database = {
         }
         Update: {
           aspirante_id?: string
+          categoria_slug?: string | null
           clase?: Database["public"]["Enums"]["license_class"]
+          clases_incluidas?: string[] | null
           codigo?: string
           created_at?: string
           created_by?: string | null
@@ -117,6 +123,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      exam_categories: {
+        Row: {
+          activa: boolean
+          cantidad_preguntas: number
+          clases: string[]
+          created_at: string
+          duracion_minutos: number
+          grupo: string
+          incluye_senales: boolean
+          max_errores: number
+          nombre: string
+          orden: number
+          preguntas_senales: number
+          slug: string
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          activa?: boolean
+          cantidad_preguntas?: number
+          clases?: string[]
+          created_at?: string
+          duracion_minutos?: number
+          grupo?: string
+          incluye_senales?: boolean
+          max_errores?: number
+          nombre: string
+          orden?: number
+          preguntas_senales?: number
+          slug: string
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          activa?: boolean
+          cantidad_preguntas?: number
+          clases?: string[]
+          created_at?: string
+          duracion_minutos?: number
+          grupo?: string
+          incluye_senales?: boolean
+          max_errores?: number
+          nombre?: string
+          orden?: number
+          preguntas_senales?: number
+          slug?: string
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       exam_configs: {
         Row: {
@@ -231,7 +288,9 @@ export type Database = {
       exams: {
         Row: {
           aspirante_id: string
+          categoria_slug: string | null
           clase: Database["public"]["Enums"]["license_class"]
+          clases_incluidas: string[] | null
           codigo_utilizado: string | null
           config_snapshot: Json | null
           correctas: number
@@ -259,7 +318,9 @@ export type Database = {
         }
         Insert: {
           aspirante_id: string
+          categoria_slug?: string | null
           clase: Database["public"]["Enums"]["license_class"]
+          clases_incluidas?: string[] | null
           codigo_utilizado?: string | null
           config_snapshot?: Json | null
           correctas?: number
@@ -287,7 +348,9 @@ export type Database = {
         }
         Update: {
           aspirante_id?: string
+          categoria_slug?: string | null
           clase?: Database["public"]["Enums"]["license_class"]
+          clases_incluidas?: string[] | null
           codigo_utilizado?: string | null
           config_snapshot?: Json | null
           correctas?: number

@@ -1,21 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { generarCodigo, listarCodigos, cancelarCodigo, eliminarCodigo } from "@/lib/codigos.functions";
+import { listarCategorias } from "@/lib/categorias.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Copy, Loader2, Plus, Search, Trash2, Ban } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/codigos")({ component: CodigosPage });
 
-const CLASES = ["A", "B", "C", "D", "E", "UNICA"] as const;
 type Estado = "todos" | "disponible" | "utilizado" | "cancelado" | "expirado";
 
 function CodigosPage() {
@@ -103,7 +103,7 @@ function CodigosPage() {
                   <div className="min-w-0">
                     <p className="font-mono text-2xl font-bold tracking-[0.2em]">{c.codigo}</p>
                     <p className="truncate text-sm font-medium">{c.nombre}</p>
-                    <p className="text-xs text-muted-foreground">DNI {c.dni ?? "—"} · Clase {c.clase}</p>
+                    <p className="text-xs text-muted-foreground">DNI {c.dni ?? "—"} · {c.categoria_slug ?? `Clase ${c.clase}`}</p>
                   </div>
                   <EstadoBadge status={c.status} />
                 </div>
@@ -141,30 +141,51 @@ function EstadoBadge({ status }: { status: string }) {
 }
 
 function FormularioCodigo({ onDone }: { onDone: (c: { codigo: string; expires_at: string }) => void }) {
-  const [form, setForm] = useState({ dni: "", nombre: "", apellido: "", email: "", telefono: "", clase: "B" });
+  const [form, setForm] = useState({ dni: "", nombre: "", apellido: "", email: "", telefono: "", categoria: "" });
   const generar = useServerFn(generarCodigo);
+  const catsFn = useServerFn(listarCategorias);
+  const cats = useQuery({ queryKey: ["categorias"], queryFn: () => catsFn() });
+  const activas = ((cats.data ?? []) as any[]).filter((c) => c.activa);
+  useEffect(() => {
+    if (!form.categoria && activas.length > 0) setForm((f) => ({ ...f, categoria: activas[0].slug }));
+  }, [activas.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const grupos = [
+    { key: "particular", label: "Particulares" },
+    { key: "profesional", label: "Profesionales" },
+  ];
+
   const mut = useMutation({
-    mutationFn: async () => await generar({ data: { ...form, clase: form.clase as (typeof CLASES)[number] } }),
+    mutationFn: async () => await generar({ data: form }),
     onSuccess: (r: any) => { toast.success("Código generado."); onDone({ codigo: r.codigo, expires_at: r.expires_at }); },
     onError: (e) => toast.error((e as Error).message),
   });
-  const puede = form.dni.trim().length >= 6 && form.nombre.trim() && form.apellido.trim();
+  const puede = form.dni.trim().length >= 6 && form.nombre.trim() && form.apellido.trim() && form.categoria;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Nuevo código</CardTitle>
-        <CardDescription>Se asocia al DNI y habilita un único examen.</CardDescription>
+        <CardDescription>Se asocia al DNI y habilita un único examen combinado según la categoría.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
+        <Field label="Categoría del examen">
+          <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v })}>
+            <SelectTrigger className="h-12"><SelectValue placeholder="Elegí la categoría" /></SelectTrigger>
+            <SelectContent>
+              {grupos.map((g) => (
+                <SelectGroup key={g.key}>
+                  <SelectLabel>{g.label}</SelectLabel>
+                  {activas.filter((c) => c.grupo === g.key).map((c) => (
+                    <SelectItem key={c.slug} value={c.slug}>{c.nombre}</SelectItem>
+                  ))}
+                </SelectGroup>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="DNI"><Input className="h-12" inputMode="numeric" value={form.dni} onChange={(e) => setForm({ ...form, dni: e.target.value.replace(/\D/g, "") })} /></Field>
-          <Field label="Clase">
-            <Select value={form.clase} onValueChange={(v) => setForm({ ...form, clase: v })}>
-              <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
-              <SelectContent>{CLASES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
-          </Field>
           <Field label="Nombre"><Input className="h-12" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} /></Field>
           <Field label="Apellido"><Input className="h-12" value={form.apellido} onChange={(e) => setForm({ ...form, apellido: e.target.value })} /></Field>
           <Field label="Correo (opcional)"><Input className="h-12" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
