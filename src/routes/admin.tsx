@@ -10,6 +10,7 @@ const tabs = [
   { to: "/admin", label: "Inicio", exact: true },
   { to: "/admin/preguntas", label: "Banco de preguntas" },
   { to: "/admin/codigos", label: "Códigos" },
+  { to: "/admin/categorias", label: "Categorías" },
   { to: "/admin/importar", label: "Importar" },
   { to: "/admin/emulador", label: "Emulador" },
   { to: "/admin/archivo", label: "Archivo" },
