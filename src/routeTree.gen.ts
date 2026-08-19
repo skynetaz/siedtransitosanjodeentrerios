@@ -26,6 +26,7 @@ import { Route as AdminEstadisticasRouteImport } from './routes/admin.estadistic
 import { Route as AdminEmuladorRouteImport } from './routes/admin.emulador'
 import { Route as AdminConfiguracionRouteImport } from './routes/admin.configuracion'
 import { Route as AdminCodigosRouteImport } from './routes/admin.codigos'
+import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
 import { Route as AdminArchivoRouteImport } from './routes/admin.archivo'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -113,6 +114,11 @@ const AdminCodigosRoute = AdminCodigosRouteImport.update({
   path: '/codigos',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
+  id: '/categorias',
+  path: '/categorias',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminArchivoRoute = AdminArchivoRouteImport.update({
   id: '/archivo',
   path: '/archivo',
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/panel': typeof PanelRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/archivo': typeof AdminArchivoRoute
+  '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/emulador': typeof AdminEmuladorRoute
@@ -149,6 +156,7 @@ export interface FileRoutesByTo {
   '/panel': typeof PanelRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/archivo': typeof AdminArchivoRoute
+  '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/emulador': typeof AdminEmuladorRoute
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/panel': typeof PanelRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/archivo': typeof AdminArchivoRoute
+  '/admin/categorias': typeof AdminCategoriasRoute
   '/admin/codigos': typeof AdminCodigosRoute
   '/admin/configuracion': typeof AdminConfiguracionRoute
   '/admin/emulador': typeof AdminEmuladorRoute
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/panel'
     | '/reset-password'
     | '/admin/archivo'
+    | '/admin/categorias'
     | '/admin/codigos'
     | '/admin/configuracion'
     | '/admin/emulador'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/panel'
     | '/reset-password'
     | '/admin/archivo'
+    | '/admin/categorias'
     | '/admin/codigos'
     | '/admin/configuracion'
     | '/admin/emulador'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/panel'
     | '/reset-password'
     | '/admin/archivo'
+    | '/admin/categorias'
     | '/admin/codigos'
     | '/admin/configuracion'
     | '/admin/emulador'
@@ -374,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCodigosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/categorias': {
+      id: '/admin/categorias'
+      path: '/categorias'
+      fullPath: '/admin/categorias'
+      preLoaderRoute: typeof AdminCategoriasRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/archivo': {
       id: '/admin/archivo'
       path: '/archivo'
@@ -386,6 +405,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminArchivoRoute: typeof AdminArchivoRoute
+  AdminCategoriasRoute: typeof AdminCategoriasRoute
   AdminCodigosRoute: typeof AdminCodigosRoute
   AdminConfiguracionRoute: typeof AdminConfiguracionRoute
   AdminEmuladorRoute: typeof AdminEmuladorRoute
@@ -398,6 +418,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminArchivoRoute: AdminArchivoRoute,
+  AdminCategoriasRoute: AdminCategoriasRoute,
   AdminCodigosRoute: AdminCodigosRoute,
   AdminConfiguracionRoute: AdminConfiguracionRoute,
   AdminEmuladorRoute: AdminEmuladorRoute,
