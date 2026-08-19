@@ -6,7 +6,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { answersMatch } from "@/lib/normalize";
-import { buildOptions } from "@/lib/mc";
 
 // ---------------------------------------------------------------
 // Obtener el examen habilitado actual del aspirante autenticado
@@ -47,32 +46,14 @@ export const iniciarExamen = createServerFn({ method: "POST" })
     }
     if (exam.status !== "habilitado") throw new Error("El examen no está habilitado.");
 
-    const { data: cfg } = await supabaseAdmin.from("exam_configs").select("*").eq("clase", exam.clase).single();
-    const cantidad = cfg?.cantidad_preguntas ?? 20;
-    const duracion = cfg?.duracion_minutos ?? 15;
-    const maxErrores = cfg?.max_errores ?? 4;
-
-    // Traer preguntas activas de la clase + comunes (UNICA)
-    type Clase = "A"|"B"|"C"|"D"|"E"|"UNICA";
-    const clases: Clase[] = exam.clase === "UNICA" ? ["UNICA"] : [exam.clase as Clase, "UNICA"];
-    const { data: pool, error: qErr } = await supabaseAdmin
-      .from("questions")
-      .select("id, pregunta, eliminatoria, respuesta_correcta, respuestas_aceptadas, peso, opciones_incorrectas")
-      .in("clase", clases).eq("activa", true);
-    if (qErr) throw qErr;
-    if (!pool || pool.length === 0) throw new Error("No hay preguntas disponibles para esta clase.");
-
-    // Barajar y tomar N
-    const shuffled = pool.map((v) => ({ v, s: Math.random() })).sort((a,b)=>a.s-b.s).map((x) => x.v);
-    const selected = shuffled.slice(0, Math.min(cantidad, shuffled.length));
-
+    const { resolverCategoria, seleccionarPreguntas } = await import("@/lib/seleccion.server");
+    const cat = await resolverCategoria(supabaseAdmin, exam.categoria_slug, exam.clase);
+    const seleccion = await seleccionarPreguntas(supabaseAdmin, cat);
+    const duracion = cat.duracion_minutos;
+    const maxErrores = cat.max_errores;
     const now = new Date().toISOString();
-    const rows = selected.map((q, i) => ({
-      exam_id: data.examId,
-      question_id: q.id,
-      orden: i + 1,
-      snapshot: { pregunta: q.pregunta, eliminatoria: q.eliminatoria, peso: q.peso, opciones: buildOptions(q.respuesta_correcta, q.opciones_incorrectas ?? []) },
-    }));
+    const rows = seleccion.map((r) => ({ ...r, exam_id: data.examId }));
+
     await supabaseAdmin.from("exam_questions").delete().eq("exam_id", data.examId); // limpio por si acaso
     const { error: iErr } = await supabaseAdmin.from("exam_questions").insert(rows);
     if (iErr) throw iErr;
@@ -80,8 +61,11 @@ export const iniciarExamen = createServerFn({ method: "POST" })
     const { error: uErr } = await supabaseAdmin.from("exams").update({
       status: "rindiendo",
       started_at: now,
-      total_preguntas: selected.length,
-      config_snapshot: { cantidad, duracion_minutos: duracion, max_errores: maxErrores },
+      total_preguntas: rows.length,
+      config_snapshot: {
+        categoria: cat.slug, nombre: cat.nombre, cantidad: rows.length,
+        duracion_minutos: duracion, max_errores: maxErrores,
+      },
     }).eq("id", data.examId);
     if (uErr) throw uErr;
 
