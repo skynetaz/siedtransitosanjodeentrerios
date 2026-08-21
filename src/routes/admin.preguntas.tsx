@@ -132,12 +132,23 @@ function QuestionDialog({ topics, question, trigger }: { topics: any[]; question
   const mut = useMutation({
     mutationFn: async () => {
       const incorrectas = incorrectasText.split("\n").map((s: string) => s.trim()).filter(Boolean).slice(0, 3);
-      const payload = {
-        ...f,
+      // Solo columnas reales de la tabla: se descartan campos derivados del join (topics, created_at, etc.)
+      const src = f as any;
+      const payload: Record<string, any> = {
+        clase: src.clase,
+        topic_id: src.topic_id ?? null,
+        pregunta: src.pregunta,
+        respuesta_correcta: src.respuesta_correcta,
+        eliminatoria: !!src.eliminatoria,
+        peso: src.peso ?? 1,
+        nivel: src.nivel ?? "medio",
+        activa: src.activa !== false,
+        fuente: src.fuente ?? null,
         respuestas_aceptadas: aceptadasText.split("\n").map((s) => s.trim()).filter(Boolean),
         opciones_incorrectas: incorrectas,
         opciones_revisadas: incorrectas.length >= 3,
       };
+
       if (question?.id) {
         const { error } = await supabase.from("questions").update(payload as any).eq("id", question.id);
         if (error) throw error;
