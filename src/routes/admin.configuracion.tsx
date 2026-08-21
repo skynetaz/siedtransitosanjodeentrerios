@@ -48,6 +48,7 @@ function ConfigCard({ cfg, onSaved }: { cfg: any; onSaved: () => void }) {
         <div><Label>Duración (minutos)</Label><Input type="number" value={f.duracion_minutos} onChange={(e) => setF({ ...f, duracion_minutos: parseInt(e.target.value)||0 })} /></div>
         <div><Label>Máximo de errores permitidos</Label><Input type="number" value={f.max_errores} onChange={(e) => setF({ ...f, max_errores: parseInt(e.target.value)||0 })} /></div>
         <PreguntasClaseDialog clase={cfg.clase} />
+        <VistaPreviaDialog clase={cfg.clase} cfg={f} />
         <Button onClick={() => mut.mutate()} disabled={mut.isPending} className="w-full">Guardar</Button>
       </CardContent>
     </Card>
@@ -128,6 +129,92 @@ function PreguntasClaseDialog({ clase }: { clase: string }) {
             )}
           </div>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Vista previa del examen: resumen de la configuración sin guardar + preguntas activas de la clase. */
+function VistaPreviaDialog({ clase, cfg }: { clase: string; cfg: { cantidad_preguntas: number; duracion_minutos: number; max_errores: number } }) {
+  const [open, setOpen] = useState(false);
+
+  const preguntas = useQuery({
+    queryKey: ["preview-clase", clase],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("questions")
+        .select("id, pregunta, respuesta_correcta, opciones_incorrectas, eliminatoria, peso, topics(nombre)")
+        .eq("clase", clase as any)
+        .eq("activa", true)
+        .order("pregunta");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const disponibles = preguntas.data ?? [];
+  const seleccionadas = disponibles.slice(0, cfg.cantidad_preguntas);
+  const puntajeTotal = seleccionadas.reduce((a, p) => a + (p.peso ?? 1), 0);
+  const aciertosMin = Math.max(0, cfg.cantidad_preguntas - cfg.max_errores);
+  const faltan = Math.max(0, cfg.cantidad_preguntas - disponibles.length);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="secondary" className="w-full"><Eye className="mr-1 h-4 w-4" />Vista previa del examen</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Vista previa — Clase {clase}</DialogTitle>
+          <DialogDescription>
+            Así quedaría el examen con la configuración actual (todavía sin guardar).
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded border p-3"><div className="text-xs text-muted-foreground">Preguntas</div><div className="text-lg font-semibold">{seleccionadas.length} / {cfg.cantidad_preguntas}</div></div>
+          <div className="rounded border p-3"><div className="text-xs text-muted-foreground">Duración</div><div className="text-lg font-semibold">{cfg.duracion_minutos} min</div></div>
+          <div className="rounded border p-3"><div className="text-xs text-muted-foreground">Máx. errores</div><div className="text-lg font-semibold">{cfg.max_errores}</div></div>
+          <div className="rounded border p-3"><div className="text-xs text-muted-foreground">Puntaje total</div><div className="text-lg font-semibold">{puntajeTotal}</div></div>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Se aprueba con al menos <span className="font-semibold text-foreground">{aciertosMin}</span> respuestas correctas. Una pregunta eliminatoria mal respondida desaprueba el examen.
+        </p>
+        {faltan > 0 && (
+          <div className="flex items-start gap-2 rounded border border-destructive/40 bg-destructive/10 p-3 text-sm">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>Faltan {faltan} pregunta(s) activas en esta clase para completar el examen configurado.</span>
+          </div>
+        )}
+
+        {preguntas.isLoading && <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>}
+
+        <ol className="space-y-3">
+          {seleccionadas.map((p, i) => {
+            const opciones = [p.respuesta_correcta, ...(((p.opciones_incorrectas ?? []) as string[]).filter(Boolean))];
+            return (
+              <li key={p.id} className="rounded border p-3">
+                <div className="mb-1 flex flex-wrap gap-1">
+                  {p.topics?.nombre && <Badge variant="outline">{p.topics.nombre}</Badge>}
+                  {p.eliminatoria && <Badge className="bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
+                  <Badge variant="secondary">Peso {p.peso ?? 1}</Badge>
+                </div>
+                <p className="text-sm font-medium">{i + 1}. {p.pregunta}</p>
+                <ul className="mt-2 space-y-1">
+                  {opciones.map((o, j) => (
+                    <li key={j} className={j === 0 ? "text-sm font-semibold text-primary" : "text-sm text-muted-foreground"}>
+                      {String.fromCharCode(65 + j)}. {o}{j === 0 ? " (correcta)" : ""}
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            );
+          })}
+          {!preguntas.isLoading && seleccionadas.length === 0 && (
+            <div className="py-8 text-center text-muted-foreground">No hay preguntas activas para esta clase.</div>
+          )}
+        </ol>
       </DialogContent>
     </Dialog>
   );
