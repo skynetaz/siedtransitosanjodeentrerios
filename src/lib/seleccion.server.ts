@@ -61,18 +61,13 @@ export async function seleccionarPreguntas(admin: any, cat: Categoria) {
   const preguntas = (pool ?? []) as Pregunta[];
   if (preguntas.length === 0) throw new Error("No hay preguntas disponibles para esta categoría.");
 
-  // Señales: se buscan en todas las clases (son transversales al examen).
+  // Señales: SOLO de las clases incluidas en la categoría (nunca de otras clases).
   let senalesIds = new Set<string>();
   let senales: Pregunta[] = [];
   if (cat.incluye_senales && cat.preguntas_senales > 0) {
     const { data: topic } = await admin.from("topics").select("id").eq("slug", "senales").maybeSingle();
     if (topic?.id) {
-      const { data: sPool } = await admin
-        .from("questions")
-        .select("id, pregunta, eliminatoria, peso, respuesta_correcta, opciones_incorrectas, topic_id")
-        .eq("topic_id", topic.id)
-        .eq("activa", true);
-      senales = shuffle((sPool ?? []) as Pregunta[]).slice(0, cat.preguntas_senales);
+      senales = shuffle(preguntas.filter((q) => q.topic_id === topic.id)).slice(0, cat.preguntas_senales);
       senalesIds = new Set(senales.map((q) => q.id));
     }
   }
@@ -80,6 +75,7 @@ export async function seleccionarPreguntas(admin: any, cat: Categoria) {
   const resto = shuffle(preguntas.filter((q) => !senalesIds.has(q.id)));
   const faltan = Math.max(0, cat.cantidad_preguntas - senales.length);
   const seleccion = shuffle([...senales, ...resto.slice(0, faltan)]);
+
 
   return seleccion.map((q, i) => ({
     question_id: q.id,
