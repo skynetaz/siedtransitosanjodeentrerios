@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
-import { ListChecks, Loader2, AlertTriangle } from "lucide-react";
+import { ListChecks, Loader2, AlertTriangle, Eye } from "lucide-react";
 
 export const Route = createFileRoute("/admin/configuracion")({ component: Config });
 
