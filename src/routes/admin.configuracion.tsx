@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
-import { ListChecks, Loader2, AlertTriangle, Eye } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ListChecks, Loader2, AlertTriangle, Eye, ArrowUp, ArrowDown, Plus, Minus } from "lucide-react";
 
 export const Route = createFileRoute("/admin/configuracion")({ component: Config });
 
@@ -21,7 +21,7 @@ function Config() {
   const q = useQuery({ queryKey: ["exam-configs"], queryFn: async () => (await supabase.from("exam_configs").select("*")).data ?? [] });
   return (
     <div className="space-y-4">
-      <Card><CardHeader><CardTitle>Configuración de exámenes por clase</CardTitle><CardDescription>Cantidad de preguntas, duración y máximo de errores permitidos. Con "Ver preguntas de la clase" podés revisar y marcar cuáles entran en el examen.</CardDescription></CardHeader></Card>
+      <Card><CardHeader><CardTitle>Configuración de exámenes por clase</CardTitle><CardDescription>Cantidad de preguntas, duración y máximo de errores permitidos. Con "Ver preguntas de la clase" podés revisar y marcar cuáles entran en el examen, y en la vista previa podés reordenarlas antes de guardar.</CardDescription></CardHeader></Card>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {CLASES.map((c) => {
           const cfg = (q.data ?? []).find((x: any) => x.clase === c) as any;
@@ -32,14 +32,60 @@ function Config() {
   );
 }
 
+type Cfg = { cantidad_preguntas: number; duracion_minutos: number; max_errores: number };
+
 function ConfigCard({ cfg, onSaved }: { cfg: any; onSaved: () => void }) {
-  const [f, setF] = useState({ cantidad_preguntas: cfg.cantidad_preguntas, duracion_minutos: cfg.duracion_minutos, max_errores: cfg.max_errores });
+  const [f, setF] = useState<Cfg>({ cantidad_preguntas: cfg.cantidad_preguntas, duracion_minutos: cfg.duracion_minutos, max_errores: cfg.max_errores });
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  /** Orden manual de las preguntas (ids) definido en la vista previa. */
+  const [orden, setOrden] = useState<string[]>([]);
   useEffect(() => setF({ cantidad_preguntas: cfg.cantidad_preguntas, duracion_minutos: cfg.duracion_minutos, max_errores: cfg.max_errores }), [cfg]);
+
+  // Preguntas activas actuales de la clase (para el diff al guardar).
+  const activas = useQuery({
+    queryKey: ["activas-clase", cfg.clase],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("questions")
+        .select("id, pregunta, peso")
+        .eq("clase", cfg.clase as any)
+        .eq("activa", true)
+        .order("pregunta");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  // Línea base: primera lectura tras cargar la pantalla o tras guardar.
+  const baseRef = useRef<{ id: string; pregunta: string }[] | null>(null);
+  useEffect(() => {
+    if (activas.data && baseRef.current === null) baseRef.current = activas.data.map((p) => ({ id: p.id, pregunta: p.pregunta }));
+  }, [activas.data]);
+
   const mut = useMutation({
     mutationFn: async () => { const { error } = await supabase.from("exam_configs").update(f).eq("clase", cfg.clase); if (error) throw error; },
-    onSuccess: () => { toast.success("Configuración actualizada"); onSaved(); },
+    onSuccess: () => {
+      toast.success("Configuración actualizada");
+      baseRef.current = (activas.data ?? []).map((p: any) => ({ id: p.id, pregunta: p.pregunta }));
+      setConfirmOpen(false);
+      onSaved();
+    },
     onError: (e) => toast.error(e.message),
   });
+
+  const base = baseRef.current ?? [];
+  const actual = activas.data ?? [];
+  const agregadas = actual.filter((p: any) => !base.some((b) => b.id === p.id));
+  const quitadas = base.filter((b) => !actual.some((p: any) => p.id === b.id));
+  const cambiosCfg = [
+    { label: "Cantidad de preguntas", de: cfg.cantidad_preguntas, a: f.cantidad_preguntas },
+    { label: "Duración (minutos)", de: cfg.duracion_minutos, a: f.duracion_minutos },
+    { label: "Máximo de errores", de: cfg.max_errores, a: f.max_errores },
+  ].filter((c) => c.de !== c.a);
+  const puntajeDe = base.length;
+  const puntajeA = actual.reduce((a: number, p: any) => a + (p.peso ?? 1), 0);
+  const sinCambios = cambiosCfg.length === 0 && agregadas.length === 0 && quitadas.length === 0;
+
   return (
     <Card>
       <CardHeader><CardTitle>Clase {cfg.clase}</CardTitle></CardHeader>
@@ -48,8 +94,64 @@ function ConfigCard({ cfg, onSaved }: { cfg: any; onSaved: () => void }) {
         <div><Label>Duración (minutos)</Label><Input type="number" value={f.duracion_minutos} onChange={(e) => setF({ ...f, duracion_minutos: parseInt(e.target.value)||0 })} /></div>
         <div><Label>Máximo de errores permitidos</Label><Input type="number" value={f.max_errores} onChange={(e) => setF({ ...f, max_errores: parseInt(e.target.value)||0 })} /></div>
         <PreguntasClaseDialog clase={cfg.clase} />
-        <VistaPreviaDialog clase={cfg.clase} cfg={f} />
-        <Button onClick={() => mut.mutate()} disabled={mut.isPending} className="w-full">Guardar</Button>
+        <VistaPreviaDialog clase={cfg.clase} cfg={f} orden={orden} setOrden={setOrden} />
+
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogTrigger asChild>
+            <Button className="w-full">Guardar</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Confirmar cambios — Clase {cfg.clase}</DialogTitle>
+              <DialogDescription>Revisá el resumen antes de guardar la configuración.</DialogDescription>
+            </DialogHeader>
+
+            {sinCambios ? (
+              <p className="text-sm text-muted-foreground">No hay cambios respecto de la última configuración guardada.</p>
+            ) : (
+              <div className="space-y-4">
+                {cambiosCfg.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">Parámetros</p>
+                    {cambiosCfg.map((c) => (
+                      <div key={c.label} className="flex items-center justify-between rounded border p-2 text-sm">
+                        <span>{c.label}</span>
+                        <span className="tabular-nums"><span className="text-muted-foreground line-through">{c.de}</span> → <span className="font-semibold">{c.a}</span></span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {(agregadas.length > 0 || quitadas.length > 0) && (
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">Preguntas incluidas en el examen</p>
+                    {agregadas.map((p: any) => (
+                      <div key={p.id} className="flex items-start gap-2 rounded border border-primary/40 bg-primary/5 p-2 text-sm">
+                        <Plus className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>{p.pregunta}</span>
+                      </div>
+                    ))}
+                    {quitadas.map((p) => (
+                      <div key={p.id} className="flex items-start gap-2 rounded border border-destructive/40 bg-destructive/5 p-2 text-sm">
+                        <Minus className="mt-0.5 h-4 w-4 shrink-0 text-destructive" /><span>{p.pregunta}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between rounded border p-2 text-sm">
+                      <span>Puntaje total del banco activo</span>
+                      <span className="tabular-nums"><span className="text-muted-foreground line-through">{puntajeDe}</span> → <span className="font-semibold">{puntajeA}</span></span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+              <Button onClick={() => mut.mutate()} disabled={mut.isPending}>
+                {mut.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}Confirmar y guardar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
@@ -80,7 +182,12 @@ function PreguntasClaseDialog({ clase }: { clase: string }) {
       const { error } = await supabase.from("questions").update({ activa }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["preguntas-clase", clase] }); qc.invalidateQueries({ queryKey: ["questions"] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["preguntas-clase", clase] });
+      qc.invalidateQueries({ queryKey: ["activas-clase", clase] });
+      qc.invalidateQueries({ queryKey: ["preview-clase", clase] });
+      qc.invalidateQueries({ queryKey: ["questions"] });
+    },
     onError: (e) => toast.error((e as Error).message),
   });
 
@@ -134,8 +241,18 @@ function PreguntasClaseDialog({ clase }: { clase: string }) {
   );
 }
 
-/** Vista previa del examen: resumen de la configuración sin guardar + preguntas activas de la clase. */
-function VistaPreviaDialog({ clase, cfg }: { clase: string; cfg: { cantidad_preguntas: number; duracion_minutos: number; max_errores: number } }) {
+/** Vista previa del examen: resumen de la configuración sin guardar + preguntas activas reordenables. */
+function VistaPreviaDialog({
+  clase,
+  cfg,
+  orden,
+  setOrden,
+}: {
+  clase: string;
+  cfg: Cfg;
+  orden: string[];
+  setOrden: (ids: string[]) => void;
+}) {
   const [open, setOpen] = useState(false);
 
   const preguntas = useQuery({
@@ -153,11 +270,25 @@ function VistaPreviaDialog({ clase, cfg }: { clase: string; cfg: { cantidad_preg
     },
   });
 
-  const disponibles = preguntas.data ?? [];
+  const disponibles = useMemo(() => {
+    const base = preguntas.data ?? [];
+    if (orden.length === 0) return base;
+    const pos = new Map(orden.map((id, i) => [id, i]));
+    return [...base].sort((a, b) => (pos.get(a.id) ?? 9999) - (pos.get(b.id) ?? 9999));
+  }, [preguntas.data, orden]);
+
   const seleccionadas = disponibles.slice(0, cfg.cantidad_preguntas);
   const puntajeTotal = seleccionadas.reduce((a, p) => a + (p.peso ?? 1), 0);
   const aciertosMin = Math.max(0, cfg.cantidad_preguntas - cfg.max_errores);
   const faltan = Math.max(0, cfg.cantidad_preguntas - disponibles.length);
+
+  const mover = (i: number, dir: -1 | 1) => {
+    const ids = disponibles.map((p) => p.id);
+    const j = i + dir;
+    if (j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    setOrden(ids);
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -168,7 +299,7 @@ function VistaPreviaDialog({ clase, cfg }: { clase: string; cfg: { cantidad_preg
         <DialogHeader>
           <DialogTitle>Vista previa — Clase {clase}</DialogTitle>
           <DialogDescription>
-            Así quedaría el examen con la configuración actual (todavía sin guardar).
+            Así quedaría el examen con la configuración actual (todavía sin guardar). Podés reordenar las preguntas con las flechas.
           </DialogDescription>
         </DialogHeader>
 
@@ -178,9 +309,12 @@ function VistaPreviaDialog({ clase, cfg }: { clase: string; cfg: { cantidad_preg
           <div className="rounded border p-3"><div className="text-xs text-muted-foreground">Máx. errores</div><div className="text-lg font-semibold">{cfg.max_errores}</div></div>
           <div className="rounded border p-3"><div className="text-xs text-muted-foreground">Puntaje total</div><div className="text-lg font-semibold">{puntajeTotal}</div></div>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Se aprueba con al menos <span className="font-semibold text-foreground">{aciertosMin}</span> respuestas correctas. Una pregunta eliminatoria mal respondida desaprueba el examen.
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">
+            Se aprueba con al menos <span className="font-semibold text-foreground">{aciertosMin}</span> respuestas correctas. Una pregunta eliminatoria mal respondida desaprueba el examen.
+          </p>
+          {orden.length > 0 && <Button size="sm" variant="ghost" onClick={() => setOrden([])}>Restablecer orden</Button>}
+        </div>
         {faltan > 0 && (
           <div className="flex items-start gap-2 rounded border border-destructive/40 bg-destructive/10 p-3 text-sm">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -195,19 +329,27 @@ function VistaPreviaDialog({ clase, cfg }: { clase: string; cfg: { cantidad_preg
             const opciones = [p.respuesta_correcta, ...(((p.opciones_incorrectas ?? []) as string[]).filter(Boolean))];
             return (
               <li key={p.id} className="rounded border p-3">
-                <div className="mb-1 flex flex-wrap gap-1">
-                  {p.topics?.nombre && <Badge variant="outline">{p.topics.nombre}</Badge>}
-                  {p.eliminatoria && <Badge className="bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
-                  <Badge variant="secondary">Peso {p.peso ?? 1}</Badge>
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap gap-1">
+                      {p.topics?.nombre && <Badge variant="outline">{p.topics.nombre}</Badge>}
+                      {p.eliminatoria && <Badge className="bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
+                      <Badge variant="secondary">Peso {p.peso ?? 1}</Badge>
+                    </div>
+                    <p className="text-sm font-medium">{i + 1}. {p.pregunta}</p>
+                    <ul className="mt-2 space-y-1">
+                      {opciones.map((o, j) => (
+                        <li key={j} className={j === 0 ? "text-sm font-semibold text-primary" : "text-sm text-muted-foreground"}>
+                          {String.fromCharCode(65 + j)}. {o}{j === 0 ? " (correcta)" : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="flex shrink-0 flex-col gap-1">
+                    <Button size="icon" variant="outline" aria-label="Subir pregunta" disabled={i === 0} onClick={() => mover(i, -1)}><ArrowUp className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="outline" aria-label="Bajar pregunta" disabled={i === seleccionadas.length - 1} onClick={() => mover(i, 1)}><ArrowDown className="h-4 w-4" /></Button>
+                  </div>
                 </div>
-                <p className="text-sm font-medium">{i + 1}. {p.pregunta}</p>
-                <ul className="mt-2 space-y-1">
-                  {opciones.map((o, j) => (
-                    <li key={j} className={j === 0 ? "text-sm font-semibold text-primary" : "text-sm text-muted-foreground"}>
-                      {String.fromCharCode(65 + j)}. {o}{j === 0 ? " (correcta)" : ""}
-                    </li>
-                  ))}
-                </ul>
               </li>
             );
           })}
