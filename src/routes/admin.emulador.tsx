@@ -5,7 +5,7 @@ import { startEmulation, finalizarEmulation, eliminarEmulation, listMyEmulations
 import { listarCategorias } from "@/lib/categorias.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { OptionCard, ExamProgress } from "@/components/exam/ExamPieces";
+import { OptionCard, ExamProgress, esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
