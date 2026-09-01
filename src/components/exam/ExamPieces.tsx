@@ -66,7 +66,12 @@ export function OptionCard({
       >
         {selected ? <Check className="h-4 w-4" /> : letra}
       </span>
-      <span className="min-w-0 text-base leading-snug break-words">{texto}</span>
+      {esSenal(texto) ? (
+        <SenalImg src={texto} />
+      ) : (
+        <span className="min-w-0 text-base leading-snug break-words">{texto}</span>
+      )}
+
     </button>
   );
 }
