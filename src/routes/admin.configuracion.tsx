@@ -337,13 +337,20 @@ function VistaPreviaDialog({
                       <Badge variant="secondary">Peso {p.peso ?? 1}</Badge>
                     </div>
                     <p className="text-sm font-medium">{i + 1}. {p.pregunta}</p>
-                    <ul className="mt-2 space-y-1">
+                    <ul className="mt-2 flex flex-wrap gap-2">
                       {opciones.map((o, j) => (
                         <li key={j} className={j === 0 ? "text-sm font-semibold text-primary" : "text-sm text-muted-foreground"}>
-                          {String.fromCharCode(65 + j)}. {o}{j === 0 ? " (correcta)" : ""}
+                          {esSenal(o) ? (
+                            <span className={j === 0 ? "inline-block rounded-md ring-2 ring-primary" : "inline-block"}>
+                              <SenalImg src={o} className="h-20 w-20" />
+                            </span>
+                          ) : (
+                            <>{String.fromCharCode(65 + j)}. {o}{j === 0 ? " (correcta)" : ""}</>
+                          )}
                         </li>
                       ))}
                     </ul>
+
                   </div>
                   <div className="flex shrink-0 flex-col gap-1">
                     <Button size="icon" variant="outline" aria-label="Subir pregunta" disabled={i === 0} onClick={() => mover(i, -1)}><ArrowUp className="h-4 w-4" /></Button>
