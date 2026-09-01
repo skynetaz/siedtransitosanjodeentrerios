@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast } from "sonner";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ListChecks, Loader2, AlertTriangle, Eye, ArrowUp, ArrowDown, Plus, Minus } from "lucide-react";
+import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
 
 export const Route = createFileRoute("/admin/configuracion")({ component: Config });
 
