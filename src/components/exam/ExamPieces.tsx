@@ -20,7 +20,16 @@ export function ExamProgress({ actual, total }: { actual: number; total: number 
   );
 }
 
+/** Una opción es una señal de tránsito cuando su valor es la ruta de la imagen. */
+export const esSenal = (v: string) => typeof v === "string" && v.startsWith("/senales/");
+
+/** Miniatura de una señal de tránsito usada como opción de respuesta. */
+export function SenalImg({ src, className }: { src: string; className?: string }) {
+  return <img src={src} alt="Señal de tránsito" loading="lazy" draggable={false} className={cn("h-24 w-24 rounded-md object-contain", className)} />;
+}
+
 /** Opción de respuesta: área de toque grande, un solo seleccionado. */
+
 export function OptionCard({
   texto,
   letra,
