@@ -220,9 +220,10 @@ function RevisionView({ data, onNew }: { data: any; onNew: () => void }) {
                   <Badge className={r.correcta ? "bg-success text-success-foreground" : "bg-destructive text-destructive-foreground"}>{r.correcta ? "OK" : "Falló"}</Badge>
                 </div>
               </div>
-              <div><span className="text-muted-foreground">Respondiste:</span> {r.respuesta_dada || "—"}</div>
-              <div><span className="text-muted-foreground">Esperada:</span> <b>{r.respuesta_correcta}</b></div>
-              {r.respuestas_aceptadas?.length > 0 && <div className="text-xs text-muted-foreground">Variantes aceptadas: {r.respuestas_aceptadas.join(" · ")}</div>}
+              <div className="flex items-center gap-2"><span className="text-muted-foreground">Respondiste:</span> {esSenal(r.respuesta_dada) ? <SenalImg src={r.respuesta_dada} className="h-16 w-16" /> : (r.respuesta_dada || "—")}</div>
+              <div className="flex items-center gap-2"><span className="text-muted-foreground">Esperada:</span> {esSenal(r.respuesta_correcta) ? <SenalImg src={r.respuesta_correcta} className="h-16 w-16" /> : <b>{r.respuesta_correcta}</b>}</div>
+              {r.respuestas_aceptadas?.length > 0 && !esSenal(r.respuesta_correcta) && <div className="text-xs text-muted-foreground">Variantes aceptadas: {r.respuestas_aceptadas.join(" · ")}</div>}
+
             </CardContent>
           </Card>
         ))}
