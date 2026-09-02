@@ -94,7 +94,9 @@ function ConfigCard({ cfg, onSaved }: { cfg: any; onSaved: () => void }) {
         <div><Label>Cantidad de preguntas</Label><Input type="number" value={f.cantidad_preguntas} onChange={(e) => setF({ ...f, cantidad_preguntas: parseInt(e.target.value)||0 })} /></div>
         <div><Label>Duración (minutos)</Label><Input type="number" value={f.duracion_minutos} onChange={(e) => setF({ ...f, duracion_minutos: parseInt(e.target.value)||0 })} /></div>
         <div><Label>Máximo de errores permitidos</Label><Input type="number" value={f.max_errores} onChange={(e) => setF({ ...f, max_errores: parseInt(e.target.value)||0 })} /></div>
+        <SenalesSwitch clase={cfg.clase} />
         <PreguntasClaseDialog clase={cfg.clase} />
+
         <VistaPreviaDialog clase={cfg.clase} cfg={f} orden={orden} setOrden={setOrden} />
 
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -226,7 +228,12 @@ function PreguntasClaseDialog({ clase }: { clase: string }) {
                       {faltanOpciones && <Badge variant="secondary"><AlertTriangle className="mr-1 h-3 w-3" />Sin 3 opciones</Badge>}
                     </div>
                     <p className="text-sm font-medium">{p.pregunta}</p>
-                    <p className="mt-1 text-xs text-muted-foreground"><span className="font-semibold">R:</span> {p.respuesta_correcta}</p>
+                    {esSenal(p.respuesta_correcta) ? (
+                      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground"><span className="font-semibold">R:</span> <SenalImg src={p.respuesta_correcta} className="h-14 w-14" /></div>
+                    ) : (
+                      <p className="mt-1 text-xs text-muted-foreground"><span className="font-semibold">R:</span> {p.respuesta_correcta}</p>
+                    )}
+
                   </div>
                   <Switch checked={!!p.activa} onCheckedChange={(v) => toggle.mutate({ id: p.id, activa: v })} />
                 </div>
@@ -367,5 +374,58 @@ function VistaPreviaDialog({
         </ol>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Activa o desactiva en bloque las preguntas de señales de tránsito de la clase. */
+function SenalesSwitch({ clase }: { clase: string }) {
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ["senales-clase", clase],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("questions")
+        .select("id, activa, topics!inner(slug)")
+        .eq("clase", clase as any)
+        .eq("topics.slug", "senales");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const lista = q.data ?? [];
+  const activas = lista.filter((p) => p.activa).length;
+
+  const setAll = useMutation({
+    mutationFn: async (activa: boolean) => {
+      const ids = lista.map((p) => p.id);
+      if (ids.length === 0) return;
+      const { error } = await supabase.from("questions").update({ activa }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Señales actualizadas");
+      qc.invalidateQueries({ queryKey: ["senales-clase", clase] });
+      qc.invalidateQueries({ queryKey: ["activas-clase", clase] });
+      qc.invalidateQueries({ queryKey: ["preview-clase", clase] });
+      qc.invalidateQueries({ queryKey: ["preguntas-clase", clase] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  return (
+    <div className="flex items-start justify-between gap-3 rounded border p-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">Señales de tránsito</p>
+        <p className="text-xs text-muted-foreground">
+          {lista.length === 0 ? "Sin señales cargadas para esta clase" : `${activas} de ${lista.length} incluidas en el examen`}
+        </p>
+      </div>
+      <Switch
+        disabled={lista.length === 0 || setAll.isPending}
+        checked={lista.length > 0 && activas === lista.length}
+        onCheckedChange={(v) => setAll.mutate(v)}
+      />
+    </div>
   );
 }
