@@ -20,6 +20,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
+import { Route as AdminSenalesRouteImport } from './routes/admin.senales'
 import { Route as AdminPreguntasRouteImport } from './routes/admin.preguntas'
 import { Route as AdminImportarRouteImport } from './routes/admin.importar'
 import { Route as AdminEstadisticasRouteImport } from './routes/admin.estadisticas'
@@ -84,6 +85,11 @@ const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSenalesRoute = AdminSenalesRouteImport.update({
+  id: '/senales',
+  path: '/senales',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPreguntasRoute = AdminPreguntasRouteImport.update({
   id: '/preguntas',
   path: '/preguntas',
@@ -143,6 +149,7 @@ export interface FileRoutesByFullPath {
   '/admin/estadisticas': typeof AdminEstadisticasRoute
   '/admin/importar': typeof AdminImportarRoute
   '/admin/preguntas': typeof AdminPreguntasRoute
+  '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/admin/estadisticas': typeof AdminEstadisticasRoute
   '/admin/importar': typeof AdminImportarRoute
   '/admin/preguntas': typeof AdminPreguntasRoute
+  '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin': typeof AdminIndexRoute
 }
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/admin/estadisticas': typeof AdminEstadisticasRoute
   '/admin/importar': typeof AdminImportarRoute
   '/admin/preguntas': typeof AdminPreguntasRoute
+  '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/admin/estadisticas'
     | '/admin/importar'
     | '/admin/preguntas'
+    | '/admin/senales'
     | '/admin/usuarios'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/admin/estadisticas'
     | '/admin/importar'
     | '/admin/preguntas'
+    | '/admin/senales'
     | '/admin/usuarios'
     | '/admin'
   id:
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/admin/estadisticas'
     | '/admin/importar'
     | '/admin/preguntas'
+    | '/admin/senales'
     | '/admin/usuarios'
     | '/admin/'
   fileRoutesById: FileRoutesById
@@ -344,6 +356,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsuariosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/senales': {
+      id: '/admin/senales'
+      path: '/senales'
+      fullPath: '/admin/senales'
+      preLoaderRoute: typeof AdminSenalesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/preguntas': {
       id: '/admin/preguntas'
       path: '/preguntas'
@@ -412,6 +431,7 @@ interface AdminRouteChildren {
   AdminEstadisticasRoute: typeof AdminEstadisticasRoute
   AdminImportarRoute: typeof AdminImportarRoute
   AdminPreguntasRoute: typeof AdminPreguntasRoute
+  AdminSenalesRoute: typeof AdminSenalesRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -425,6 +445,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminEstadisticasRoute: AdminEstadisticasRoute,
   AdminImportarRoute: AdminImportarRoute,
   AdminPreguntasRoute: AdminPreguntasRoute,
+  AdminSenalesRoute: AdminSenalesRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
