@@ -226,7 +226,12 @@ function PreguntasClaseDialog({ clase }: { clase: string }) {
                       {faltanOpciones && <Badge variant="secondary"><AlertTriangle className="mr-1 h-3 w-3" />Sin 3 opciones</Badge>}
                     </div>
                     <p className="text-sm font-medium">{p.pregunta}</p>
-                    <p className="mt-1 text-xs text-muted-foreground"><span className="font-semibold">R:</span> {p.respuesta_correcta}</p>
+                    {esSenal(p.respuesta_correcta) ? (
+                      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground"><span className="font-semibold">R:</span> <SenalImg src={p.respuesta_correcta} className="h-14 w-14" /></div>
+                    ) : (
+                      <p className="mt-1 text-xs text-muted-foreground"><span className="font-semibold">R:</span> {p.respuesta_correcta}</p>
+                    )}
+
                   </div>
                   <Switch checked={!!p.activa} onCheckedChange={(v) => toggle.mutate({ id: p.id, activa: v })} />
                 </div>
