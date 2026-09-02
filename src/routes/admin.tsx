@@ -11,6 +11,7 @@ const tabs = [
   { to: "/admin/preguntas", label: "Banco de preguntas" },
   { to: "/admin/codigos", label: "Códigos" },
   { to: "/admin/categorias", label: "Categorías" },
+  { to: "/admin/senales", label: "Señales" },
   { to: "/admin/importar", label: "Importar" },
   { to: "/admin/emulador", label: "Emulador" },
   { to: "/admin/archivo", label: "Archivo" },

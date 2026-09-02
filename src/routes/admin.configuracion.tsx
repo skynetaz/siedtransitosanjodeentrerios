@@ -421,11 +421,133 @@ function SenalesSwitch({ clase }: { clase: string }) {
           {lista.length === 0 ? "Sin señales cargadas para esta clase" : `${activas} de ${lista.length} incluidas en el examen`}
         </p>
       </div>
-      <Switch
-        disabled={lista.length === 0 || setAll.isPending}
-        checked={lista.length > 0 && activas === lista.length}
-        onCheckedChange={(v) => setAll.mutate(v)}
-      />
+      <div className="flex shrink-0 items-center gap-2">
+        <SenalesDetalleDialog clase={clase} />
+        <Switch
+          disabled={lista.length === 0 || setAll.isPending}
+          checked={lista.length > 0 && activas === lista.length}
+          onCheckedChange={(v) => setAll.mutate(v)}
+        />
+      </div>
     </div>
+  );
+}
+
+/**
+ * Selección fina de señales: permite marcar o desmarcar cada señal de la clase
+ * y agregar (copiar) señales de cualquier otra clase a este examen.
+ */
+function SenalesDetalleDialog({ clase }: { clase: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["senales-detalle"] });
+    qc.invalidateQueries({ queryKey: ["senales-clase", clase] });
+    qc.invalidateQueries({ queryKey: ["senales-admin"] });
+    qc.invalidateQueries({ queryKey: ["activas-clase", clase] });
+    qc.invalidateQueries({ queryKey: ["preview-clase", clase] });
+    qc.invalidateQueries({ queryKey: ["preguntas-clase", clase] });
+  };
+
+  const todas = useQuery({
+    queryKey: ["senales-detalle"],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("questions")
+        .select("id, clase, pregunta, respuesta_correcta, opciones_incorrectas, activa, eliminatoria, peso, topic_id, orden")
+        .like("respuesta_correcta", "/senales/%")
+        .order("clase")
+        .order("orden");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const propias = (todas.data ?? []).filter((s) => s.clase === clase);
+  const otras = (todas.data ?? []).filter((s) => s.clase !== clase);
+
+  const toggle = useMutation({
+    mutationFn: async ({ id, activa }: { id: string; activa: boolean }) => {
+      const { error } = await supabase.from("questions").update({ activa }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const agregar = useMutation({
+    mutationFn: async (s: any) => {
+      const { error } = await supabase.from("questions").insert({
+        clase: clase as any,
+        topic_id: s.topic_id,
+        pregunta: s.pregunta,
+        respuesta_correcta: s.respuesta_correcta,
+        opciones_incorrectas: s.opciones_incorrectas ?? [],
+        respuestas_aceptadas: [],
+        activa: true,
+        eliminatoria: s.eliminatoria,
+        peso: s.peso ?? 1,
+        nivel: "medio",
+        orden: propias.length + 1,
+        opciones_revisadas: ((s.opciones_incorrectas ?? []) as string[]).filter(Boolean).length >= 3,
+      } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Señal agregada a la clase."); invalidate(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const yaEsta = (s: any) => propias.some((p) => p.respuesta_correcta === s.respuesta_correcta);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-9">Detalle</Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Señales de la Clase {clase}</DialogTitle>
+          <DialogDescription>
+            Marcá o desmarcá cada señal de esta clase, o agregá señales de otras clases si el examen las necesita.
+          </DialogDescription>
+        </DialogHeader>
+
+        {todas.isLoading && <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>}
+
+        <div className="space-y-2">
+          {propias.map((s) => (
+            <div key={s.id} className="flex items-start gap-3 rounded border p-3">
+              <SenalImg src={s.respuesta_correcta} className="h-16 w-16 shrink-0" />
+              <p className="min-w-0 flex-1 text-sm">{s.pregunta}</p>
+              <Switch checked={!!s.activa} onCheckedChange={(v) => toggle.mutate({ id: s.id, activa: v })} />
+            </div>
+          ))}
+          {!todas.isLoading && propias.length === 0 && (
+            <p className="py-4 text-center text-sm text-muted-foreground">Esta clase no tiene señales cargadas.</p>
+          )}
+        </div>
+
+        {otras.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-semibold">Agregar señales de otras clases</p>
+            {otras.map((s) => (
+              <div key={s.id} className="flex items-start gap-3 rounded border p-3">
+                <SenalImg src={s.respuesta_correcta} className="h-14 w-14 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <Badge variant="secondary" className="mb-1">Clase {s.clase}</Badge>
+                  <p className="text-sm">{s.pregunta}</p>
+                </div>
+                <Button size="sm" variant="outline" disabled={yaEsta(s) || agregar.isPending}
+                  onClick={() => agregar.mutate(s)}>
+                  {yaEsta(s) ? "Ya incluida" : <><Plus className="mr-1 h-4 w-4" />Agregar</>}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

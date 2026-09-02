@@ -447,6 +447,7 @@ export type Database = {
           nivel: string
           opciones_incorrectas: string[]
           opciones_revisadas: boolean
+          orden: number
           peso: number
           pregunta: string
           respuesta_correcta: string
@@ -464,6 +465,7 @@ export type Database = {
           nivel?: string
           opciones_incorrectas?: string[]
           opciones_revisadas?: boolean
+          orden?: number
           peso?: number
           pregunta: string
           respuesta_correcta: string
@@ -481,6 +483,7 @@ export type Database = {
           nivel?: string
           opciones_incorrectas?: string[]
           opciones_revisadas?: boolean
+          orden?: number
           peso?: number
           pregunta?: string
           respuesta_correcta?: string
