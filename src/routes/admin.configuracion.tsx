@@ -94,7 +94,9 @@ function ConfigCard({ cfg, onSaved }: { cfg: any; onSaved: () => void }) {
         <div><Label>Cantidad de preguntas</Label><Input type="number" value={f.cantidad_preguntas} onChange={(e) => setF({ ...f, cantidad_preguntas: parseInt(e.target.value)||0 })} /></div>
         <div><Label>Duración (minutos)</Label><Input type="number" value={f.duracion_minutos} onChange={(e) => setF({ ...f, duracion_minutos: parseInt(e.target.value)||0 })} /></div>
         <div><Label>Máximo de errores permitidos</Label><Input type="number" value={f.max_errores} onChange={(e) => setF({ ...f, max_errores: parseInt(e.target.value)||0 })} /></div>
+        <SenalesSwitch clase={cfg.clase} />
         <PreguntasClaseDialog clase={cfg.clase} />
+
         <VistaPreviaDialog clase={cfg.clase} cfg={f} orden={orden} setOrden={setOrden} />
 
         <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
