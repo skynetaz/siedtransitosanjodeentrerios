@@ -376,3 +376,56 @@ function VistaPreviaDialog({
     </Dialog>
   );
 }
+
+/** Activa o desactiva en bloque las preguntas de señales de tránsito de la clase. */
+function SenalesSwitch({ clase }: { clase: string }) {
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ["senales-clase", clase],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("questions")
+        .select("id, activa, topics!inner(slug)")
+        .eq("clase", clase as any)
+        .eq("topics.slug", "senales");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const lista = q.data ?? [];
+  const activas = lista.filter((p) => p.activa).length;
+
+  const setAll = useMutation({
+    mutationFn: async (activa: boolean) => {
+      const ids = lista.map((p) => p.id);
+      if (ids.length === 0) return;
+      const { error } = await supabase.from("questions").update({ activa }).in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Señales actualizadas");
+      qc.invalidateQueries({ queryKey: ["senales-clase", clase] });
+      qc.invalidateQueries({ queryKey: ["activas-clase", clase] });
+      qc.invalidateQueries({ queryKey: ["preview-clase", clase] });
+      qc.invalidateQueries({ queryKey: ["preguntas-clase", clase] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  return (
+    <div className="flex items-start justify-between gap-3 rounded border p-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">Señales de tránsito</p>
+        <p className="text-xs text-muted-foreground">
+          {lista.length === 0 ? "Sin señales cargadas para esta clase" : `${activas} de ${lista.length} incluidas en el examen`}
+        </p>
+      </div>
+      <Switch
+        disabled={lista.length === 0 || setAll.isPending}
+        checked={lista.length > 0 && activas === lista.length}
+        onCheckedChange={(v) => setAll.mutate(v)}
+      />
+    </div>
+  );
+}
