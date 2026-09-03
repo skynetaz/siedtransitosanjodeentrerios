@@ -150,12 +150,14 @@ function Ingreso({ onStart }: { onStart: (s: Sesion) => void }) {
 // ---------------------------------------------------------------
 const LETRAS = ["A", "B", "C", "D"];
 
-function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: string) => void }) {
+function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: string, senales: SenalMarcada[]) => void }) {
   const { exam, questions } = sesion;
   const [idx, setIdx] = useState(0);
   const [seleccion, setSeleccion] = useState<string | null>(null);
   const [advertencia, setAdvertencia] = useState<string | null>(null);
   const finishing = useRef(false);
+  /** Señales que el aspirante fue marcando, para mostrarlas al finalizar. */
+  const senalesRef = useRef<SenalMarcada[]>([]);
 
   const dur = exam.config_snapshot?.duracion_minutos ?? 15;
   const endTime = new Date(exam.started_at).getTime() + dur * 60_000;
@@ -170,9 +172,9 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
     finishing.current = true;
     try {
       const r = await finalizar({ data: { examId: exam.id } });
-      onFinish(motivo ? "cancelado" : (r as any).status);
+      onFinish(motivo ? "cancelado" : (r as any).status, senalesRef.current);
     } catch {
-      onFinish("cancelado");
+      onFinish("cancelado", senalesRef.current);
     }
   }, [exam.id, finalizar, onFinish]);
 
@@ -186,7 +188,7 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
     finishing.current = true;
     evento({ data: { examId: exam.id, tipo: "tab_change", motivo, finalizar: true } })
       .catch(() => {})
-      .finally(() => onFinish("cancelado"));
+      .finally(() => onFinish("cancelado", senalesRef.current));
   }, [exam.id, evento, onFinish]);
 
   useExamGuard({ active: true, onWarning, onCancel });
