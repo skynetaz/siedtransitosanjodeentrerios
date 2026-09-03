@@ -256,7 +256,15 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
             size="lg"
             className="h-14 w-full text-base"
             disabled={!seleccion || respMut.isPending}
-            onClick={() => respMut.mutate({ examQuestionId: actual.id, respuesta: seleccion! })}
+            onClick={() => {
+              if (esSenal(seleccion!)) {
+                senalesRef.current = [
+                  ...senalesRef.current.filter((s) => s.pregunta !== actual.snapshot?.pregunta),
+                  { pregunta: actual.snapshot?.pregunta ?? "Señal de tránsito", imagen: seleccion! },
+                ];
+              }
+              respMut.mutate({ examQuestionId: actual.id, respuesta: seleccion! });
+            }}
           >
             {respMut.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             {idx < questions.length - 1 ? "Siguiente" : "Finalizar examen"}
