@@ -31,10 +31,12 @@ export const Route = createFileRoute("/examen")({
 });
 
 type Sesion = { exam: any; questions: any[] };
+/** Señal marcada por el aspirante durante el examen (para mostrar al final). */
+export type SenalMarcada = { pregunta: string; imagen: string };
 
 function ExamenPage() {
   const [sesion, setSesion] = useState<Sesion | null>(null);
-  const [resultado, setResultado] = useState<{ status: string; examId: string } | null>(null);
+  const [resultado, setResultado] = useState<{ status: string; examId: string; senales: SenalMarcada[] } | null>(null);
 
   return (
     <div className="min-h-screen bg-background flex flex-col select-none">
@@ -49,13 +51,13 @@ function ExamenPage() {
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-5">
         {resultado ? (
-          <Resultado status={resultado.status} examId={resultado.examId} />
+          <Resultado status={resultado.status} examId={resultado.examId} senales={resultado.senales} />
         ) : sesion ? (
           <Runner
             sesion={sesion}
-            onFinish={(status) => {
+            onFinish={(status, senales) => {
               exitFullscreen();
-              setResultado({ status, examId: sesion.exam.id });
+              setResultado({ status, examId: sesion.exam.id, senales });
               setSesion(null);
             }}
           />
