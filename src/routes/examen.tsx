@@ -31,10 +31,12 @@ export const Route = createFileRoute("/examen")({
 });
 
 type Sesion = { exam: any; questions: any[] };
+/** Señal marcada por el aspirante durante el examen (para mostrar al final). */
+export type SenalMarcada = { pregunta: string; imagen: string };
 
 function ExamenPage() {
   const [sesion, setSesion] = useState<Sesion | null>(null);
-  const [resultado, setResultado] = useState<{ status: string; examId: string } | null>(null);
+  const [resultado, setResultado] = useState<{ status: string; examId: string; senales: SenalMarcada[] } | null>(null);
 
   return (
     <div className="min-h-screen bg-background flex flex-col select-none">
@@ -49,13 +51,13 @@ function ExamenPage() {
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-5">
         {resultado ? (
-          <Resultado status={resultado.status} examId={resultado.examId} />
+          <Resultado status={resultado.status} examId={resultado.examId} senales={resultado.senales} />
         ) : sesion ? (
           <Runner
             sesion={sesion}
-            onFinish={(status) => {
+            onFinish={(status, senales) => {
               exitFullscreen();
-              setResultado({ status, examId: sesion.exam.id });
+              setResultado({ status, examId: sesion.exam.id, senales });
               setSesion(null);
             }}
           />
@@ -148,12 +150,14 @@ function Ingreso({ onStart }: { onStart: (s: Sesion) => void }) {
 // ---------------------------------------------------------------
 const LETRAS = ["A", "B", "C", "D"];
 
-function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: string) => void }) {
+function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: string, senales: SenalMarcada[]) => void }) {
   const { exam, questions } = sesion;
   const [idx, setIdx] = useState(0);
   const [seleccion, setSeleccion] = useState<string | null>(null);
   const [advertencia, setAdvertencia] = useState<string | null>(null);
   const finishing = useRef(false);
+  /** Señales que el aspirante fue marcando, para mostrarlas al finalizar. */
+  const senalesRef = useRef<SenalMarcada[]>([]);
 
   const dur = exam.config_snapshot?.duracion_minutos ?? 15;
   const endTime = new Date(exam.started_at).getTime() + dur * 60_000;
@@ -168,9 +172,9 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
     finishing.current = true;
     try {
       const r = await finalizar({ data: { examId: exam.id } });
-      onFinish(motivo ? "cancelado" : (r as any).status);
+      onFinish(motivo ? "cancelado" : (r as any).status, senalesRef.current);
     } catch {
-      onFinish("cancelado");
+      onFinish("cancelado", senalesRef.current);
     }
   }, [exam.id, finalizar, onFinish]);
 
@@ -184,7 +188,7 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
     finishing.current = true;
     evento({ data: { examId: exam.id, tipo: "tab_change", motivo, finalizar: true } })
       .catch(() => {})
-      .finally(() => onFinish("cancelado"));
+      .finally(() => onFinish("cancelado", senalesRef.current));
   }, [exam.id, evento, onFinish]);
 
   useExamGuard({ active: true, onWarning, onCancel });
@@ -252,7 +256,15 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
             size="lg"
             className="h-14 w-full text-base"
             disabled={!seleccion || respMut.isPending}
-            onClick={() => respMut.mutate({ examQuestionId: actual.id, respuesta: seleccion! })}
+            onClick={() => {
+              if (esSenal(seleccion!)) {
+                senalesRef.current = [
+                  ...senalesRef.current.filter((s) => s.pregunta !== actual.snapshot?.pregunta),
+                  { pregunta: actual.snapshot?.pregunta ?? "Señal de tránsito", imagen: seleccion! },
+                ];
+              }
+              respMut.mutate({ examQuestionId: actual.id, respuesta: seleccion! });
+            }}
           >
             {respMut.isPending && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
             {idx < questions.length - 1 ? "Siguiente" : "Finalizar examen"}
