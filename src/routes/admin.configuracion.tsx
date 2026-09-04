@@ -618,7 +618,7 @@ function TodasLasSenalesDialog() {
 
   const actualizar = useMutation({
     mutationFn: async ({ id, campos }: { id: string; campos: Record<string, boolean> }) => {
-      const { error } = await supabase.from("questions").update(campos).eq("id", id);
+      const { error } = await supabase.from("questions").update(campos as any).eq("id", id);
       if (error) throw error;
     },
     onSuccess: invalidate,
