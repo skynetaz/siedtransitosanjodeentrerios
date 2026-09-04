@@ -477,6 +477,16 @@ function SenalesDetalleDialog({ clase }: { clase: string }) {
     onError: (e) => toast.error((e as Error).message),
   });
 
+  /** Marca o desmarca una señal como eliminatoria. */
+  const toggleElim = useMutation({
+    mutationFn: async ({ id, eliminatoria }: { id: string; eliminatoria: boolean }) => {
+      const { error } = await supabase.from("questions").update({ eliminatoria }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Señal actualizada."); invalidate(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
   const agregar = useMutation({
     mutationFn: async (s: any) => {
       const { error } = await supabase.from("questions").insert({
