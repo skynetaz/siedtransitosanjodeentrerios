@@ -168,9 +168,24 @@ function FormularioCodigo({ onDone }: { onDone: (c: { codigo: string; expires_at
         <CardDescription>Se asocia al DNI y habilita un único examen combinado según la categoría.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <Field label="Categoría del examen">
+        <div
+          className={`space-y-2 rounded-lg border-2 p-3 ${
+            form.categoria ? "border-success/60 bg-success/5" : "border-destructive bg-destructive/5"
+          }`}
+        >
+          <Label className="flex items-center gap-2 text-base font-extrabold uppercase tracking-wide">
+            <AlertTriangle className={`h-5 w-5 ${form.categoria ? "text-success" : "text-destructive"}`} />
+            Categoría del examen
+          </Label>
+          <p className={`text-sm font-semibold ${form.categoria ? "text-success" : "text-destructive"}`}>
+            {form.categoria
+              ? `Vas a habilitar: ${catElegida?.nombre ?? form.categoria}`
+              : "Seleccione una categoría de examen para poder generar el código."}
+          </p>
           <Select value={form.categoria} onValueChange={(v) => setForm({ ...form, categoria: v })}>
-            <SelectTrigger className="h-12"><SelectValue placeholder="Elegí la categoría" /></SelectTrigger>
+            <SelectTrigger className="h-14 text-base font-bold">
+              <SelectValue placeholder="Seleccione una categoría de examen" />
+            </SelectTrigger>
             <SelectContent>
               {grupos.map((g) => (
                 <SelectGroup key={g.key}>
@@ -182,7 +197,7 @@ function FormularioCodigo({ onDone }: { onDone: (c: { codigo: string; expires_at
               ))}
             </SelectContent>
           </Select>
-        </Field>
+        </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="DNI"><Input className="h-12" inputMode="numeric" value={form.dni} onChange={(e) => setForm({ ...form, dni: e.target.value.replace(/\D/g, "") })} /></Field>
           <Field label="Nombre"><Input className="h-12" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} /></Field>
