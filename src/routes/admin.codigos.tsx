@@ -146,9 +146,8 @@ function FormularioCodigo({ onDone }: { onDone: (c: { codigo: string; expires_at
   const catsFn = useServerFn(listarCategorias);
   const cats = useQuery({ queryKey: ["categorias"], queryFn: () => catsFn() });
   const activas = ((cats.data ?? []) as any[]).filter((c) => c.activa);
-  useEffect(() => {
-    if (!form.categoria && activas.length > 0) setForm((f) => ({ ...f, categoria: activas[0].slug }));
-  }, [activas.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const catElegida = activas.find((c) => c.slug === form.categoria);
+
 
   const grupos = [
     { key: "particular", label: "Particulares" },
