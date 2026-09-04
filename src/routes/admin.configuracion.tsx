@@ -22,7 +22,13 @@ function Config() {
   const q = useQuery({ queryKey: ["exam-configs"], queryFn: async () => (await supabase.from("exam_configs").select("*")).data ?? [] });
   return (
     <div className="space-y-4">
-      <Card><CardHeader><CardTitle>Configuración de exámenes por clase</CardTitle><CardDescription>Cantidad de preguntas, duración y máximo de errores permitidos. Con "Ver preguntas de la clase" podés revisar y marcar cuáles entran en el examen, y en la vista previa podés reordenarlas antes de guardar.</CardDescription></CardHeader></Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuración de exámenes por clase</CardTitle>
+          <CardDescription>Cantidad de preguntas, duración y máximo de errores permitidos. Con "Ver preguntas de la clase" podés revisar y marcar cuáles entran en el examen, y en la vista previa podés reordenarlas antes de guardar.</CardDescription>
+        </CardHeader>
+        <CardContent><TodasLasSenalesDialog /></CardContent>
+      </Card>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {CLASES.map((c) => {
           const cfg = (q.data ?? []).find((x: any) => x.clase === c) as any;
