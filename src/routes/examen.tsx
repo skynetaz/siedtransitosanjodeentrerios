@@ -304,6 +304,22 @@ function Resultado({ status, examId, senales }: { status: string; examId: string
           {cancelado && <p className="text-sm text-muted-foreground">El intento se cerró por incumplir las condiciones del examen.</p>}
         </div>
 
+        {senales.length > 0 && (
+          <div className="border-t pt-4">
+            <p className="mb-2 text-sm font-medium">Señales de tránsito que marcaste</p>
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {senales.map((s, i) => (
+                <li key={i} className="rounded-lg border bg-card p-2 text-center">
+                  <SenalImg src={s.imagen} className="mx-auto h-24 w-24" />
+                  <p className="mt-1 line-clamp-3 text-[11px] leading-snug text-muted-foreground">{s.pregunta}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+
+
         {!cancelado && (
           <div className="border-t pt-4">
             <p className="mb-2 text-sm font-medium">Firma del aspirante</p>
