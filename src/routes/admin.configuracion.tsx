@@ -520,7 +520,8 @@ function SenalesDetalleDialog({ clase }: { clase: string }) {
         <DialogHeader>
           <DialogTitle>Señales de la Clase {clase}</DialogTitle>
           <DialogDescription>
-            Marcá o desmarcá cada señal de esta clase, o agregá señales de otras clases si el examen las necesita.
+            Marcá o desmarcá cada señal de esta clase, definí cuáles son eliminatorias, o agregá señales de otras
+            clases si el examen las necesita.
           </DialogDescription>
         </DialogHeader>
 
@@ -528,10 +529,22 @@ function SenalesDetalleDialog({ clase }: { clase: string }) {
 
         <div className="space-y-2">
           {propias.map((s) => (
-            <div key={s.id} className="flex items-start gap-3 rounded border p-3">
+            <div key={s.id} className="flex flex-wrap items-start gap-3 rounded border p-3">
               <SenalImg src={s.respuesta_correcta} className="h-16 w-16 shrink-0" />
-              <p className="min-w-0 flex-1 text-sm">{s.pregunta}</p>
-              <Switch checked={!!s.activa} onCheckedChange={(v) => toggle.mutate({ id: s.id, activa: v })} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm">{s.pregunta}</p>
+                {s.eliminatoria && <Badge className="mt-1 bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">En el examen</Label>
+                  <Switch checked={!!s.activa} onCheckedChange={(v) => toggle.mutate({ id: s.id, activa: v })} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">Eliminatoria</Label>
+                  <Switch checked={!!s.eliminatoria} onCheckedChange={(v) => toggleElim.mutate({ id: s.id, eliminatoria: v })} />
+                </div>
+              </div>
             </div>
           ))}
           {!todas.isLoading && propias.length === 0 && (
