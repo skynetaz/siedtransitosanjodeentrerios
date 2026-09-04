@@ -282,7 +282,7 @@ function ExamProgressWrapper({ actual, total }: { actual: number; total: number 
 // ---------------------------------------------------------------
 // Resultado: solo aprobado / desaprobado + firma
 // ---------------------------------------------------------------
-function Resultado({ status, examId }: { status: string; examId: string }) {
+function Resultado({ status, examId, senales }: { status: string; examId: string; senales: SenalMarcada[] }) {
   const aprobado = status === "aprobado";
   const cancelado = status === "cancelado";
   const [firmado, setFirmado] = useState(false);
