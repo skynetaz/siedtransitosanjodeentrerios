@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignaturePad } from "@/components/SignaturePad";
-import { ExamProgress, OptionCard } from "@/components/exam/ExamPieces";
+import { ExamProgress, OptionCard, esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { useExamGuard, requestFullscreen, exitFullscreen } from "@/components/exam/use-exam-guard";
 import { AlertTriangle, CheckCircle2, Clock, Eye, EyeOff, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
