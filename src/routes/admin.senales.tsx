@@ -82,6 +82,15 @@ function SenalesPage() {
     onError: (e) => toast.error((e as Error).message),
   });
 
+  const toggleElim = useMutation({
+    mutationFn: async ({ id, eliminatoria }: { id: string; eliminatoria: boolean }) => {
+      const { error } = await supabase.from("questions").update({ eliminatoria }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Señal actualizada."); invalidate(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
   const borrar = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("questions").delete().eq("id", id);
@@ -191,9 +200,15 @@ function SenalesPage() {
                     onClick={() => { if (confirm("¿Eliminar esta señal?")) borrar.mutate(s.id); }}>
                     <Trash2 className="mr-1 h-4 w-4" />Eliminar
                   </Button>
-                  <div className="ml-auto flex items-center gap-2">
-                    <Label className="text-xs text-muted-foreground">En el examen</Label>
-                    <Switch checked={s.activa} onCheckedChange={(v) => toggle.mutate({ id: s.id, activa: v })} />
+                  <div className="ml-auto flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground">Eliminatoria</Label>
+                      <Switch checked={s.eliminatoria} onCheckedChange={(v) => toggleElim.mutate({ id: s.id, eliminatoria: v })} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground">En el examen</Label>
+                      <Switch checked={s.activa} onCheckedChange={(v) => toggle.mutate({ id: s.id, activa: v })} />
+                    </div>
                   </div>
                 </div>
               </CardContent>

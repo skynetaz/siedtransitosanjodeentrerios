@@ -22,7 +22,13 @@ function Config() {
   const q = useQuery({ queryKey: ["exam-configs"], queryFn: async () => (await supabase.from("exam_configs").select("*")).data ?? [] });
   return (
     <div className="space-y-4">
-      <Card><CardHeader><CardTitle>Configuración de exámenes por clase</CardTitle><CardDescription>Cantidad de preguntas, duración y máximo de errores permitidos. Con "Ver preguntas de la clase" podés revisar y marcar cuáles entran en el examen, y en la vista previa podés reordenarlas antes de guardar.</CardDescription></CardHeader></Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuración de exámenes por clase</CardTitle>
+          <CardDescription>Cantidad de preguntas, duración y máximo de errores permitidos. Con "Ver preguntas de la clase" podés revisar y marcar cuáles entran en el examen, y en la vista previa podés reordenarlas antes de guardar.</CardDescription>
+        </CardHeader>
+        <CardContent><TodasLasSenalesDialog /></CardContent>
+      </Card>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {CLASES.map((c) => {
           const cfg = (q.data ?? []).find((x: any) => x.clase === c) as any;
@@ -477,6 +483,16 @@ function SenalesDetalleDialog({ clase }: { clase: string }) {
     onError: (e) => toast.error((e as Error).message),
   });
 
+  /** Marca o desmarca una señal como eliminatoria. */
+  const toggleElim = useMutation({
+    mutationFn: async ({ id, eliminatoria }: { id: string; eliminatoria: boolean }) => {
+      const { error } = await supabase.from("questions").update({ eliminatoria }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Señal actualizada."); invalidate(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
   const agregar = useMutation({
     mutationFn: async (s: any) => {
       const { error } = await supabase.from("questions").insert({
@@ -510,7 +526,8 @@ function SenalesDetalleDialog({ clase }: { clase: string }) {
         <DialogHeader>
           <DialogTitle>Señales de la Clase {clase}</DialogTitle>
           <DialogDescription>
-            Marcá o desmarcá cada señal de esta clase, o agregá señales de otras clases si el examen las necesita.
+            Marcá o desmarcá cada señal de esta clase, definí cuáles son eliminatorias, o agregá señales de otras
+            clases si el examen las necesita.
           </DialogDescription>
         </DialogHeader>
 
@@ -518,10 +535,22 @@ function SenalesDetalleDialog({ clase }: { clase: string }) {
 
         <div className="space-y-2">
           {propias.map((s) => (
-            <div key={s.id} className="flex items-start gap-3 rounded border p-3">
+            <div key={s.id} className="flex flex-wrap items-start gap-3 rounded border p-3">
               <SenalImg src={s.respuesta_correcta} className="h-16 w-16 shrink-0" />
-              <p className="min-w-0 flex-1 text-sm">{s.pregunta}</p>
-              <Switch checked={!!s.activa} onCheckedChange={(v) => toggle.mutate({ id: s.id, activa: v })} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm">{s.pregunta}</p>
+                {s.eliminatoria && <Badge className="mt-1 bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">En el examen</Label>
+                  <Switch checked={!!s.activa} onCheckedChange={(v) => toggle.mutate({ id: s.id, activa: v })} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs text-muted-foreground">Eliminatoria</Label>
+                  <Switch checked={!!s.eliminatoria} onCheckedChange={(v) => toggleElim.mutate({ id: s.id, eliminatoria: v })} />
+                </div>
+              </div>
             </div>
           ))}
           {!todas.isLoading && propias.length === 0 && (
@@ -547,6 +576,108 @@ function SenalesDetalleDialog({ clase }: { clase: string }) {
             ))}
           </div>
         )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Vista general de TODAS las señales cargadas, agrupadas por clase, con su
+ * imagen correcta. Permite marcar cuáles entran al examen y cuáles son
+ * eliminatorias, sin salir de la solapa de configuración.
+ */
+function TodasLasSenalesDialog() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [filtroClase, setFiltroClase] = useState<string>("TODAS");
+
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["senales-todas"] });
+    qc.invalidateQueries({ queryKey: ["senales-detalle"] });
+    qc.invalidateQueries({ queryKey: ["senales-clase"] });
+    qc.invalidateQueries({ queryKey: ["senales-admin"] });
+    qc.invalidateQueries({ queryKey: ["activas-clase"] });
+    qc.invalidateQueries({ queryKey: ["preview-clase"] });
+    qc.invalidateQueries({ queryKey: ["preguntas-clase"] });
+  };
+
+  const todas = useQuery({
+    queryKey: ["senales-todas"],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("questions")
+        .select("id, clase, pregunta, respuesta_correcta, activa, eliminatoria, orden")
+        .like("respuesta_correcta", "/senales/%")
+        .order("clase")
+        .order("orden");
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+  const actualizar = useMutation({
+    mutationFn: async ({ id, campos }: { id: string; campos: Record<string, boolean> }) => {
+      const { error } = await supabase.from("questions").update(campos as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const lista = (todas.data ?? []).filter((s) => filtroClase === "TODAS" || s.clase === filtroClase);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="w-full sm:w-auto">
+          <ListChecks className="mr-1 h-4 w-4" />Ver todas las señales
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Todas las señales de tránsito</DialogTitle>
+          <DialogDescription>
+            Marcá las señales que querés incluir en cada examen y cuáles deben ser eliminatorias.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-wrap gap-2">
+          {(["TODAS", ...CLASES] as string[]).map((c) => (
+            <Button key={c} size="sm" variant={filtroClase === c ? "default" : "outline"} onClick={() => setFiltroClase(c)}>
+              {c}
+            </Button>
+          ))}
+        </div>
+
+        {todas.isLoading && <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>}
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {lista.map((s) => (
+            <div key={s.id} className="flex gap-3 rounded border p-3">
+              <SenalImg src={s.respuesta_correcta} className="h-20 w-20 shrink-0" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary">Clase {s.clase}</Badge>
+                  {!s.activa && <Badge variant="outline">Fuera del examen</Badge>}
+                  {s.eliminatoria && <Badge className="bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
+                </div>
+                <p className="line-clamp-2 text-xs text-muted-foreground">{s.pregunta}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">En el examen</Label>
+                  <Switch checked={!!s.activa} onCheckedChange={(v) => actualizar.mutate({ id: s.id, campos: { activa: v } })} />
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-xs">Eliminatoria</Label>
+                  <Switch checked={!!s.eliminatoria} onCheckedChange={(v) => actualizar.mutate({ id: s.id, campos: { eliminatoria: v } })} />
+                </div>
+              </div>
+            </div>
+          ))}
+          {!todas.isLoading && lista.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">No hay señales cargadas.</p>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

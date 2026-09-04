@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignaturePad } from "@/components/SignaturePad";
-import { ExamProgress, OptionCard } from "@/components/exam/ExamPieces";
+import { ExamProgress, OptionCard, esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { useExamGuard, requestFullscreen, exitFullscreen } from "@/components/exam/use-exam-guard";
 import { AlertTriangle, CheckCircle2, Clock, Eye, EyeOff, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -282,7 +282,7 @@ function ExamProgressWrapper({ actual, total }: { actual: number; total: number 
 // ---------------------------------------------------------------
 // Resultado: solo aprobado / desaprobado + firma
 // ---------------------------------------------------------------
-function Resultado({ status, examId }: { status: string; examId: string }) {
+function Resultado({ status, examId, senales }: { status: string; examId: string; senales: SenalMarcada[] }) {
   const aprobado = status === "aprobado";
   const cancelado = status === "cancelado";
   const [firmado, setFirmado] = useState(false);
@@ -303,6 +303,22 @@ function Resultado({ status, examId }: { status: string; examId: string }) {
           </p>
           {cancelado && <p className="text-sm text-muted-foreground">El intento se cerró por incumplir las condiciones del examen.</p>}
         </div>
+
+        {senales.length > 0 && (
+          <div className="border-t pt-4">
+            <p className="mb-2 text-sm font-medium">Señales de tránsito que marcaste</p>
+            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {senales.map((s, i) => (
+                <li key={i} className="rounded-lg border bg-card p-2 text-center">
+                  <SenalImg src={s.imagen} className="mx-auto h-24 w-24" />
+                  <p className="mt-1 line-clamp-3 text-[11px] leading-snug text-muted-foreground">{s.pregunta}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+
 
         {!cancelado && (
           <div className="border-t pt-4">
