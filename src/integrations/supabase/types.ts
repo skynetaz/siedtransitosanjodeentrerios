@@ -409,6 +409,7 @@ export type Database = {
           id: string
           license_class: Database["public"]["Enums"]["license_class"] | null
           nombre: string
+          signature: string | null
           telefono: string | null
           updated_at: string
         }
@@ -420,6 +421,7 @@ export type Database = {
           id: string
           license_class?: Database["public"]["Enums"]["license_class"] | null
           nombre?: string
+          signature?: string | null
           telefono?: string | null
           updated_at?: string
         }
@@ -431,6 +433,7 @@ export type Database = {
           id?: string
           license_class?: Database["public"]["Enums"]["license_class"] | null
           nombre?: string
+          signature?: string | null
           telefono?: string | null
           updated_at?: string
         }
