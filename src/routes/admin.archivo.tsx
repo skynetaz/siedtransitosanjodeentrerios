@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SignaturePad } from "@/components/SignaturePad";
+import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { exportExamExcel, exportExamPDF, exportListExcel } from "@/lib/export-utils";
 import { toast } from "sonner";
-import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer } from "lucide-react";
 
 export const Route = createFileRoute("/admin/archivo")({ component: ArchivoPage });
 
@@ -120,6 +121,7 @@ function ExamDetailDialog({ examId, onClose }: { examId: string; onClose: () => 
             <div className="flex gap-2 flex-wrap">
               <Button size="sm" onClick={()=>exportExamPDF(q.data!)}><FileDown className="mr-1 h-4 w-4" />Exportar PDF</Button>
               <Button size="sm" variant="outline" onClick={()=>exportExamExcel(q.data!)}><FileDown className="mr-1 h-4 w-4" />Exportar Excel</Button>
+              <Button size="sm" variant="outline" onClick={()=>imprimirExamen(q.data!)}><Printer className="mr-1 h-4 w-4" />Imprimir</Button>
             </div>
             <ExamPreview data={q.data} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
