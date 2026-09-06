@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { ShieldCheck, Loader2, Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Ingresar — SIED" }] }),
@@ -98,6 +98,7 @@ function StaffForm() {
   const [loading, setLoading] = useState(false);
   const [recuperando, setRecuperando] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [verPass, setVerPass] = useState(false);
 
   const handle = async (e: React.FormEvent) => {
     e.preventDefault();
