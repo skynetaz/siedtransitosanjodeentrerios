@@ -72,7 +72,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" },
       { title: "SIED — Sistema Integral de Evaluación para Licencias de Conducir" },
       { name: "description", content: "Plataforma oficial de evaluación teórica para el otorgamiento de licencias de conducir. Gestión de aspirantes, banco de preguntas, corrección automática y estadísticas." },
       { property: "og:title", content: "SIED — Evaluación de Licencias de Conducir" },
