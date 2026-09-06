@@ -141,7 +141,7 @@ export const finalizarExamen = createServerFn({ method: "POST" })
     const correctas = (allEq ?? []).filter((r) => r.correcta === true).length;
     const incorrectas = (allEq ?? []).filter((r) => r.correcta === false).length;
     const cfg = exam.config_snapshot as { max_errores?: number } | null;
-    const maxErr = cfg?.max_errores ?? 4;
+    const maxErr = cfg?.max_errores ?? 5;
     const status = incorrectas <= maxErr ? "aprobado" : "desaprobado";
     const finished = new Date();
     const started = exam.started_at ? new Date(exam.started_at) : finished;
