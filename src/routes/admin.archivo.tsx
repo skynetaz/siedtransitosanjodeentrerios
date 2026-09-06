@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SignaturePad } from "@/components/SignaturePad";
+import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { exportExamExcel, exportExamPDF, exportListExcel } from "@/lib/export-utils";
 import { toast } from "sonner";
-import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer } from "lucide-react";
 
 export const Route = createFileRoute("/admin/archivo")({ component: ArchivoPage });
 
@@ -120,6 +121,7 @@ function ExamDetailDialog({ examId, onClose }: { examId: string; onClose: () => 
             <div className="flex gap-2 flex-wrap">
               <Button size="sm" onClick={()=>exportExamPDF(q.data!)}><FileDown className="mr-1 h-4 w-4" />Exportar PDF</Button>
               <Button size="sm" variant="outline" onClick={()=>exportExamExcel(q.data!)}><FileDown className="mr-1 h-4 w-4" />Exportar Excel</Button>
+              <Button size="sm" variant="outline" onClick={()=>imprimirExamen(q.data!)}><Printer className="mr-1 h-4 w-4" />Imprimir</Button>
             </div>
             <ExamPreview data={q.data} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -145,6 +147,13 @@ function ExamDetailDialog({ examId, onClose }: { examId: string; onClose: () => 
   );
 }
 
+/** Celda de respuesta: si es una señal muestra la imagen, si no el texto. */
+function Respuesta({ valor }: { valor?: string | null }) {
+  if (!valor) return <span>—</span>;
+  if (esSenal(valor)) return <SenalImg src={valor} className="h-20 w-20 border bg-white" />;
+  return <span>{valor}</span>;
+}
+
 function ExamPreview({ data }: { data: any }) {
   const p = data.exam.profiles ?? {};
   const d = data.exam.datos_aspirante ?? {};
@@ -154,16 +163,16 @@ function ExamPreview({ data }: { data: any }) {
         <div><b>{d.apellido ?? p.apellido}, {d.nombre ?? p.nombre}</b> — DNI {d.dni ?? p.dni}</div>
         <div className="text-muted-foreground text-xs">{d.email ?? p.email} · {d.telefono ?? p.telefono}</div>
       </div>
-      <div className="rounded border">
-        <table className="w-full text-xs">
+      <div className="overflow-x-auto rounded border">
+        <table className="w-full min-w-[560px] text-xs">
           <thead className="bg-muted/40"><tr><th className="p-2 text-left">#</th><th className="p-2 text-left">Pregunta</th><th className="p-2 text-left">Respondió</th><th className="p-2 text-left">Esperada</th><th className="p-2">OK</th></tr></thead>
           <tbody>
             {data.preguntas.map((r: any) => (
               <tr key={r.orden} className="border-t align-top">
                 <td className="p-2">{r.orden}</td>
                 <td className="p-2">{r.pregunta}{r.eliminatoria && <Badge className="ml-1 bg-destructive text-destructive-foreground text-[10px]">E</Badge>}</td>
-                <td className="p-2">{r.respuesta_dada || "—"}</td>
-                <td className="p-2">{r.respuesta_correcta}</td>
+                <td className="p-2"><Respuesta valor={r.respuesta_dada} /></td>
+                <td className="p-2"><Respuesta valor={r.respuesta_correcta} /></td>
                 <td className="p-2 text-center">{r.correcta ? "✓" : "✗"}</td>
               </tr>
             ))}
@@ -172,4 +181,65 @@ function ExamPreview({ data }: { data: any }) {
       </div>
     </div>
   );
+}
+
+/** Abre una ventana con el acta del examen lista para imprimir (con las imágenes de las señales). */
+function imprimirExamen(data: any) {
+  const p = data.exam.profiles ?? {};
+  const d = data.exam.datos_aspirante ?? {};
+  const origin = window.location.origin;
+  const celda = (v?: string | null) =>
+    !v ? "—" : esSenal(v) ? `<img src="${origin}${v}" class="sig" />` : escapeHtml(v);
+  const filas = data.preguntas
+    .map(
+      (r: any) => `<tr>
+        <td>${r.orden}</td>
+        <td>${escapeHtml(r.pregunta ?? "")}${r.eliminatoria ? " <b>(E)</b>" : ""}</td>
+        <td>${celda(r.respuesta_dada)}</td>
+        <td>${celda(r.respuesta_correcta)}</td>
+        <td class="c">${r.correcta ? "✓" : "✗"}</td>
+      </tr>`,
+    )
+    .join("");
+  const firma = (src?: string | null, txt = "Sin firma") =>
+    src ? `<img src="${src}" class="firma" />` : `<span class="muted">${txt}</span>`;
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8" />
+<title>Acta de examen — ${escapeHtml(d.apellido ?? p.apellido ?? "")}</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;color:#111;margin:24px;font-size:12px}
+  h1{font-size:18px;margin:0 0 4px}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{border:1px solid #999;padding:6px;vertical-align:top;text-align:left}
+  th{background:#eee}
+  td.c{text-align:center;font-size:14px}
+  img.sig{width:90px;height:90px;object-fit:contain;background:#fff}
+  img.firma{max-height:110px;border:1px solid #999;background:#fff}
+  .head{border:1px solid #999;padding:8px;background:#f5f5f5}
+  .firmas{display:flex;gap:24px;margin-top:16px}
+  .firmas>div{flex:1}
+  .muted{color:#666}
+  @page{margin:14mm}
+</style></head><body>
+<h1>Acta de examen teórico — SIED</h1>
+<div class="head">
+  <div><b>${escapeHtml(`${d.apellido ?? p.apellido ?? ""}, ${d.nombre ?? p.nombre ?? ""}`)}</b> — DNI ${escapeHtml(d.dni ?? p.dni ?? "")}</div>
+  <div>Clase ${escapeHtml(data.exam.clase ?? "")} · Resultado: <b>${(data.exam.status ?? "").toUpperCase()}</b> · ${data.exam.correctas ?? 0}/${data.exam.total_preguntas ?? 0}</div>
+  <div>${data.exam.finished_at ? new Date(data.exam.finished_at).toLocaleString("es-AR") : ""}</div>
+</div>
+<table><thead><tr><th>#</th><th>Pregunta</th><th>Respondió</th><th>Esperada</th><th>OK</th></tr></thead><tbody>${filas}</tbody></table>
+<div class="firmas">
+  <div><p><b>Firma del aspirante</b></p>${firma(data.exam.signature_aspirante)}</div>
+  <div><p><b>Firma / aval del inspector</b></p>${firma(data.exam.signature_inspector)}</div>
+</div>
+<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),400))<\/script>
+</body></html>`;
+  const w = window.open("", "_blank", "width=900,height=1000");
+  if (!w) { toast.error("Permití las ventanas emergentes para imprimir."); return; }
+  w.document.write(html);
+  w.document.close();
+}
+
+function escapeHtml(s: string) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }

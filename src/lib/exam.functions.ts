@@ -102,17 +102,24 @@ export const responderPregunta = createServerFn({ method: "POST" })
       respuesta_dada: data.respuesta, correcta, answered_at: new Date().toISOString(),
     }).eq("id", data.examQuestionId);
 
-    // Si es eliminatoria y falla → cerrar examen desaprobado
-    if (q.eliminatoria && !correcta) {
+    // Cierre anticipado: pregunta eliminatoria fallada, o más de N errores comunes.
+    const cfgEx = eq.exams.config_snapshot as { max_errores?: number } | null;
+    const maxErrComunes = cfgEx?.max_errores ?? 5;
+    const { data: allEq } = await supabaseAdmin.from("exam_questions").select("correcta").eq("exam_id", eq.exam_id);
+    const correctas = (allEq ?? []).filter((r) => r.correcta === true).length;
+    const incorrectas = (allEq ?? []).filter((r) => r.correcta === false).length;
+    const porEliminatoria = q.eliminatoria && !correcta;
+    const porErrores = incorrectas > maxErrComunes;
+
+    if (porEliminatoria || porErrores) {
       const now = new Date().toISOString();
-      const { data: allEq } = await supabaseAdmin.from("exam_questions").select("correcta").eq("exam_id", eq.exam_id);
-      const correctas = (allEq ?? []).filter((r) => r.correcta === true).length;
-      const incorrectas = (allEq ?? []).filter((r) => r.correcta === false).length;
       await supabaseAdmin.from("exams").update({
         status: "desaprobado", finished_at: now, correctas, incorrectas,
-        eliminado_por_pregunta: eq.question_id, puntaje: correctas,
+        ...(porEliminatoria ? { eliminado_por_pregunta: eq.question_id } : {}),
+        puntaje: correctas,
+        motivo_finalizacion: porEliminatoria ? "pregunta eliminatoria" : `superó el máximo de ${maxErrComunes} errores`,
       }).eq("id", eq.exam_id);
-      return { correcta: false, terminado: true, motivo: "eliminatoria" as const };
+      return { correcta, terminado: true, motivo: (porEliminatoria ? "eliminatoria" : "max_errores") as "eliminatoria" | "max_errores" };
     }
     return { correcta, terminado: false };
   });
@@ -134,7 +141,7 @@ export const finalizarExamen = createServerFn({ method: "POST" })
     const correctas = (allEq ?? []).filter((r) => r.correcta === true).length;
     const incorrectas = (allEq ?? []).filter((r) => r.correcta === false).length;
     const cfg = exam.config_snapshot as { max_errores?: number } | null;
-    const maxErr = cfg?.max_errores ?? 4;
+    const maxErr = cfg?.max_errores ?? 5;
     const status = incorrectas <= maxErr ? "aprobado" : "desaprobado";
     const finished = new Date();
     const started = exam.started_at ? new Date(exam.started_at) : finished;
