@@ -154,7 +154,19 @@ function StaffForm() {
         </div>
         <div>
           <Label htmlFor="p">Contraseña</Label>
-          <Input id="p" type="password" required className="h-12" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <div className="relative">
+            <Input
+              id="p" type={verPass ? "text" : "password"} required className="h-12 pr-12"
+              value={password} onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button" onClick={() => setVerPass((v) => !v)}
+              aria-label={verPass ? "Ocultar contraseña" : "Mostrar contraseña"}
+              className="absolute right-1 top-1 grid h-10 w-10 place-items-center rounded-md text-muted-foreground hover:bg-muted"
+            >
+              {verPass ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
         <Button type="submit" className="h-12 w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Ingresar
