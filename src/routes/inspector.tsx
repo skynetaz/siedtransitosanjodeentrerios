@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useState } from "react";
+import { MiFirmaGuardada } from "@/components/MiFirmaGuardada";
 import { Loader2, Search, UserPlus, KeyRound, XCircle, Copy, History } from "lucide-react";
 
 export const Route = createFileRoute("/inspector")({ component: InspectorPanel });
@@ -47,7 +48,10 @@ function InspectorPanel() {
           </Card>
           <ResultsList query={q} />
         </div>
-        <RecentExams />
+        <div className="space-y-4">
+          <MiFirmaGuardada />
+          <RecentExams />
+        </div>
       </div>
     </AppShell>
   );
