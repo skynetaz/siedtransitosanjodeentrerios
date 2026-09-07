@@ -247,13 +247,16 @@ function SenalDialog({
     return [0, 1, 2, 3].map((i) => base[i] ?? "");
   });
   const [claseDestino, setClaseDestino] = useState<Clase>(clase);
+  const [copiarA, setCopiarA] = useState<Clase[]>([]);
   const [activa, setActiva] = useState(senal?.activa ?? true);
   const [eliminatoria, setEliminatoria] = useState(senal?.eliminatoria ?? false);
 
   const mut = useMutation({
     mutationFn: async () => {
+      // Al editar NUNCA se cambia la clase: la señal debe seguir en su clase.
+      const claseFinal = senal?.id ? (senal.clase as Clase) : claseDestino;
       const payload: Record<string, any> = {
-        clase: claseDestino,
+        clase: claseFinal,
         topic_id: topicId ?? senal?.topic_id ?? null,
         pregunta: pregunta.trim(),
         respuesta_correcta: correcta,
@@ -273,10 +276,19 @@ function SenalDialog({
         const { error } = await supabase.from("questions").insert(payload as any);
         if (error) throw error;
       }
+      // Copias adicionales en otras clases (no mueve la original).
+      const extra = copiarA.filter((c) => c !== claseFinal);
+      if (extra.length) {
+        const { error } = await supabase
+          .from("questions")
+          .insert(extra.map((c) => ({ ...payload, clase: c, orden: siguienteOrden })) as any);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => { toast.success(senal ? "Señal actualizada." : "Señal creada."); setOpen(false); onSaved(); },
+    onSuccess: () => { toast.success(senal ? "Señal actualizada." : "Señal creada."); setCopiarA([]); setOpen(false); onSaved(); },
     onError: (e) => toast.error((e as Error).message),
   });
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -295,13 +307,18 @@ function SenalDialog({
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label>Clase</Label>
-              <div className="flex flex-wrap gap-1">
-                {CLASES.map((c) => (
-                  <Button key={c} type="button" size="sm" variant={claseDestino === c ? "default" : "outline"} onClick={() => setClaseDestino(c)}>{c}</Button>
-                ))}
-              </div>
+              <Label>{senal ? "Clase (no se modifica)" : "Clase"}</Label>
+              {senal ? (
+                <div className="rounded border bg-muted px-3 py-2 text-sm font-semibold">Clase {senal.clase}</div>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {CLASES.map((c) => (
+                    <Button key={c} type="button" size="sm" variant={claseDestino === c ? "default" : "outline"} onClick={() => setClaseDestino(c)}>{c}</Button>
+                  ))}
+                </div>
+              )}
             </div>
+
             <div className="flex items-center justify-between rounded border p-3">
               <Label className="text-xs">Activa</Label>
               <Switch checked={activa} onCheckedChange={setActiva} />
@@ -311,6 +328,21 @@ function SenalDialog({
               <Switch checked={eliminatoria} onCheckedChange={setEliminatoria} />
             </div>
           </div>
+
+          <div className="space-y-1.5 rounded border p-3">
+            <Label className="text-xs">Copiar además a otras clases (opcional, no mueve esta señal)</Label>
+            <div className="flex flex-wrap gap-1">
+              {CLASES.filter((c) => c !== (senal ? (senal.clase as Clase) : claseDestino)).map((c) => (
+                <Button
+                  key={c} type="button" size="sm"
+                  variant={copiarA.includes(c) ? "default" : "outline"}
+                  onClick={() => setCopiarA(copiarA.includes(c) ? copiarA.filter((x) => x !== c) : [...copiarA, c])}
+                >{c}</Button>
+              ))}
+            </div>
+          </div>
+
+
 
           <ImagePicker label="Imagen correcta" value={correcta} onChange={setCorrecta} />
           {incorrectas.map((v, i) => (
