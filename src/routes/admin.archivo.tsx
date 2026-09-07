@@ -28,6 +28,7 @@ function ArchivoPage() {
           <CardDescription>Exámenes finalizados con detalle, firmas y exportación a PDF/Excel.</CardDescription>
         </CardHeader>
       </Card>
+      <MiFirmaGuardada />
       <Tabs value={tab} onValueChange={(v)=>setTab(v as any)}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="todos">Todos</TabsTrigger>
