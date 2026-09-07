@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listarCategorias, guardarCategoria, eliminarCategoria } from "@/lib/categorias.functions";
+import { listarCategorias, guardarCategoria, eliminarCategoria, previsualizarCategoria } from "@/lib/categorias.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Save, Pencil } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Loader2, Plus, Trash2, Save, Pencil, Eye, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
+import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
+
 
 export const Route = createFileRoute("/admin/categorias")({ component: CategoriasPage });
 
@@ -97,6 +100,8 @@ function CategoriasPage() {
                   <Button variant="outline" size="sm" className="h-10" onClick={() => setEditando({ ...c })}>
                     <Pencil className="mr-1 h-4 w-4" />Editar
                   </Button>
+                  <VistaPrevia cat={c} />
+
                   <ConfirmarBorrado
                     titulo="¿Eliminar esta categoría de examen?"
                     detalle={`Se quitará "${c.nombre}" de las categorías disponibles.`}
@@ -200,8 +205,9 @@ function Editor({ value, onCancel, onSaved }: { value: Cat; onCancel: () => void
           <Switch checked={form.activa} onCheckedChange={(v) => set({ activa: v })} />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" className="h-12 flex-1" onClick={onCancel}>Cancelar</Button>
+          <VistaPrevia cat={form} className="h-12 flex-1" />
           <Button className="h-12 flex-1" disabled={!form.slug || !form.nombre || form.clases.length === 0 || mut.isPending}
             onClick={() => mut.mutate()}>
             {mut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Guardar
@@ -217,6 +223,95 @@ function Num({ label, value, onChange }: { label: string; value: number; onChang
     <div className="space-y-1.5">
       <Label className="text-xs">{label}</Label>
       <Input className="h-12" type="number" min={0} value={value} onChange={(e) => onChange(Number(e.target.value) || 0)} />
+    </div>
+  );
+}
+
+/** Diálogo con el examen de muestra armado con la configuración actual. */
+function VistaPrevia({ cat, className }: { cat: Cat; className?: string }) {
+  const [open, setOpen] = useState(false);
+  const previsualizar = useServerFn(previsualizarCategoria);
+  const q = useQuery({
+    queryKey: ["preview-categoria", cat.slug, cat.clases.join(","), cat.cantidad_preguntas, cat.preguntas_senales, cat.incluye_senales, open],
+    queryFn: () => previsualizar({ data: { ...cat, slug: cat.slug || "preview", nombre: cat.nombre || "Vista previa" } }),
+    enabled: open && cat.clases.length > 0,
+  });
+  const d = q.data as any;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className={className ?? "h-10"}>
+          <Eye className="mr-1 h-4 w-4" />Vista previa
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg">Vista previa · {cat.nombre || "Sin nombre"}</DialogTitle>
+          <DialogDescription>
+            Ejemplo de examen armado con clases {cat.clases.join(" + ")} · {cat.duracion_minutos} min · hasta {cat.max_errores} errores.
+          </DialogDescription>
+        </DialogHeader>
+
+        {q.isLoading ? (
+          <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+        ) : q.error ? (
+          <p className="text-sm text-destructive">{(q.error as Error).message}</p>
+        ) : d ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Dato label="Preguntas" valor={`${d.preguntas.length} / ${d.solicitadas}`} />
+              <Dato label="De señales" valor={String(d.senalesIncluidas)} />
+              <Dato label="Eliminatorias" valor={String(d.eliminatorias)} />
+              <Dato label="Puntaje total" valor={String(d.puntaje)} />
+            </div>
+
+            {d.preguntas.length < d.solicitadas && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <span>Faltan preguntas activas: hay {d.disponibles} disponibles para estas clases.</span>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {d.preguntas.map((p: any) => (
+                <div key={p.id} className="rounded-lg border p-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline">Clase {p.clase}</Badge>
+                    {p.tema && <span>{p.tema}</span>}
+                    <span>· peso {p.peso}</span>
+                    {p.eliminatoria && <Badge className="bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
+                  </div>
+                  <p className="mt-1 text-sm font-medium">{p.orden}. {p.pregunta}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {p.opciones.map((o: string, i: number) => {
+                      const ok = o === p.correcta;
+                      return esSenal(o) ? (
+                        <div key={i} className={ok ? "rounded-md ring-2 ring-success" : ""}>
+                          <SenalImg src={o} className="h-16 w-16" />
+                        </div>
+                      ) : (
+                        <span key={i} className={`rounded-md border px-2 py-1 text-xs ${ok ? "border-success bg-success/10 font-semibold" : ""}`}>
+                          {o}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Dato({ label, valor }: { label: string; valor: string }) {
+  return (
+    <div className="rounded-lg border p-2 text-center">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-base font-bold">{valor}</p>
     </div>
   );
 }
