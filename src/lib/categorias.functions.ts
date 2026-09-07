@@ -64,7 +64,7 @@ export const previsualizarCategoria = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { buildOptions, shuffle } = await import("@/lib/mc");
 
-    const clases = data.clases.length ? data.clases : ["UNICA"];
+    const clases = (data.clases.length ? data.clases : ["UNICA"]) as ("A"|"B"|"C"|"D"|"E"|"UNICA")[];
     const { data: pool } = await supabaseAdmin
       .from("questions")
       .select("id, pregunta, clase, eliminatoria, peso, respuesta_correcta, opciones_incorrectas, topic_id, topics(nombre)")
