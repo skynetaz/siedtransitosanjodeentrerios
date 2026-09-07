@@ -307,13 +307,18 @@ function SenalDialog({
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <Label>Clase</Label>
-              <div className="flex flex-wrap gap-1">
-                {CLASES.map((c) => (
-                  <Button key={c} type="button" size="sm" variant={claseDestino === c ? "default" : "outline"} onClick={() => setClaseDestino(c)}>{c}</Button>
-                ))}
-              </div>
+              <Label>{senal ? "Clase (no se modifica)" : "Clase"}</Label>
+              {senal ? (
+                <div className="rounded border bg-muted px-3 py-2 text-sm font-semibold">Clase {senal.clase}</div>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {CLASES.map((c) => (
+                    <Button key={c} type="button" size="sm" variant={claseDestino === c ? "default" : "outline"} onClick={() => setClaseDestino(c)}>{c}</Button>
+                  ))}
+                </div>
+              )}
             </div>
+
             <div className="flex items-center justify-between rounded border p-3">
               <Label className="text-xs">Activa</Label>
               <Switch checked={activa} onCheckedChange={setActiva} />
