@@ -53,3 +53,54 @@ export const eliminarCategoria = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true };
   });
+
+/** Vista previa: arma un examen de muestra con la configuración indicada. */
+export const previsualizarCategoria = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => categoriaSchema.partial({ slug: true, nombre: true }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Solo administradores.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { buildOptions, shuffle } = await import("@/lib/mc");
+
+    const clases = data.clases.length ? data.clases : ["UNICA"];
+    const { data: pool } = await supabaseAdmin
+      .from("questions")
+      .select("id, pregunta, clase, eliminatoria, peso, respuesta_correcta, opciones_incorrectas, topic_id, topics(nombre)")
+      .in("clase", clases)
+      .eq("activa", true);
+    const preguntas = (pool ?? []) as any[];
+
+    let senales: any[] = [];
+    let senalesIds = new Set<string>();
+    if (data.incluye_senales && data.preguntas_senales > 0) {
+      const { data: topic } = await supabaseAdmin.from("topics").select("id").eq("slug", "senales").maybeSingle();
+      if (topic?.id) {
+        senales = shuffle(preguntas.filter((q) => q.topic_id === topic.id)).slice(0, data.preguntas_senales);
+        senalesIds = new Set(senales.map((q) => q.id));
+      }
+    }
+    const resto = shuffle(preguntas.filter((q) => !senalesIds.has(q.id)));
+    const faltan = Math.max(0, data.cantidad_preguntas - senales.length);
+    const seleccion = shuffle([...senales, ...resto.slice(0, faltan)]);
+
+    return {
+      disponibles: preguntas.length,
+      solicitadas: data.cantidad_preguntas,
+      senalesIncluidas: senales.length,
+      puntaje: seleccion.reduce((s, q) => s + (q.peso ?? 1), 0),
+      eliminatorias: seleccion.filter((q) => q.eliminatoria).length,
+      preguntas: seleccion.map((q, i) => ({
+        orden: i + 1,
+        id: q.id as string,
+        clase: q.clase as string,
+        tema: (q.topics?.nombre as string) ?? null,
+        pregunta: q.pregunta as string,
+        eliminatoria: !!q.eliminatoria,
+        peso: (q.peso ?? 1) as number,
+        correcta: q.respuesta_correcta as string,
+        opciones: buildOptions(q.respuesta_correcta, q.opciones_incorrectas ?? []),
+      })),
+    };
+  });
