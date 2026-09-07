@@ -138,7 +138,7 @@ function ExamDetailDialog({ examId, onClose }: { examId: string; onClose: () => 
                 {q.data.exam.signature_inspector
                   ? <img src={q.data.exam.signature_inspector} className="border rounded bg-white max-h-40" alt="Firma inspector" />
                   : q.data.exam.signature_aspirante
-                    ? <SignaturePad label="Firmá para avalar este examen" onSave={(url)=>firmar.mutate(url)} />
+                    ? <AvalInspector onFirmar={(url)=>firmar.mutate(url)} pendiente={firmar.isPending} />
                     : <p className="text-xs text-muted-foreground">El aspirante todavía no firmó.</p>}
               </div>
             </div>
