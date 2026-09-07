@@ -329,6 +329,21 @@ function SenalDialog({
             </div>
           </div>
 
+          <div className="space-y-1.5 rounded border p-3">
+            <Label className="text-xs">Copiar además a otras clases (opcional, no mueve esta señal)</Label>
+            <div className="flex flex-wrap gap-1">
+              {CLASES.filter((c) => c !== (senal ? (senal.clase as Clase) : claseDestino)).map((c) => (
+                <Button
+                  key={c} type="button" size="sm"
+                  variant={copiarA.includes(c) ? "default" : "outline"}
+                  onClick={() => setCopiarA(copiarA.includes(c) ? copiarA.filter((x) => x !== c) : [...copiarA, c])}
+                >{c}</Button>
+              ))}
+            </div>
+          </div>
+
+
+
           <ImagePicker label="Imagen correcta" value={correcta} onChange={setCorrecta} />
           {incorrectas.map((v, i) => (
             <ImagePicker
