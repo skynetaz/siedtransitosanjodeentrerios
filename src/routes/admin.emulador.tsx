@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Play, AlertTriangle, CheckCircle2, XCircle, Clock, Trash2, RefreshCw, ChevronRight, ChevronLeft } from "lucide-react";
+import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -101,7 +102,12 @@ function EmulRow({ e, onDeleted }: { e: any; onDeleted: () => void }) {
       </div>
       <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
         {new Date(e.created_at).toLocaleString("es-AR")}
-        <Button variant="ghost" size="icon" onClick={() => del.mutate()} disabled={del.isPending}><Trash2 className="h-4 w-4" /></Button>
+        <ConfirmarBorrado
+          titulo="¿Eliminar esta prueba del emulador?"
+          detalle="Se borrará el registro de esta simulación."
+          onConfirm={() => del.mutate()}
+          trigger={<Button variant="ghost" size="icon" className="text-destructive" disabled={del.isPending}><Trash2 className="h-4 w-4" /></Button>}
+        />
       </div>
     </div>
   );

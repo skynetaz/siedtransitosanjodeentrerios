@@ -12,6 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Plus, Trash2, Save, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 
 export const Route = createFileRoute("/admin/categorias")({ component: CategoriasPage });
 
@@ -96,9 +97,16 @@ function CategoriasPage() {
                   <Button variant="outline" size="sm" className="h-10" onClick={() => setEditando({ ...c })}>
                     <Pencil className="mr-1 h-4 w-4" />Editar
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-10 text-destructive" onClick={() => del.mutate(c.slug)}>
-                    <Trash2 className="mr-1 h-4 w-4" />Eliminar
-                  </Button>
+                  <ConfirmarBorrado
+                    titulo="¿Eliminar esta categoría de examen?"
+                    detalle={`Se quitará "${c.nombre}" de las categorías disponibles.`}
+                    onConfirm={() => del.mutate(c.slug)}
+                    trigger={
+                      <Button variant="ghost" size="sm" className="h-10 text-destructive">
+                        <Trash2 className="mr-1 h-4 w-4" />Eliminar
+                      </Button>
+                    }
+                  />
                 </div>
               </CardContent>
             </Card>

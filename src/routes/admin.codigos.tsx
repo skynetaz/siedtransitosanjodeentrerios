@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Copy, Loader2, Plus, Search, Trash2, Ban, AlertTriangle } from "lucide-react";
+import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/codigos")({ component: CodigosPage });
@@ -117,9 +118,16 @@ function CodigosPage() {
                       <Ban className="mr-1 h-4 w-4" />Cancelar
                     </Button>
                   )}
-                  <Button variant="ghost" size="sm" className="h-10 text-destructive" onClick={() => delMut.mutate(c.id)}>
-                    <Trash2 className="mr-1 h-4 w-4" />Eliminar
-                  </Button>
+                  <ConfirmarBorrado
+                    titulo="¿Eliminar este código?"
+                    detalle="La persona ya no podrá ingresar al examen con este código."
+                    onConfirm={() => delMut.mutate(c.id)}
+                    trigger={
+                      <Button variant="ghost" size="sm" className="h-10 text-destructive">
+                        <Trash2 className="mr-1 h-4 w-4" />Eliminar
+                      </Button>
+                    }
+                  />
                 </div>
               </CardContent>
             </Card>
