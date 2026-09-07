@@ -100,6 +100,8 @@ function CategoriasPage() {
                   <Button variant="outline" size="sm" className="h-10" onClick={() => setEditando({ ...c })}>
                     <Pencil className="mr-1 h-4 w-4" />Editar
                   </Button>
+                  <VistaPrevia cat={c} />
+
                   <ConfirmarBorrado
                     titulo="¿Eliminar esta categoría de examen?"
                     detalle={`Se quitará "${c.nombre}" de las categorías disponibles.`}
