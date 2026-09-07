@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Plus, Pencil, Trash2, AlertTriangle, Sparkles, Loader2 } from "lucide-react";
+import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { useServerFn } from "@tanstack/react-start";
 import { generarOpcionesIA } from "@/lib/ia-opciones.functions";
 
@@ -111,7 +112,12 @@ function Preguntas() {
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <QuestionDialog topics={topics.data ?? []} question={q} trigger={<Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>} />
-                  <Button variant="ghost" size="icon" onClick={() => { if (confirm("¿Eliminar esta pregunta?")) delMut.mutate(q.id); }}><Trash2 className="h-4 w-4" /></Button>
+                  <ConfirmarBorrado
+                    titulo="¿Eliminar esta pregunta?"
+                    detalle="Se quitará del banco y de los exámenes que la usen."
+                    onConfirm={() => delMut.mutate(q.id)}
+                    trigger={<Button variant="ghost" size="icon" className="text-destructive"><Trash2 className="h-4 w-4" /></Button>}
+                  />
                 </div>
               </div>
             </CardContent>

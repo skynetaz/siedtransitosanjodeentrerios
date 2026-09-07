@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { ArrowDown, ArrowUp, Copy, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { SenalImg } from "@/components/exam/ExamPieces";
 import { SENALES_IMGS } from "@/lib/senales-catalogo";
 
@@ -196,10 +197,16 @@ function SenalesPage() {
                     trigger={<Button variant="outline" size="sm" className="h-10"><Pencil className="mr-1 h-4 w-4" />Editar</Button>}
                   />
                   <CopiarDialog senal={s} onSaved={invalidate} />
-                  <Button variant="ghost" size="sm" className="h-10 text-destructive"
-                    onClick={() => { if (confirm("¿Eliminar esta señal?")) borrar.mutate(s.id); }}>
-                    <Trash2 className="mr-1 h-4 w-4" />Eliminar
-                  </Button>
+                  <ConfirmarBorrado
+                    titulo="¿Eliminar esta señal?"
+                    detalle="La señal dejará de estar disponible para los exámenes de esta clase."
+                    onConfirm={() => borrar.mutate(s.id)}
+                    trigger={
+                      <Button variant="ghost" size="sm" className="h-10 text-destructive">
+                        <Trash2 className="mr-1 h-4 w-4" />Eliminar
+                      </Button>
+                    }
+                  />
                   <div className="ml-auto flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2">
                       <Label className="text-xs text-muted-foreground">Eliminatoria</Label>
