@@ -144,13 +144,16 @@ function SenalesPage() {
             <p className="text-sm text-muted-foreground">
               {q.isLoading ? "Cargando..." : `${activas} activa(s) de ${lista.length} señal(es) en la clase ${clase}`}
             </p>
-            <SenalDialog
-              clase={clase}
-              topicId={topic.data}
-              siguienteOrden={lista.length + 1}
-              onSaved={invalidate}
-              trigger={<Button className="h-11"><Plus className="mr-1 h-4 w-4" />Nueva señal</Button>}
-            />
+            <div className="flex flex-wrap gap-2">
+              <SubirSenal label="Subir imagen al catálogo" />
+              <SenalDialog
+                clase={clase}
+                topicId={topic.data}
+                siguienteOrden={lista.length + 1}
+                onSaved={invalidate}
+                trigger={<Button className="h-11"><Plus className="mr-1 h-4 w-4" />Nueva señal</Button>}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
