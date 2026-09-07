@@ -205,8 +205,9 @@ function Editor({ value, onCancel, onSaved }: { value: Cat; onCancel: () => void
           <Switch checked={form.activa} onCheckedChange={(v) => set({ activa: v })} />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" className="h-12 flex-1" onClick={onCancel}>Cancelar</Button>
+          <VistaPrevia cat={form} className="h-12 flex-1" />
           <Button className="h-12 flex-1" disabled={!form.slug || !form.nombre || form.clases.length === 0 || mut.isPending}
             onClick={() => mut.mutate()}>
             {mut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Guardar
