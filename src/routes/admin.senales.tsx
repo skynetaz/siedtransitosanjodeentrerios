@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Copy, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Loader2, Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { SenalImg } from "@/components/exam/ExamPieces";
 import { SENALES_IMGS } from "@/lib/senales-catalogo";
@@ -331,13 +331,123 @@ function SenalDialog({
   );
 }
 
-/** Selector de imagen del catálogo público de señales. */
+/** Catálogo de señales subidas por el personal (almacenamiento). */
+function useSenalAssets() {
+  return useQuery({
+    queryKey: ["senal-assets"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("senal_assets")
+        .select("id, path, url, nombre")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as { id: string; path: string; url: string; nombre: string }[];
+    },
+  });
+}
+
+/** Subida de una imagen nueva con vista previa antes de guardar. */
+function SubirSenal({ onListo, label = "Subir imagen" }: { onListo?: (url: string) => void; label?: string }) {
+  const [open, setOpen] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>("");
+  const qc = useQueryClient();
+
+  const elegir = (f: File | null) => {
+    if (!f) return;
+    if (!f.type.startsWith("image/")) return toast.error("El archivo debe ser una imagen.");
+    if (f.size > 5 * 1024 * 1024) return toast.error("La imagen no puede superar los 5 MB.");
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
+  };
+
+  const limpiar = () => { setFile(null); setPreview(""); };
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      if (!file) throw new Error("Elegí una imagen.");
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("senales").upload(path, file, {
+        contentType: file.type, upsert: false,
+      });
+      if (upErr) throw upErr;
+      const url = `/api/public/senal/${path}`;
+      const { error } = await supabase.from("senal_assets").insert({
+        path, url, nombre: file.name, content_type: file.type, size: file.size,
+      } as any);
+      if (error) throw error;
+      return url;
+    },
+    onSuccess: (url) => {
+      toast.success("Imagen guardada en el catálogo.");
+      qc.invalidateQueries({ queryKey: ["senal-assets"] });
+      onListo?.(url);
+      limpiar();
+      setOpen(false);
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) limpiar(); }}>
+      <DialogTrigger asChild>
+        <Button type="button" size="sm" variant="outline" className="h-10"><Upload className="mr-1 h-4 w-4" />{label}</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Subir imagen de señal</DialogTitle>
+          <DialogDescription>Aceptamos JPG, PNG, WEBP o SVG hasta 5 MB. La imagen se guarda en su calidad original.</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Input type="file" accept="image/*" className="h-12" onChange={(e) => elegir(e.target.files?.[0] ?? null)} />
+          {preview && (
+            <div className="space-y-2 rounded border p-3 text-center">
+              <img src={preview} alt="Vista previa de la señal" className="mx-auto max-h-60 rounded object-contain" />
+              <p className="truncate text-xs text-muted-foreground">
+                {file?.name} · {((file?.size ?? 0) / 1024).toFixed(0)} KB
+              </p>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button disabled={!file || mut.isPending} onClick={() => mut.mutate()}>
+            {mut.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}Usar esta imagen
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Selector de imagen: catálogo del sistema + imágenes subidas. */
 function ImagePicker({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   const [filtro, setFiltro] = useState("");
+  const assets = useSenalAssets();
+  const qc = useQueryClient();
+
+  const borrarAsset = useMutation({
+    mutationFn: async (a: { id: string; path: string; url: string }) => {
+      const { error: sErr } = await supabase.storage.from("senales").remove([a.path]);
+      if (sErr) throw sErr;
+      const { error } = await supabase.from("senal_assets").delete().eq("id", a.id);
+      if (error) throw error;
+      if (value === a.url) onChange("");
+    },
+    onSuccess: () => { toast.success("Imagen eliminada del catálogo."); qc.invalidateQueries({ queryKey: ["senal-assets"] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const subidas = useMemo(
+    () => (assets.data ?? []).filter((a) => !filtro || a.nombre.toLowerCase().includes(filtro.toLowerCase())),
+    [assets.data, filtro],
+  );
   const opciones = useMemo(
     () => SENALES_IMGS.filter((s) => !filtro || s.toLowerCase().includes(filtro.toLowerCase())).slice(0, 48),
     [filtro],
   );
+
   return (
     <div className="space-y-2 rounded border p-3">
       <div className="flex items-center gap-3">
@@ -346,10 +456,30 @@ function ImagePicker({ label, value, onChange }: { label: string; value: string;
           <p className="truncate text-xs text-muted-foreground">{value || "Sin seleccionar"}</p>
         </div>
         {value && <SenalImg src={value} className="h-16 w-16" />}
+        <SubirSenal label={value ? "Reemplazar imagen" : "Subir imagen"} onListo={onChange} />
         {value && <Button size="sm" variant="ghost" onClick={() => onChange("")}>Quitar</Button>}
       </div>
       <Input placeholder="Filtrar por nombre (ej: A_1)" value={filtro} onChange={(e) => setFiltro(e.target.value)} />
       <div className="flex max-h-40 flex-wrap gap-1 overflow-y-auto">
+        {subidas.map((a) => (
+          <div key={a.id} className="relative">
+            <button type="button" onClick={() => onChange(a.url)}
+              className={a.url === value ? "rounded ring-2 ring-primary" : "rounded opacity-80 hover:opacity-100"}>
+              <SenalImg src={a.url} className="h-14 w-14" />
+            </button>
+            <ConfirmarBorrado
+              titulo="¿Eliminar esta imagen del catálogo?"
+              detalle="La imagen dejará de estar disponible para armar señales."
+              onConfirm={() => borrarAsset.mutate(a)}
+              trigger={
+                <button type="button" aria-label="Eliminar imagen"
+                  className="absolute -right-1 -top-1 rounded-full bg-destructive p-1 text-destructive-foreground">
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              }
+            />
+          </div>
+        ))}
         {opciones.map((s) => (
           <button key={s} type="button" onClick={() => onChange(s)}
             className={s === value ? "rounded ring-2 ring-primary" : "rounded opacity-80 hover:opacity-100"}>
