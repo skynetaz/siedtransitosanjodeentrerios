@@ -22,6 +22,7 @@ export function SignaturePad({
   const boxRef = useRef<HTMLDivElement | null>(null);
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const [empty, setEmpty] = useState(!initialDataUrl);
+  const [preview, setPreview] = useState<string | null>(null);
 
   // El lienzo se dimensiona al contenedor real (ancho completo en celular).
   useLayoutEffect(() => {
@@ -63,6 +64,25 @@ export function SignaturePad({
     );
   }
 
+  if (preview) {
+    return (
+      <div className="space-y-2">
+        <p className="text-xs text-muted-foreground">Así se va a ver tu firma. Si te gusta, confirmala.</p>
+        <img src={preview} alt="Ejemplo de tu firma" className="max-h-40 w-full rounded-lg border-2 bg-white object-contain" />
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" size="lg" variant="outline" className="h-12 sm:h-11" disabled={disabled}
+            onClick={() => { setPreview(null); ref.current?.clear(); setEmpty(true); }}>
+            <Eraser className="mr-1 h-4 w-4" />Volver a firmar
+          </Button>
+          <Button type="button" size="lg" className="h-12 sm:h-11" disabled={disabled}
+            onClick={() => onSave(preview)}>
+            <Check className="mr-1 h-4 w-4" />Usar esta firma
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -74,10 +94,12 @@ export function SignaturePad({
           <SignatureCanvas
             ref={(r) => { ref.current = r; }}
             penColor="#0f172a"
-            minWidth={0.8}
-            maxWidth={2.8}
-            velocityFilterWeight={0.6}
-            throttle={8}
+            dotSize={1.4}
+            minWidth={1.1}
+            maxWidth={3.6}
+            velocityFilterWeight={0.75}
+            throttle={4}
+            minDistance={0.6}
             canvasProps={{
               width: size.w,
               height: size.h,
@@ -95,9 +117,9 @@ export function SignaturePad({
         </Button>
         <Button type="button" size="lg" className="h-12 sm:h-11" disabled={disabled || empty} onClick={() => {
           const url = ref.current?.getCanvas().toDataURL("image/png");
-          if (url) onSave(url);
+          if (url) setPreview(url);
         }}>
-          <Check className="mr-1 h-4 w-4" />Confirmar firma
+          <Check className="mr-1 h-4 w-4" />Ver ejemplo
         </Button>
       </div>
     </div>
