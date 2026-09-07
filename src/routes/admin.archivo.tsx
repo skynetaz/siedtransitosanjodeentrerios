@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SignaturePad } from "@/components/SignaturePad";
+import { MiFirmaGuardada, useMiFirma } from "@/components/MiFirmaGuardada";
 import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { exportExamExcel, exportExamPDF, exportListExcel } from "@/lib/export-utils";
 import { toast } from "sonner";
