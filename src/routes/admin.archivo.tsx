@@ -121,9 +121,9 @@ function ExamDetailDialog({ examId, onClose }: { examId: string; onClose: () => 
         {q.isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : q.data && (
           <div className="space-y-4">
             <div className="flex gap-2 flex-wrap">
-              <Button size="sm" onClick={()=>exportExamPDF(q.data!)}><FileDown className="mr-1 h-4 w-4" />Exportar PDF</Button>
+              <Button size="sm" onClick={() => void exportExamPDF(q.data)}><FileDown className="mr-1 h-4 w-4" />Exportar PDF</Button>
               <Button size="sm" variant="outline" onClick={()=>exportExamExcel(q.data!)}><FileDown className="mr-1 h-4 w-4" />Exportar Excel</Button>
-              <Button size="sm" variant="outline" onClick={()=>imprimirExamen(q.data!)}><Printer className="mr-1 h-4 w-4" />Imprimir</Button>
+              <Button size="sm" variant="outline" onClick={() => void imprimirExamen(q.data)}><Printer className="mr-1 h-4 w-4" />Imprimir</Button>
             </div>
             <ExamPreview data={q.data} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -211,12 +211,41 @@ function ExamPreview({ data }: { data: any }) {
 }
 
 /** Abre una ventana con el acta del examen lista para imprimir (con las imágenes de las señales). */
-function imprimirExamen(data: any) {
+async function imprimirExamen(data: any) {
+  const w = window.open("", "_blank", "width=900,height=1000");
+  if (!w) { toast.error("Permití las ventanas emergentes para imprimir."); return; }
+  w.document.write('<!doctype html><html lang="es"><body style="font-family:system-ui;padding:24px">Preparando imágenes para imprimir…</body></html>');
+  w.document.close();
+
   const p = data.exam.profiles ?? {};
   const d = data.exam.datos_aspirante ?? {};
-  const origin = window.location.origin;
+  const rutas: string[] = Array.from(new Set<string>(
+    (data.preguntas as any[]).flatMap((r: any) => [r.respuesta_dada, r.respuesta_correcta])
+      .filter((v: unknown): v is string => typeof v === "string" && esSenal(v)),
+  ));
+  const imagenes = new Map<string, string>();
+  await Promise.all(rutas.map(async (ruta) => {
+    try {
+      const response = await fetch(ruta, { cache: "force-cache" });
+      if (!response.ok) return;
+      const blob = await response.blob();
+      const dataUrl = await new Promise<string | null>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+      if (dataUrl) imagenes.set(ruta, dataUrl);
+    } catch {
+      // Si una imagen puntual falla, el resto del acta continúa disponible.
+    }
+  }));
   const celda = (v?: string | null) =>
-    !v ? "—" : esSenal(v) ? `<img src="${origin}${v}" class="sig" />` : escapeHtml(v);
+    !v ? "—" : esSenal(v)
+      ? imagenes.has(v)
+        ? `<img src="${imagenes.get(v)}" class="sig" alt="Señal de tránsito" />`
+        : `<strong>Imagen no disponible</strong>`
+      : escapeHtml(v);
   const filas = data.preguntas
     .map(
       (r: any) => `<tr>
@@ -259,10 +288,15 @@ function imprimirExamen(data: any) {
   <div><p><b>Firma del aspirante</b></p>${firma(data.exam.signature_aspirante)}</div>
   <div><p><b>Firma / aval del inspector</b></p>${firma(data.exam.signature_inspector)}</div>
 </div>
-<script>window.addEventListener('load',()=>setTimeout(()=>window.print(),400))<\/script>
+<script>
+  const imagenes = Array.from(document.images);
+  Promise.all(imagenes.map((img) => img.complete
+    ? (img.decode ? img.decode().catch(() => undefined) : Promise.resolve())
+    : new Promise((resolve) => { img.onload = resolve; img.onerror = resolve; })
+  )).then(() => setTimeout(() => window.print(), 250));
+<\/script>
 </body></html>`;
-  const w = window.open("", "_blank", "width=900,height=1000");
-  if (!w) { toast.error("Permití las ventanas emergentes para imprimir."); return; }
+  w.document.open();
   w.document.write(html);
   w.document.close();
 }
