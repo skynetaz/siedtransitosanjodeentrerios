@@ -149,6 +149,31 @@ function ExamDetailDialog({ examId, onClose }: { examId: string; onClose: () => 
   );
 }
 
+/** Aval del inspector: usa la firma guardada con un toque, o permite dibujar otra. */
+function AvalInspector({ onFirmar, pendiente }: { onFirmar: (url: string) => void; pendiente: boolean }) {
+  const mi = useMiFirma();
+  const [dibujar, setDibujar] = useState(false);
+  if (mi.data?.firma && !dibujar) {
+    return (
+      <div className="space-y-2">
+        <img src={mi.data.firma} alt="Mi firma guardada" className="max-h-32 w-full rounded border bg-white object-contain" />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button className="h-11" disabled={pendiente} onClick={() => onFirmar(mi.data!.firma!)}>
+            <Signature className="mr-1 h-4 w-4" />Avalar con mi firma
+          </Button>
+          <Button variant="outline" className="h-11" onClick={() => setDibujar(true)}>Firmar a mano</Button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <SignaturePad label="Firmá para avalar este examen" disabled={pendiente} onSave={onFirmar} />
+      {mi.data?.firma && <Button variant="ghost" className="w-full" onClick={() => setDibujar(false)}>Usar mi firma guardada</Button>}
+    </div>
+  );
+}
+
 /** Celda de respuesta: si es una señal muestra la imagen, si no el texto. */
 function Respuesta({ valor }: { valor?: string | null }) {
   if (!valor) return <span>—</span>;
