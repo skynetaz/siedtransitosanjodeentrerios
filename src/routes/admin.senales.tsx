@@ -247,13 +247,16 @@ function SenalDialog({
     return [0, 1, 2, 3].map((i) => base[i] ?? "");
   });
   const [claseDestino, setClaseDestino] = useState<Clase>(clase);
+  const [copiarA, setCopiarA] = useState<Clase[]>([]);
   const [activa, setActiva] = useState(senal?.activa ?? true);
   const [eliminatoria, setEliminatoria] = useState(senal?.eliminatoria ?? false);
 
   const mut = useMutation({
     mutationFn: async () => {
+      // Al editar NUNCA se cambia la clase: la señal debe seguir en su clase.
+      const claseFinal = senal?.id ? (senal.clase as Clase) : claseDestino;
       const payload: Record<string, any> = {
-        clase: claseDestino,
+        clase: claseFinal,
         topic_id: topicId ?? senal?.topic_id ?? null,
         pregunta: pregunta.trim(),
         respuesta_correcta: correcta,
@@ -273,10 +276,19 @@ function SenalDialog({
         const { error } = await supabase.from("questions").insert(payload as any);
         if (error) throw error;
       }
+      // Copias adicionales en otras clases (no mueve la original).
+      const extra = copiarA.filter((c) => c !== claseFinal);
+      if (extra.length) {
+        const { error } = await supabase
+          .from("questions")
+          .insert(extra.map((c) => ({ ...payload, clase: c, orden: siguienteOrden })) as any);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => { toast.success(senal ? "Señal actualizada." : "Señal creada."); setOpen(false); onSaved(); },
+    onSuccess: () => { toast.success(senal ? "Señal actualizada." : "Señal creada."); setCopiarA([]); setOpen(false); onSaved(); },
     onError: (e) => toast.error((e as Error).message),
   });
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
