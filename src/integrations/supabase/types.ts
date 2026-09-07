@@ -504,6 +504,47 @@ export type Database = {
           },
         ]
       }
+      senal_assets: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          nombre: string
+          path: string
+          size: number | null
+          url: string
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre?: string
+          path: string
+          size?: number | null
+          url: string
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nombre?: string
+          path?: string
+          size?: number | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "senal_assets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       topics: {
         Row: {
           created_at: string

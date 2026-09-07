@@ -15,6 +15,13 @@
       "when": 1788700976665,
       "tag": "0001_add_profile_signature",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788794693006,
+      "tag": "0002_senal_assets",
+      "breakpoints": true
     }
   ]
 }
