@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listarCategorias, guardarCategoria, eliminarCategoria } from "@/lib/categorias.functions";
+import { listarCategorias, guardarCategoria, eliminarCategoria, previsualizarCategoria } from "@/lib/categorias.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Trash2, Save, Pencil } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Loader2, Plus, Trash2, Save, Pencil, Eye, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
+import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
+
 
 export const Route = createFileRoute("/admin/categorias")({ component: CategoriasPage });
 
