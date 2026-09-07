@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SignaturePad } from "@/components/SignaturePad";
+import { MiFirmaGuardada, useMiFirma } from "@/components/MiFirmaGuardada";
 import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { exportExamExcel, exportExamPDF, exportListExcel } from "@/lib/export-utils";
 import { toast } from "sonner";
@@ -27,6 +28,7 @@ function ArchivoPage() {
           <CardDescription>Exámenes finalizados con detalle, firmas y exportación a PDF/Excel.</CardDescription>
         </CardHeader>
       </Card>
+      <MiFirmaGuardada />
       <Tabs value={tab} onValueChange={(v)=>setTab(v as any)}>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="todos">Todos</TabsTrigger>
@@ -136,7 +138,7 @@ function ExamDetailDialog({ examId, onClose }: { examId: string; onClose: () => 
                 {q.data.exam.signature_inspector
                   ? <img src={q.data.exam.signature_inspector} className="border rounded bg-white max-h-40" alt="Firma inspector" />
                   : q.data.exam.signature_aspirante
-                    ? <SignaturePad label="Firmá para avalar este examen" onSave={(url)=>firmar.mutate(url)} />
+                    ? <AvalInspector onFirmar={(url)=>firmar.mutate(url)} pendiente={firmar.isPending} />
                     : <p className="text-xs text-muted-foreground">El aspirante todavía no firmó.</p>}
               </div>
             </div>
@@ -144,6 +146,31 @@ function ExamDetailDialog({ examId, onClose }: { examId: string; onClose: () => 
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Aval del inspector: usa la firma guardada con un toque, o permite dibujar otra. */
+function AvalInspector({ onFirmar, pendiente }: { onFirmar: (url: string) => void; pendiente: boolean }) {
+  const mi = useMiFirma();
+  const [dibujar, setDibujar] = useState(false);
+  if (mi.data?.firma && !dibujar) {
+    return (
+      <div className="space-y-2">
+        <img src={mi.data.firma} alt="Mi firma guardada" className="max-h-32 w-full rounded border bg-white object-contain" />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button className="h-11" disabled={pendiente} onClick={() => onFirmar(mi.data!.firma!)}>
+            <Signature className="mr-1 h-4 w-4" />Avalar con mi firma
+          </Button>
+          <Button variant="outline" className="h-11" onClick={() => setDibujar(true)}>Firmar a mano</Button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <SignaturePad label="Firmá para avalar este examen" disabled={pendiente} onSave={onFirmar} />
+      {mi.data?.firma && <Button variant="ghost" className="w-full" onClick={() => setDibujar(false)}>Usar mi firma guardada</Button>}
+    </div>
   );
 }
 
