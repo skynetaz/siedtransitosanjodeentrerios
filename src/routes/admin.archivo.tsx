@@ -219,8 +219,8 @@ async function imprimirExamen(data: any) {
 
   const p = data.exam.profiles ?? {};
   const d = data.exam.datos_aspirante ?? {};
-  const rutas = Array.from(new Set(
-    data.preguntas.flatMap((r: any) => [r.respuesta_dada, r.respuesta_correcta])
+  const rutas: string[] = Array.from(new Set<string>(
+    (data.preguntas as any[]).flatMap((r: any) => [r.respuesta_dada, r.respuesta_correcta])
       .filter((v: unknown): v is string => typeof v === "string" && esSenal(v)),
   ));
   const imagenes = new Map<string, string>();
