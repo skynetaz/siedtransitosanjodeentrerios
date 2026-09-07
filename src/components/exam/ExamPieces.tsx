@@ -21,7 +21,8 @@ export function ExamProgress({ actual, total }: { actual: number; total: number 
 }
 
 /** Una opción es una señal de tránsito cuando su valor es la ruta de la imagen. */
-export const esSenal = (v: string) => typeof v === "string" && v.startsWith("/senales/");
+export const esSenal = (v: string) =>
+  typeof v === "string" && (v.startsWith("/senales/") || v.startsWith("/api/public/senal/"));
 
 /** Miniatura de una señal de tránsito usada como opción de respuesta. */
 export function SenalImg({ src, className }: { src: string; className?: string }) {
