@@ -15,6 +15,7 @@ const tabs = [
   { to: "/admin/importar", label: "Importar" },
   { to: "/admin/emulador", label: "Emulador" },
   { to: "/admin/archivo", label: "Archivo" },
+  { to: "/admin/firma", label: "Mi firma" },
   { to: "/admin/usuarios", label: "Usuarios" },
   { to: "/admin/configuracion", label: "Configuración" },
   { to: "/admin/estadisticas", label: "Estadísticas" },
