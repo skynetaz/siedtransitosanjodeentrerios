@@ -28,10 +28,36 @@ function datosDe(d: ExamDetail) {
   };
 }
 
-export function exportExamPDF(d: ExamDetail) {
+const esImagenSenal = (valor?: string | null) => Boolean(valor?.startsWith("/senales/"));
+
+async function imagenComoDataUrl(src: string): Promise<string | null> {
+  try {
+    const response = await fetch(src, { cache: "force-cache" });
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+export async function exportExamPDF(d: ExamDetail) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const info = datosDe(d);
   const ex = d.exam;
+  const rutasSenales = Array.from(new Set(
+    d.preguntas.flatMap((p) => [p.respuesta_dada, p.respuesta_correcta]).filter((v): v is string => esImagenSenal(v)),
+  ));
+  const imagenes = new Map<string, string>();
+  await Promise.all(rutasSenales.map(async (ruta) => {
+    const dataUrl = await imagenComoDataUrl(ruta);
+    if (dataUrl) imagenes.set(ruta, dataUrl);
+  }));
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
@@ -62,14 +88,32 @@ export function exportExamPDF(d: ExamDetail) {
     body: d.preguntas.map((p) => [
       String(p.orden),
       p.pregunta + (p.eliminatoria ? " [E]" : ""),
-      p.respuesta_dada ?? "—",
-      p.respuesta_correcta,
+      esImagenSenal(p.respuesta_dada) ? "" : (p.respuesta_dada ?? "—"),
+      esImagenSenal(p.respuesta_correcta) ? "" : p.respuesta_correcta,
       p.correcta === true ? "Sí" : p.correcta === false ? "No" : "—",
     ]),
     styles: { fontSize: 9, cellPadding: 4, valign: "top" },
     headStyles: { fillColor: [15, 23, 42] },
     columnStyles: { 0: { cellWidth: 24 }, 4: { cellWidth: 30, halign: "center" } },
     margin: { left: 40, right: 40 },
+    didParseCell: (hook) => {
+      if (hook.section !== "body") return;
+      const pregunta = d.preguntas[hook.row.index];
+      if (pregunta && (esImagenSenal(pregunta.respuesta_dada) || esImagenSenal(pregunta.respuesta_correcta))) {
+        hook.cell.styles.minCellHeight = 66;
+      }
+    },
+    didDrawCell: (hook) => {
+      if (hook.section !== "body" || (hook.column.index !== 2 && hook.column.index !== 3)) return;
+      const pregunta = d.preguntas[hook.row.index];
+      if (!pregunta) return;
+      const ruta = hook.column.index === 2 ? pregunta.respuesta_dada : pregunta.respuesta_correcta;
+      if (!ruta || !esImagenSenal(ruta)) return;
+      const imagen = imagenes.get(ruta);
+      if (!imagen) return;
+      const lado = Math.min(56, hook.cell.height - 8, hook.cell.width - 8);
+      doc.addImage(imagen, "JPEG", hook.cell.x + 4, hook.cell.y + 4, lado, lado);
+    },
   });
 
   const afterTableY = (doc as any).lastAutoTable?.finalY ?? 400;
