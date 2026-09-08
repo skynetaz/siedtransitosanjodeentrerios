@@ -200,10 +200,19 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
 
   useEffect(() => { if (restante === 0) cerrar(); }, [restante, cerrar]);
 
+  /** Segunda oportunidad activa sobre la pregunta actual (respuesta previa bloqueada). */
+  const [segunda, setSegunda] = useState<{ previa: string; motivo: string } | null>(null);
+
   const respMut = useMutation({
     mutationFn: async (payload: { examQuestionId: string; respuesta: string }) => await responder({ data: payload }),
     onSuccess: (r: any) => {
+      if (r.segundaOportunidad) {
+        setSegunda({ previa: r.respuestaPrevia, motivo: r.motivo });
+        setSeleccion(null);
+        return;
+      }
       if (r.terminado) { cerrar("eliminatoria"); return; }
+      setSegunda(null);
       setSeleccion(null);
       if (idx < questions.length - 1) setIdx(idx + 1);
       else cerrar();
