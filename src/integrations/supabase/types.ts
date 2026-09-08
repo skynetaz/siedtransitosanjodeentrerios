@@ -246,6 +246,8 @@ export type Database = {
           orden: number
           question_id: string
           respuesta_dada: string | null
+          respuesta_previa: string | null
+          segunda_oportunidad: boolean
           snapshot: Json
         }
         Insert: {
@@ -256,6 +258,8 @@ export type Database = {
           orden: number
           question_id: string
           respuesta_dada?: string | null
+          respuesta_previa?: string | null
+          segunda_oportunidad?: boolean
           snapshot: Json
         }
         Update: {
@@ -266,6 +270,8 @@ export type Database = {
           orden?: number
           question_id?: string
           respuesta_dada?: string | null
+          respuesta_previa?: string | null
+          segunda_oportunidad?: boolean
           snapshot?: Json
         }
         Relationships: [
@@ -306,6 +312,8 @@ export type Database = {
           motivo_finalizacion: string | null
           porcentaje: number | null
           puntaje: number
+          segunda_oportunidad_question_id: string | null
+          segunda_oportunidad_usada: boolean
           signature_aspirante: string | null
           signature_inspector: string | null
           signed_aspirante_at: string | null
@@ -336,6 +344,8 @@ export type Database = {
           motivo_finalizacion?: string | null
           porcentaje?: number | null
           puntaje?: number
+          segunda_oportunidad_question_id?: string | null
+          segunda_oportunidad_usada?: boolean
           signature_aspirante?: string | null
           signature_inspector?: string | null
           signed_aspirante_at?: string | null
@@ -366,6 +376,8 @@ export type Database = {
           motivo_finalizacion?: string | null
           porcentaje?: number | null
           puntaje?: number
+          segunda_oportunidad_question_id?: string | null
+          segunda_oportunidad_usada?: boolean
           signature_aspirante?: string | null
           signature_inspector?: string | null
           signed_aspirante_at?: string | null
@@ -396,6 +408,13 @@ export type Database = {
             columns: ["inspector_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exams_segunda_oportunidad_question_id_fkey"
+            columns: ["segunda_oportunidad_question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
             referencedColumns: ["id"]
           },
         ]
