@@ -363,17 +363,24 @@ function Resultado({ status, examId, senales }: { status: string; examId: string
             {firmado ? (
               <p className="text-sm text-muted-foreground">Firma registrada correctamente. Ya podés retirarte.</p>
             ) : (
-              <SignaturePad label="Firmá para dejar registro del examen" onSave={(url) => firmar.mutate(url)} />
+              <>
+                <p className="mb-2 text-sm text-muted-foreground">
+                  Todos los exámenes, aprobados o desaprobados, deben quedar firmados.
+                </p>
+                <SignaturePad label="Firmá para dejar registro del examen" onSave={(url) => firmar.mutate(url)} />
+              </>
             )}
           </div>
         )}
 
         <Button
           variant="outline" size="lg" className="h-12 w-full"
+          disabled={!cancelado && !firmado}
           onClick={async () => { await supabase.auth.signOut(); window.location.href = "/"; }}
         >
-          Salir
+          {!cancelado && !firmado ? "Firmá para poder salir" : "Salir"}
         </Button>
+
       </CardContent>
     </Card>
   );
