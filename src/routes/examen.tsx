@@ -256,6 +256,15 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
               Tenés <strong>una única posibilidad</strong> de corregir esta pregunta para continuar.
             </p>
             <p className="font-bold">Si te volvés a equivocar, quedás DESAPROBADO.</p>
+            <div className="mt-2 rounded-md bg-background/95 p-2 text-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wide text-destructive">Tu respuesta incorrecta fue:</p>
+              {esSenal(segunda.previa) ? (
+                <SenalImg src={segunda.previa} className="mt-1 h-20 w-20" />
+              ) : (
+                <p className="mt-1 text-sm font-medium">{segunda.previa}</p>
+              )}
+            </div>
+
           </div>
         </div>
       )}
