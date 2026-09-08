@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 /** Barra de progreso del examen: "Pregunta 8 de 40" + porcentaje. */
 export function ExamProgress({ actual, total }: { actual: number; total: number }) {
@@ -36,12 +36,14 @@ export function OptionCard({
   letra,
   selected,
   disabled,
+  marcaIncorrecta,
   onSelect,
 }: {
   texto: string;
   letra: string;
   selected: boolean;
   disabled?: boolean;
+  marcaIncorrecta?: boolean;
   onSelect: () => void;
 }) {
   return (
@@ -54,25 +56,34 @@ export function OptionCard({
       className={cn(
         "flex w-full items-start gap-3 rounded-xl border-2 p-4 text-left transition-all duration-200 min-h-14 active:scale-[0.99]",
         "shadow-sm disabled:opacity-60",
-        selected
-          ? "border-primary bg-primary/10 shadow-md"
-          : "border-border bg-card hover:border-primary/40",
+        marcaIncorrecta
+          ? "border-destructive bg-destructive/10"
+          : selected
+            ? "border-primary bg-primary/10 shadow-md"
+            : "border-border bg-card hover:border-primary/40",
       )}
     >
       <span
         className={cn(
           "mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 text-sm font-bold",
-          selected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40 text-muted-foreground",
+          marcaIncorrecta
+            ? "border-destructive bg-destructive text-destructive-foreground"
+            : selected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40 text-muted-foreground",
         )}
       >
-        {selected ? <Check className="h-4 w-4" /> : letra}
+        {marcaIncorrecta ? <X className="h-4 w-4" /> : selected ? <Check className="h-4 w-4" /> : letra}
       </span>
-      {esSenal(texto) ? (
-        <SenalImg src={texto} />
-      ) : (
-        <span className="min-w-0 text-base leading-snug break-words">{texto}</span>
-      )}
-
+      <span className="min-w-0 space-y-1">
+        {esSenal(texto) ? (
+          <SenalImg src={texto} />
+        ) : (
+          <span className="block min-w-0 text-base leading-snug break-words">{texto}</span>
+        )}
+        {marcaIncorrecta && (
+          <span className="block text-xs font-bold uppercase text-destructive">Tu respuesta incorrecta</span>
+        )}
+      </span>
     </button>
   );
 }
+
