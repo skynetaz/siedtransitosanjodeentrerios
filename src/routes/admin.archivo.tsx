@@ -14,7 +14,7 @@ import { MiFirmaGuardada, useMiFirma } from "@/components/MiFirmaGuardada";
 import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { exportExamExcel, exportExamPDF, exportListExcel } from "@/lib/export-utils";
 import { toast } from "sonner";
-import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer } from "lucide-react";
+import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/admin/archivo")({ component: ArchivoPage });
 
@@ -87,6 +87,7 @@ function ArchiveList({ estado }: { estado: "aprobado"|"desaprobado"|"pendiente_f
                     <span>{e.finished_at ? new Date(e.finished_at).toLocaleString("es-AR") : ""}</span>
                     {e.signature_aspirante && <Badge variant="outline" className="text-xs">Firmado aspirante</Badge>}
                     {e.signature_inspector && <Badge variant="outline" className="text-xs">Firmado inspector</Badge>}
+                    {e.segunda_oportunidad_usada && <Badge className="bg-warning text-warning-foreground text-xs"><AlertTriangle className="mr-1 h-3 w-3" />Usó 2ª oportunidad</Badge>}
                   </div>
                 </div>
                 <Button size="sm" variant="outline" onClick={()=>setOpenId(e.id)}><FileText className="mr-1 h-4 w-4" />Ver / firmar / exportar</Button>
@@ -195,9 +196,18 @@ function ExamPreview({ data }: { data: any }) {
           <thead className="bg-muted/40"><tr><th className="p-2 text-left">#</th><th className="p-2 text-left">Pregunta</th><th className="p-2 text-left">Respondió</th><th className="p-2 text-left">Esperada</th><th className="p-2">OK</th></tr></thead>
           <tbody>
             {data.preguntas.map((r: any) => (
-              <tr key={r.orden} className="border-t align-top">
+              <tr key={r.orden} className={`border-t align-top ${r.segunda_oportunidad ? "bg-warning/15" : ""}`}>
                 <td className="p-2">{r.orden}</td>
-                <td className="p-2">{r.pregunta}{r.eliminatoria && <Badge className="ml-1 bg-destructive text-destructive-foreground text-[10px]">E</Badge>}</td>
+                <td className="p-2">
+                  {r.pregunta}{r.eliminatoria && <Badge className="ml-1 bg-destructive text-destructive-foreground text-[10px]">E</Badge>}
+                  {r.segunda_oportunidad && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      <Badge className="bg-warning text-warning-foreground text-[10px]"><AlertTriangle className="mr-1 h-3 w-3" />2ª oportunidad</Badge>
+                      <span className="text-[11px] text-muted-foreground">Primera respuesta (errónea):</span>
+                      <Respuesta valor={r.respuesta_previa} />
+                    </div>
+                  )}
+                </td>
                 <td className="p-2"><Respuesta valor={r.respuesta_dada} /></td>
                 <td className="p-2"><Respuesta valor={r.respuesta_correcta} /></td>
                 <td className="p-2 text-center">{r.correcta ? "✓" : "✗"}</td>
@@ -220,7 +230,7 @@ async function imprimirExamen(data: any) {
   const p = data.exam.profiles ?? {};
   const d = data.exam.datos_aspirante ?? {};
   const rutas: string[] = Array.from(new Set<string>(
-    (data.preguntas as any[]).flatMap((r: any) => [r.respuesta_dada, r.respuesta_correcta])
+    (data.preguntas as any[]).flatMap((r: any) => [r.respuesta_dada, r.respuesta_correcta, r.respuesta_previa])
       .filter((v: unknown): v is string => typeof v === "string" && esSenal(v)),
   ));
   const imagenes = new Map<string, string>();
@@ -248,9 +258,9 @@ async function imprimirExamen(data: any) {
       : escapeHtml(v);
   const filas = data.preguntas
     .map(
-      (r: any) => `<tr>
+      (r: any) => `<tr${r.segunda_oportunidad ? ' class="so"' : ""}>
         <td>${r.orden}</td>
-        <td>${escapeHtml(r.pregunta ?? "")}${r.eliminatoria ? " <b>(E)</b>" : ""}</td>
+        <td>${escapeHtml(r.pregunta ?? "")}${r.eliminatoria ? " <b>(E)</b>" : ""}${r.segunda_oportunidad ? `<div class="so-nota"><b>⚠ 2ª OPORTUNIDAD</b> — primera respuesta (errónea): ${celda(r.respuesta_previa)}</div>` : ""}</td>
         <td>${celda(r.respuesta_dada)}</td>
         <td>${celda(r.respuesta_correcta)}</td>
         <td class="c">${r.correcta ? "✓" : "✗"}</td>
@@ -275,6 +285,8 @@ async function imprimirExamen(data: any) {
   .firmas{display:flex;gap:24px;margin-top:16px}
   .firmas>div{flex:1}
   .muted{color:#666}
+  tr.so td{background:#fff3cd}
+  .so-nota{margin-top:4px;padding:3px 6px;border:1px solid #d39e00;background:#ffe8a1;font-size:11px}
   @page{margin:14mm}
 </style></head><body>
 <h1>Acta de examen teórico — SIED</h1>

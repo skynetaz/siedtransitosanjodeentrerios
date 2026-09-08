@@ -200,10 +200,19 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
 
   useEffect(() => { if (restante === 0) cerrar(); }, [restante, cerrar]);
 
+  /** Segunda oportunidad activa sobre la pregunta actual (respuesta previa bloqueada). */
+  const [segunda, setSegunda] = useState<{ previa: string; motivo: string } | null>(null);
+
   const respMut = useMutation({
     mutationFn: async (payload: { examQuestionId: string; respuesta: string }) => await responder({ data: payload }),
     onSuccess: (r: any) => {
+      if (r.segundaOportunidad) {
+        setSegunda({ previa: r.respuestaPrevia, motivo: r.motivo });
+        setSeleccion(null);
+        return;
+      }
       if (r.terminado) { cerrar("eliminatoria"); return; }
+      setSegunda(null);
       setSeleccion(null);
       if (idx < questions.length - 1) setIdx(idx + 1);
       else cerrar();
@@ -235,7 +244,23 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
         </div>
       )}
 
-      <Card className="shadow-sm">
+      {segunda && (
+        <div role="alert" className="flex gap-3 rounded-lg border-2 border-destructive bg-destructive p-4 text-destructive-foreground shadow-md">
+          <AlertTriangle className="mt-0.5 h-6 w-6 shrink-0" />
+          <div className="space-y-1 text-sm">
+            <p className="text-base font-extrabold uppercase tracking-wide">Última oportunidad</p>
+            <p>
+              {segunda.motivo === "eliminatoria"
+                ? "Respondiste mal una pregunta eliminatoria."
+                : "Superaste el máximo de errores permitidos."}{" "}
+              Tenés <strong>una única posibilidad</strong> de corregir esta pregunta para continuar.
+            </p>
+            <p className="font-bold">Si te volvés a equivocar, quedás DESAPROBADO.</p>
+          </div>
+        </div>
+      )}
+
+      <Card className={`shadow-sm ${segunda ? "border-destructive" : ""}`}>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg leading-snug">{actual.snapshot?.pregunta}</CardTitle>
         </CardHeader>
@@ -247,11 +272,12 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
                 texto={op}
                 letra={LETRAS[i] ?? String(i + 1)}
                 selected={seleccion === op}
-                disabled={respMut.isPending}
+                disabled={respMut.isPending || (segunda?.previa === op)}
                 onSelect={() => setSeleccion(op)}
               />
             ))}
           </div>
+          {segunda && <p className="text-xs text-muted-foreground">La opción que elegiste antes quedó bloqueada.</p>}
           <Button
             size="lg"
             className="h-14 w-full text-base"
