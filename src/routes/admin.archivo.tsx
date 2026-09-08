@@ -14,7 +14,7 @@ import { MiFirmaGuardada, useMiFirma } from "@/components/MiFirmaGuardada";
 import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { exportExamExcel, exportExamPDF, exportListExcel } from "@/lib/export-utils";
 import { toast } from "sonner";
-import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer } from "lucide-react";
+import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer, AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/admin/archivo")({ component: ArchivoPage });
 
