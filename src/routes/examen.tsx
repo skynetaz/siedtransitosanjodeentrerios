@@ -282,8 +282,10 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
                 letra={LETRAS[i] ?? String(i + 1)}
                 selected={seleccion === op}
                 disabled={respMut.isPending || (segunda?.previa === op)}
+                marcaIncorrecta={segunda?.previa === op}
                 onSelect={() => setSeleccion(op)}
               />
+
             ))}
           </div>
           {segunda && <p className="text-xs text-muted-foreground">La opción que elegiste antes quedó bloqueada.</p>}
