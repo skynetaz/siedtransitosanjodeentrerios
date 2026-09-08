@@ -98,18 +98,39 @@ export const responderPregunta = createServerFn({ method: "POST" })
     if (!q) throw new Error("Pregunta no encontrada.");
 
     const correcta = answersMatch(data.respuesta, q.respuesta_correcta, q.respuestas_aceptadas ?? []);
+
+    // Cierre anticipado: pregunta eliminatoria fallada, o más de N errores comunes.
+    // Antes de cerrar, el aspirante tiene UNA segunda oportunidad en todo el examen
+    // para corregir la pregunta que lo desaprobaría.
+    const cfgEx = eq.exams.config_snapshot as { max_errores?: number } | null;
+    const maxErrComunes = cfgEx?.max_errores ?? 5;
+    const { data: otrasEq } = await supabaseAdmin.from("exam_questions").select("correcta").eq("exam_id", eq.exam_id).neq("id", data.examQuestionId);
+    const correctasOtras = (otrasEq ?? []).filter((r) => r.correcta === true).length;
+    const incorrectasOtras = (otrasEq ?? []).filter((r) => r.correcta === false).length;
+    const incorrectas = incorrectasOtras + (correcta ? 0 : 1);
+    const correctas = correctasOtras + (correcta ? 1 : 0);
+    const porEliminatoria = q.eliminatoria && !correcta;
+    const porErrores = incorrectas > maxErrComunes;
+
+    if ((porEliminatoria || porErrores) && !eq.exams.segunda_oportunidad_usada) {
+      // Segunda oportunidad: no se cuenta la respuesta, se marca la pregunta y se pide corregir.
+      await supabaseAdmin.from("exam_questions").update({
+        segunda_oportunidad: true, respuesta_previa: data.respuesta,
+        respuesta_dada: null, correcta: null, answered_at: null,
+      }).eq("id", data.examQuestionId);
+      await supabaseAdmin.from("exams").update({
+        segunda_oportunidad_usada: true, segunda_oportunidad_question_id: eq.question_id,
+      }).eq("id", eq.exam_id);
+      return {
+        correcta: false, terminado: false, segundaOportunidad: true,
+        respuestaPrevia: data.respuesta,
+        motivo: (porEliminatoria ? "eliminatoria" : "max_errores") as "eliminatoria" | "max_errores",
+      };
+    }
+
     await supabaseAdmin.from("exam_questions").update({
       respuesta_dada: data.respuesta, correcta, answered_at: new Date().toISOString(),
     }).eq("id", data.examQuestionId);
-
-    // Cierre anticipado: pregunta eliminatoria fallada, o más de N errores comunes.
-    const cfgEx = eq.exams.config_snapshot as { max_errores?: number } | null;
-    const maxErrComunes = cfgEx?.max_errores ?? 5;
-    const { data: allEq } = await supabaseAdmin.from("exam_questions").select("correcta").eq("exam_id", eq.exam_id);
-    const correctas = (allEq ?? []).filter((r) => r.correcta === true).length;
-    const incorrectas = (allEq ?? []).filter((r) => r.correcta === false).length;
-    const porEliminatoria = q.eliminatoria && !correcta;
-    const porErrores = incorrectas > maxErrComunes;
 
     if (porEliminatoria || porErrores) {
       const now = new Date().toISOString();
@@ -119,9 +140,9 @@ export const responderPregunta = createServerFn({ method: "POST" })
         puntaje: correctas,
         motivo_finalizacion: porEliminatoria ? "pregunta eliminatoria" : `superó el máximo de ${maxErrComunes} errores`,
       }).eq("id", eq.exam_id);
-      return { correcta, terminado: true, motivo: (porEliminatoria ? "eliminatoria" : "max_errores") as "eliminatoria" | "max_errores" };
+      return { correcta, terminado: true, segundaOportunidad: false, motivo: (porEliminatoria ? "eliminatoria" : "max_errores") as "eliminatoria" | "max_errores" };
     }
-    return { correcta, terminado: false };
+    return { correcta, terminado: false, segundaOportunidad: false };
   });
 
 // ---------------------------------------------------------------
