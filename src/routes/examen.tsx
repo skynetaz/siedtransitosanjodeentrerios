@@ -211,7 +211,7 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
         setSeleccion(null);
         return;
       }
-      if (r.terminado) { cerrar("eliminatoria"); return; }
+      if (r.terminado) { cerrar(); return; }
       setSegunda(null);
       setSeleccion(null);
       if (idx < questions.length - 1) setIdx(idx + 1);
