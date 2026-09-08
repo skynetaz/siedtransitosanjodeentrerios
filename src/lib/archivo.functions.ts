@@ -20,7 +20,7 @@ export const listExamsArchive = createServerFn({ method: "POST" })
     await assertStaff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let query = supabaseAdmin.from("exams")
-      .select("id, clase, status, finished_at, correctas, incorrectas, total_preguntas, is_emulation, signature_aspirante, signature_inspector, datos_aspirante, profiles!exams_aspirante_id_fkey(dni,nombre,apellido,email,telefono)")
+      .select("id, clase, status, finished_at, correctas, incorrectas, total_preguntas, is_emulation, signature_aspirante, signature_inspector, datos_aspirante, segunda_oportunidad_usada, profiles!exams_aspirante_id_fkey(dni,nombre,apellido,email,telefono)")
       .eq("is_emulation", false)
       .in("status", ["aprobado","desaprobado"])
       .order("finished_at", { ascending: false })
@@ -43,7 +43,7 @@ export const getExamDetail = createServerFn({ method: "POST" })
       .eq("id", data.examId).single();
     if (!exam) throw new Error("No encontrado.");
     const { data: eqs } = await supabaseAdmin.from("exam_questions")
-      .select("orden, snapshot, respuesta_dada, correcta, question_id")
+      .select("orden, snapshot, respuesta_dada, correcta, question_id, segunda_oportunidad, respuesta_previa")
       .eq("exam_id", data.examId).order("orden");
     const qIds = (eqs ?? []).map((e) => e.question_id);
     const { data: qs } = await supabaseAdmin.from("questions")
@@ -59,6 +59,8 @@ export const getExamDetail = createServerFn({ method: "POST" })
         respuesta_dada: e.respuesta_dada,
         respuesta_correcta: q?.respuesta_correcta,
         correcta: e.correcta,
+        segunda_oportunidad: e.segunda_oportunidad,
+        respuesta_previa: e.respuesta_previa,
       };
     });
     return { exam, preguntas };
