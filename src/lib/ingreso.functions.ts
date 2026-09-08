@@ -23,18 +23,31 @@ export const iniciarConCodigo = createServerFn({ method: "POST" })
       .eq("codigo", codigo)
       .maybeSingle();
     if (!code || code.aspirante_id !== context.userId) throw new Error("Código inválido.");
-    if (code.status === "utilizado") throw new Error("Este código ya fue utilizado.");
     if (code.status === "cancelado") throw new Error("Este código fue cancelado.");
-    if (code.expires_at && new Date(code.expires_at).getTime() < Date.now()) {
-      await supabaseAdmin.from("exam_access_codes").update({ status: "expirado" }).eq("id", code.id);
-      throw new Error("El código venció. Pedí uno nuevo al administrador.");
-    }
 
     const examId = code.exam_id;
     if (!examId) throw new Error("El código no tiene un examen asociado.");
     const { data: exam } = await supabaseAdmin.from("exams").select("*").eq("id", examId).single();
     if (!exam || exam.aspirante_id !== context.userId) throw new Error("Examen no disponible.");
+
+    // Si el examen ya está en curso, se reanuda con las mismas preguntas
+    // (por ejemplo si se cortó la conexión o se recargó la pantalla).
+    if (exam.status === "rindiendo") {
+      const { data: qs } = await supabaseAdmin
+        .from("exam_questions")
+        .select("id, orden, snapshot, respuesta_dada")
+        .eq("exam_id", examId)
+        .order("orden");
+      return { exam, questions: qs ?? [] };
+    }
+
+    if (code.status === "utilizado") throw new Error("Este código ya fue utilizado.");
+    if (code.expires_at && new Date(code.expires_at).getTime() < Date.now()) {
+      await supabaseAdmin.from("exam_access_codes").update({ status: "expirado" }).eq("id", code.id);
+      throw new Error("El código venció. Pedí uno nuevo al administrador.");
+    }
     if (!["habilitado", "esperando"].includes(exam.status)) throw new Error("Este examen ya no está disponible.");
+
 
     const { resolverCategoria, seleccionarPreguntas } = await import("@/lib/seleccion.server");
     const cat = await resolverCategoria(supabaseAdmin, exam.categoria_slug, exam.clase);
