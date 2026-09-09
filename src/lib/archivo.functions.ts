@@ -95,8 +95,12 @@ export const firmarInspector = createServerFn({ method: "POST" })
 const SUPER_ADMIN_EMAIL = "charlasseguridadvialsanjose@gmail.com";
 
 async function assertSuperAdmin(context: any) {
-  const email = String(context.claims?.email ?? "").toLowerCase();
+  let email = String(context.claims?.email ?? "").toLowerCase();
   const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  if (!email) {
+    const { data: prof } = await context.supabase.from("profiles").select("email").eq("id", context.userId).maybeSingle();
+    email = String(prof?.email ?? "").toLowerCase();
+  }
   if (!isAdmin || email !== SUPER_ADMIN_EMAIL) {
     throw new Error("Solo el administrador principal puede eliminar exámenes.");
   }
