@@ -47,7 +47,7 @@ function ArchiveList({ estado }: { estado: "aprobado"|"desaprobado"|"pendiente_f
   const fn = useServerFn(listExamsArchive);
   const q = useQuery({ queryKey: ["archive", estado], queryFn: () => fn({ data: { estado } }) });
   const permisoFn = useServerFn(puedeBorrarExamenes);
-  const permiso = useQuery({ queryKey: ["puede-borrar-examenes"], queryFn: () => permisoFn({ data: {} }) });
+  const permiso = useQuery({ queryKey: ["puede-borrar-examenes"], queryFn: () => permisoFn() });
   const [openId, setOpenId] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
   const [fecha, setFecha] = useState("");
