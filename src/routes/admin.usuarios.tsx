@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { createStaff } from "@/lib/admin.functions";
+import { createStaff, deleteStaff } from "@/lib/admin.functions";
+import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
+import { useCurrentUser } from "@/lib/use-current-user";
+import { Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,12 +41,15 @@ function Usuarios() {
       <div className="grid gap-2">
         {(list.data ?? []).map((r: any) => (
           <Card key={r.user_id + r.role}>
-            <CardContent className="pt-4 flex items-center justify-between">
+            <CardContent className="pt-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="font-medium">{r.profile?.nombre} {r.profile?.apellido}</div>
                 <div className="text-sm text-muted-foreground">{r.profile?.email}</div>
               </div>
-              <Badge variant={r.role === "admin" ? "default" : "secondary"}>{r.role}</Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant={r.role === "admin" ? "default" : "secondary"}>{r.role}</Badge>
+                <BorrarPersonal userId={r.user_id} nombre={`${r.profile?.nombre ?? ""} ${r.profile?.apellido ?? ""}`.trim()} />
+              </div>
             </CardContent>
           </Card>
         ))}
