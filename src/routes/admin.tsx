@@ -28,28 +28,24 @@ function AdminLayout() {
   if (!user) return <Navigate to="/auth" replace />;
   if (!isAdmin) return <Navigate to="/panel" replace />;
   return (
-    <AppShell
-      title="Panel Administrador"
-      subtitle="Gestión completa del sistema de evaluación"
-      nav={
-        <nav className="hidden md:flex items-center gap-1">
-          {tabs.map((t) => {
-            const active = t.exact ? location.pathname === t.to : location.pathname.startsWith(t.to);
-            return (
-              <Link key={t.to} to={t.to} className={cn("px-3 py-1.5 rounded text-sm font-medium", active ? "bg-accent text-accent-foreground" : "hover:bg-white/10 text-institutional-foreground")}>
-                {t.label}
-              </Link>
-            );
-          })}
-        </nav>
-      }
-    >
-      <div className="md:hidden mb-4 flex flex-wrap gap-2">
+    <AppShell title="Panel Administrador" subtitle="Gestión completa del sistema de evaluación">
+      <nav className="no-print -mx-1 mb-4 flex flex-wrap gap-2 px-1">
         {tabs.map((t) => {
           const active = t.exact ? location.pathname === t.to : location.pathname.startsWith(t.to);
-          return <Link key={t.to} to={t.to} className={cn("px-3 py-1.5 rounded text-sm border", active ? "bg-primary text-primary-foreground border-primary" : "bg-card")}>{t.label}</Link>;
+          return (
+            <Link
+              key={t.to}
+              to={t.to}
+              className={cn(
+                "rounded-md border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+                active ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card hover:bg-muted",
+              )}
+            >
+              {t.label}
+            </Link>
+          );
         })}
-      </div>
+      </nav>
       <Outlet />
     </AppShell>
   );

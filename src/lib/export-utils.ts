@@ -59,31 +59,30 @@ export async function exportExamPDF(d: ExamDetail) {
     if (dataUrl) imagenes.set(ruta, dataUrl);
   }));
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("Dirección de Tránsito — Examen de Licencia de Conducir", 40, 50);
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Clase: ${ex.clase}   Estado: ${ex.status?.toUpperCase()}   Fecha: ${ex.finished_at ? new Date(ex.finished_at).toLocaleString("es-AR") : "—"}`, 40, 70);
+  // Acta compacta: pensada para entrar en 2 hojas A4.
+  const M = 28; // margen en puntos
+  const ANCHO = 595 - M * 2;
 
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.text("Dirección de Tránsito — Examen de Licencia de Conducir", M, 30);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Clase: ${ex.clase}   Estado: ${(ex.status ?? "").toUpperCase()}   Fecha: ${ex.finished_at ? new Date(ex.finished_at).toLocaleString("es-AR") : "—"}`, M, 43);
+  doc.text(`${info.apellido}, ${info.nombre} — DNI ${info.dni}   ${info.email || "—"} · ${info.telefono || "—"}`, M, 54);
+  doc.text(
+    `Correctas: ${ex.correctas ?? 0} / ${ex.total_preguntas ?? 0}   Incorrectas: ${ex.incorrectas ?? 0}` +
+      (ex.eliminado_por_pregunta ? "   Desaprobado por pregunta eliminatoria." : ""),
+    M,
+    65,
+  );
   doc.setDrawColor(200);
-  doc.line(40, 80, 555, 80);
+  doc.line(M, 71, 595 - M, 71);
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Datos del aspirante", 40, 100);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Apellido y Nombre: ${info.apellido}, ${info.nombre}`, 40, 118);
-  doc.text(`DNI: ${info.dni}`, 40, 134);
-  doc.text(`Correo: ${info.email || "—"}    Teléfono: ${info.telefono || "—"}`, 40, 150);
-
-  doc.setFont("helvetica", "bold");
-  doc.text("Resultado", 40, 176);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Correctas: ${ex.correctas ?? 0} / ${ex.total_preguntas ?? 0}    Incorrectas: ${ex.incorrectas ?? 0}`, 40, 192);
-  if (ex.eliminado_por_pregunta) doc.text("Desaprobado por pregunta eliminatoria.", 40, 208);
+  const LADO_SENAL = 22; // lado de la miniatura de señal, en puntos
 
   autoTable(doc, {
-    startY: 224,
+    startY: 78,
     head: [["#", "Pregunta", "Respuesta del aspirante", "Correcta esperada", "OK"]],
     body: d.preguntas.map((p) => [
       String(p.orden),
@@ -92,15 +91,20 @@ export async function exportExamPDF(d: ExamDetail) {
       esImagenSenal(p.respuesta_correcta) ? "" : p.respuesta_correcta,
       p.correcta === true ? "Sí" : p.correcta === false ? "No" : "—",
     ]),
-    styles: { fontSize: 9, cellPadding: 4, valign: "top" },
-    headStyles: { fillColor: [15, 23, 42] },
-    columnStyles: { 0: { cellWidth: 24 }, 4: { cellWidth: 30, halign: "center" } },
-    margin: { left: 40, right: 40 },
+    styles: { fontSize: 6.2, cellPadding: 1.5, valign: "top", overflow: "linebreak", lineWidth: 0.3 },
+    headStyles: { fillColor: [15, 23, 42], fontSize: 6.4, cellPadding: 2 },
+    columnStyles: {
+      0: { cellWidth: 14, halign: "center" },
+      2: { cellWidth: ANCHO * 0.2 },
+      3: { cellWidth: ANCHO * 0.2 },
+      4: { cellWidth: 18, halign: "center" },
+    },
+    margin: { left: M, right: M, top: 24, bottom: 24 },
     didParseCell: (hook) => {
       if (hook.section !== "body") return;
       const pregunta = d.preguntas[hook.row.index];
       if (pregunta && (esImagenSenal(pregunta.respuesta_dada) || esImagenSenal(pregunta.respuesta_correcta))) {
-        hook.cell.styles.minCellHeight = 66;
+        hook.cell.styles.minCellHeight = LADO_SENAL + 4;
       }
     },
     didDrawCell: (hook) => {
@@ -111,31 +115,33 @@ export async function exportExamPDF(d: ExamDetail) {
       if (!ruta || !esImagenSenal(ruta)) return;
       const imagen = imagenes.get(ruta);
       if (!imagen) return;
-      const lado = Math.min(56, hook.cell.height - 8, hook.cell.width - 8);
-      doc.addImage(imagen, "JPEG", hook.cell.x + 4, hook.cell.y + 4, lado, lado);
+      const lado = Math.min(LADO_SENAL, hook.cell.height - 3, hook.cell.width - 3);
+      doc.addImage(imagen, "JPEG", hook.cell.x + 2, hook.cell.y + 2, lado, lado);
     },
   });
 
   const afterTableY = (doc as any).lastAutoTable?.finalY ?? 400;
-  let y = afterTableY + 30;
-  if (y > 720) { doc.addPage(); y = 60; }
+  const ALTO_FIRMA = 56;
+  let y = afterTableY + 16;
+  if (y + ALTO_FIRMA + 30 > 812) { doc.addPage(); y = 40; }
 
   doc.setFont("helvetica", "bold");
-  doc.text("Firma del aspirante", 60, y);
-  doc.text("Firma y aval del inspector", 330, y);
+  doc.setFontSize(8);
+  doc.text("Firma del aspirante", M, y);
+  doc.text("Firma y aval del inspector", 310, y);
   doc.setDrawColor(120);
-  doc.rect(60, y + 10, 220, 80);
-  doc.rect(330, y + 10, 220, 80);
+  doc.rect(M, y + 6, 230, ALTO_FIRMA);
+  doc.rect(310, y + 6, 230, ALTO_FIRMA);
   if (ex.signature_aspirante) {
-    try { doc.addImage(ex.signature_aspirante, "PNG", 62, y + 12, 216, 76); } catch {}
+    try { doc.addImage(ex.signature_aspirante, "PNG", M + 2, y + 8, 226, ALTO_FIRMA - 4); } catch {}
   }
   if (ex.signature_inspector) {
-    try { doc.addImage(ex.signature_inspector, "PNG", 332, y + 12, 216, 76); } catch {}
+    try { doc.addImage(ex.signature_inspector, "PNG", 312, y + 8, 226, ALTO_FIRMA - 4); } catch {}
   }
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.text(`${info.apellido}, ${info.nombre} — DNI ${info.dni}`, 60, y + 105);
-  doc.text(ex.signed_inspector_at ? `Firmado ${new Date(ex.signed_inspector_at).toLocaleString("es-AR")}` : "Pendiente de firma", 330, y + 105);
+  doc.setFontSize(7);
+  doc.text(`${info.apellido}, ${info.nombre} — DNI ${info.dni}`, M, y + ALTO_FIRMA + 16);
+  doc.text(ex.signed_inspector_at ? `Firmado ${new Date(ex.signed_inspector_at).toLocaleString("es-AR")}` : "Pendiente de firma", 310, y + ALTO_FIRMA + 16);
 
   const filename = `examen_${info.apellido || "aspirante"}_${info.dni || ex.id.slice(0,8)}.pdf`;
   doc.save(filename);

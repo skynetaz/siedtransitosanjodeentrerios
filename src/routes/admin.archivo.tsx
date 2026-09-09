@@ -273,21 +273,24 @@ async function imprimirExamen(data: any) {
 <title>Acta de examen — ${escapeHtml(d.apellido ?? p.apellido ?? "")}</title>
 <style>
   *{box-sizing:border-box}
-  body{font-family:system-ui,Segoe UI,Arial,sans-serif;color:#111;margin:24px;font-size:12px}
-  h1{font-size:18px;margin:0 0 4px}
-  table{width:100%;border-collapse:collapse;margin-top:12px}
-  th,td{border:1px solid #999;padding:6px;vertical-align:top;text-align:left}
-  th{background:#eee}
-  td.c{text-align:center;font-size:14px}
-  img.sig{width:90px;height:90px;object-fit:contain;background:#fff}
-  img.firma{max-height:110px;border:1px solid #999;background:#fff}
-  .head{border:1px solid #999;padding:8px;background:#f5f5f5}
-  .firmas{display:flex;gap:24px;margin-top:16px}
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;color:#111;margin:0;font-size:7.6px;line-height:1.15}
+  h1{font-size:12px;margin:0 0 2px}
+  table{width:100%;border-collapse:collapse;margin-top:4px;table-layout:fixed}
+  th,td{border:1px solid #999;padding:1.5px 3px;vertical-align:top;text-align:left;word-wrap:break-word}
+  th{background:#eee;font-size:7.6px}
+  col.n{width:16px}col.r{width:19%}col.ok{width:16px}
+  td.c{text-align:center;font-size:8px}
+  tr{page-break-inside:avoid}
+  img.sig{width:26px;height:26px;object-fit:contain;background:#fff;display:block}
+  img.firma{max-height:52px;border:1px solid #999;background:#fff}
+  .head{border:1px solid #999;padding:4px;background:#f5f5f5}
+  .firmas{display:flex;gap:16px;margin-top:6px;page-break-inside:avoid}
   .firmas>div{flex:1}
+  .firmas p{margin:0 0 2px}
   .muted{color:#666}
   tr.so td{background:#fff3cd}
-  .so-nota{margin-top:4px;padding:3px 6px;border:1px solid #d39e00;background:#ffe8a1;font-size:11px}
-  @page{margin:14mm}
+  .so-nota{margin-top:2px;padding:1px 3px;border:1px solid #d39e00;background:#ffe8a1;font-size:7px}
+  @page{size:A4;margin:8mm}
 </style></head><body>
 <h1>Acta de examen teórico — SIED</h1>
 <div class="head">
@@ -295,7 +298,7 @@ async function imprimirExamen(data: any) {
   <div>Clase ${escapeHtml(data.exam.clase ?? "")} · Resultado: <b>${(data.exam.status ?? "").toUpperCase()}</b> · ${data.exam.correctas ?? 0}/${data.exam.total_preguntas ?? 0}</div>
   <div>${data.exam.finished_at ? new Date(data.exam.finished_at).toLocaleString("es-AR") : ""}</div>
 </div>
-<table><thead><tr><th>#</th><th>Pregunta</th><th>Respondió</th><th>Esperada</th><th>OK</th></tr></thead><tbody>${filas}</tbody></table>
+<table><colgroup><col class="n" /><col /><col class="r" /><col class="r" /><col class="ok" /></colgroup><thead><tr><th>#</th><th>Pregunta</th><th>Respondió</th><th>Esperada</th><th>OK</th></tr></thead><tbody>${filas}</tbody></table>
 <div class="firmas">
   <div><p><b>Firma del aspirante</b></p>${firma(data.exam.signature_aspirante)}</div>
   <div><p><b>Firma / aval del inspector</b></p>${firma(data.exam.signature_inspector)}</div>
