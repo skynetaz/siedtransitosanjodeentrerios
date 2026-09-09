@@ -298,7 +298,7 @@ async function imprimirExamen(data: any) {
   <div>Clase ${escapeHtml(data.exam.clase ?? "")} · Resultado: <b>${(data.exam.status ?? "").toUpperCase()}</b> · ${data.exam.correctas ?? 0}/${data.exam.total_preguntas ?? 0}</div>
   <div>${data.exam.finished_at ? new Date(data.exam.finished_at).toLocaleString("es-AR") : ""}</div>
 </div>
-<table><thead><tr><th>#</th><th>Pregunta</th><th>Respondió</th><th>Esperada</th><th>OK</th></tr></thead><tbody>${filas}</tbody></table>
+<table><colgroup><col class="n" /><col /><col class="r" /><col class="r" /><col class="ok" /></colgroup><thead><tr><th>#</th><th>Pregunta</th><th>Respondió</th><th>Esperada</th><th>OK</th></tr></thead><tbody>${filas}</tbody></table>
 <div class="firmas">
   <div><p><b>Firma del aspirante</b></p>${firma(data.exam.signature_aspirante)}</div>
   <div><p><b>Firma / aval del inspector</b></p>${firma(data.exam.signature_inspector)}</div>
