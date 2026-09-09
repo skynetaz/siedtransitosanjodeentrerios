@@ -99,3 +99,28 @@ function CreateStaffDialog() {
     </Dialog>
   );
 }
+
+/** Borrado de personal con doble confirmación (aviso + cartel de PELIGRO). */
+function BorrarPersonal({ userId, nombre }: { userId: string; nombre: string }) {
+  const qc = useQueryClient();
+  const { user } = useCurrentUser();
+  const fn = useServerFn(deleteStaff);
+  const mut = useMutation({
+    mutationFn: async () => { await fn({ data: { userId } }); },
+    onSuccess: () => { toast.success("Usuario eliminado"); qc.invalidateQueries({ queryKey: ["staff-list"] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  if (user?.id === userId) return <span className="text-xs text-muted-foreground">Tu cuenta</span>;
+  return (
+    <ConfirmarBorrado
+      titulo={`¿Eliminar a ${nombre || "este usuario"}?`}
+      detalle="Se quitará su acceso al sistema de forma permanente."
+      onConfirm={() => mut.mutate()}
+      trigger={
+        <Button size="sm" variant="outline" className="text-destructive" disabled={mut.isPending}>
+          <Trash2 className="mr-1 h-4 w-4" />Eliminar
+        </Button>
+      }
+    />
+  );
+}
