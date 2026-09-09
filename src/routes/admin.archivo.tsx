@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listExamsArchive, getExamDetail, firmarInspector } from "@/lib/archivo.functions";
+import { listExamsArchive, getExamDetail, firmarInspector, eliminarExamen, puedeBorrarExamenes } from "@/lib/archivo.functions";
+import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import { MiFirmaGuardada, useMiFirma } from "@/components/MiFirmaGuardada";
 import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { exportExamExcel, exportExamPDF, exportListExcel } from "@/lib/export-utils";
 import { toast } from "sonner";
-import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer, AlertTriangle } from "lucide-react";
+import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer, AlertTriangle, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/archivo")({ component: ArchivoPage });
 
