@@ -182,3 +182,36 @@ function cryptoRandomCode(len: number, digitsOnly = false): string {
   for (let i = 0; i < len; i++) out += chars[bytes[i] % chars.length];
   return out;
 }
+
+// ---------------------------------------------------------------
+// Eliminar personal (admin o inspector). Requiere admin.
+// No permite eliminarse a sí mismo ni dejar el sistema sin admins.
+// ---------------------------------------------------------------
+export const deleteStaff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ userId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Solo administradores pueden eliminar personal.");
+    if (data.userId === context.userId) throw new Error("No podés eliminar tu propio usuario.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: roles, error: rolesErr } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", data.userId);
+    if (rolesErr) throw rolesErr;
+    const esAdminObjetivo = (roles ?? []).some((r) => r.role === "admin");
+    if (esAdminObjetivo) {
+      const { count } = await supabaseAdmin.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "admin");
+      if ((count ?? 0) <= 1) throw new Error("Debe quedar al menos un administrador en el sistema.");
+    }
+    if ((roles ?? []).some((r) => r.role === "aspirante")) {
+      throw new Error("Este usuario es aspirante: no se elimina desde Personal.");
+    }
+
+    const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (delErr) throw delErr;
+    await supabaseAdmin.from("audit_log").insert({
+      user_id: context.userId, accion: "eliminar_personal", target_type: "user", target_id: data.userId,
+    });
+    return { ok: true };
+  });

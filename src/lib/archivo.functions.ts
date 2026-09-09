@@ -88,3 +88,49 @@ export const firmarInspector = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+// ---------------------------------------------------------------
+// Borrado de exámenes: SOLO el administrador principal.
+// ---------------------------------------------------------------
+const SUPER_ADMIN_EMAIL = "charlasseguridadvialsanjose@gmail.com";
+
+async function assertSuperAdmin(context: any) {
+  let email = String(context.claims?.email ?? "").toLowerCase();
+  const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  if (!email) {
+    const { data: prof } = await context.supabase.from("profiles").select("email").eq("id", context.userId).maybeSingle();
+    email = String(prof?.email ?? "").toLowerCase();
+  }
+  if (!isAdmin || email !== SUPER_ADMIN_EMAIL) {
+    throw new Error("Solo el administrador principal puede eliminar exámenes.");
+  }
+}
+
+/** Indica si el usuario actual puede eliminar exámenes. */
+export const puedeBorrarExamenes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    try { await assertSuperAdmin(context); return { permitido: true }; }
+    catch { return { permitido: false }; }
+  });
+
+/** Elimina un examen y todos sus registros asociados. Irreversible. */
+export const eliminarExamen = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ examId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ex } = await supabaseAdmin.from("exams").select("id, aspirante_id").eq("id", data.examId).maybeSingle();
+    if (!ex) throw new Error("El examen ya no existe.");
+    await supabaseAdmin.from("exam_questions").delete().eq("exam_id", data.examId);
+    await supabaseAdmin.from("exam_events").delete().eq("exam_id", data.examId);
+    await supabaseAdmin.from("exam_access_codes").delete().eq("exam_id", data.examId);
+    const { error } = await supabaseAdmin.from("exams").delete().eq("id", data.examId);
+    if (error) throw error;
+    await supabaseAdmin.from("audit_log").insert({
+      user_id: context.userId, accion: "eliminar_examen", target_type: "exam", target_id: data.examId,
+      meta: { aspirante_id: ex.aspirante_id },
+    });
+    return { ok: true };
+  });

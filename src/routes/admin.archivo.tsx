@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listExamsArchive, getExamDetail, firmarInspector } from "@/lib/archivo.functions";
+import { listExamsArchive, getExamDetail, firmarInspector, eliminarExamen, puedeBorrarExamenes } from "@/lib/archivo.functions";
+import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import { MiFirmaGuardada, useMiFirma } from "@/components/MiFirmaGuardada";
 import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { exportExamExcel, exportExamPDF, exportListExcel } from "@/lib/export-utils";
 import { toast } from "sonner";
-import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer, AlertTriangle } from "lucide-react";
+import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer, AlertTriangle, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/archivo")({ component: ArchivoPage });
 
@@ -45,6 +46,8 @@ function ArchivoPage() {
 function ArchiveList({ estado }: { estado: "aprobado"|"desaprobado"|"pendiente_firma"|"todos" }) {
   const fn = useServerFn(listExamsArchive);
   const q = useQuery({ queryKey: ["archive", estado], queryFn: () => fn({ data: { estado } }) });
+  const permisoFn = useServerFn(puedeBorrarExamenes);
+  const permiso = useQuery({ queryKey: ["puede-borrar-examenes"], queryFn: () => permisoFn() });
   const [openId, setOpenId] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
   const [fecha, setFecha] = useState("");
@@ -90,7 +93,16 @@ function ArchiveList({ estado }: { estado: "aprobado"|"desaprobado"|"pendiente_f
                     {e.segunda_oportunidad_usada && <Badge className="bg-warning text-warning-foreground text-xs"><AlertTriangle className="mr-1 h-3 w-3" />Usó 2ª oportunidad</Badge>}
                   </div>
                 </div>
-                <Button size="sm" variant="outline" onClick={()=>setOpenId(e.id)}><FileText className="mr-1 h-4 w-4" />Ver / firmar / exportar</Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={()=>setOpenId(e.id)}><FileText className="mr-1 h-4 w-4" />Ver / firmar / exportar</Button>
+                  {permiso.data?.permitido && (
+                    <BorrarExamen
+                      examId={e.id}
+                      etiqueta={`${p.apellido ?? ""}, ${p.nombre ?? ""} — DNI ${p.dni ?? ""}`}
+                      onDeleted={() => q.refetch()}
+                    />
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -318,4 +330,26 @@ async function imprimirExamen(data: any) {
 
 function escapeHtml(s: string) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+}
+
+/** Borrado definitivo de un examen. Solo visible para el administrador principal. */
+function BorrarExamen({ examId, etiqueta, onDeleted }: { examId: string; etiqueta: string; onDeleted: () => void }) {
+  const fn = useServerFn(eliminarExamen);
+  const mut = useMutation({
+    mutationFn: async () => { await fn({ data: { examId } }); },
+    onSuccess: () => { toast.success("Examen eliminado definitivamente"); onDeleted(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  return (
+    <ConfirmarBorrado
+      titulo="¿Eliminar este examen del archivo?"
+      detalle={`Se borrará el acta completa de ${etiqueta}, con sus respuestas y firmas. No podrá recuperarse.`}
+      onConfirm={() => mut.mutate()}
+      trigger={
+        <Button size="sm" variant="outline" className="text-destructive" disabled={mut.isPending}>
+          <Trash2 className="mr-1 h-4 w-4" />Eliminar examen
+        </Button>
+      }
+    />
+  );
 }
