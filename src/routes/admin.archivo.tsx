@@ -93,7 +93,16 @@ function ArchiveList({ estado }: { estado: "aprobado"|"desaprobado"|"pendiente_f
                     {e.segunda_oportunidad_usada && <Badge className="bg-warning text-warning-foreground text-xs"><AlertTriangle className="mr-1 h-3 w-3" />Usó 2ª oportunidad</Badge>}
                   </div>
                 </div>
-                <Button size="sm" variant="outline" onClick={()=>setOpenId(e.id)}><FileText className="mr-1 h-4 w-4" />Ver / firmar / exportar</Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" variant="outline" onClick={()=>setOpenId(e.id)}><FileText className="mr-1 h-4 w-4" />Ver / firmar / exportar</Button>
+                  {permiso.data?.permitido && (
+                    <BorrarExamen
+                      examId={e.id}
+                      etiqueta={`${p.apellido ?? ""}, ${p.nombre ?? ""} — DNI ${p.dni ?? ""}`}
+                      onDeleted={() => q.refetch()}
+                    />
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
