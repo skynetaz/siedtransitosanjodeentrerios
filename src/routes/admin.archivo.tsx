@@ -331,3 +331,25 @@ async function imprimirExamen(data: any) {
 function escapeHtml(s: string) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 }
+
+/** Borrado definitivo de un examen. Solo visible para el administrador principal. */
+function BorrarExamen({ examId, etiqueta, onDeleted }: { examId: string; etiqueta: string; onDeleted: () => void }) {
+  const fn = useServerFn(eliminarExamen);
+  const mut = useMutation({
+    mutationFn: async () => { await fn({ data: { examId } }); },
+    onSuccess: () => { toast.success("Examen eliminado definitivamente"); onDeleted(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  return (
+    <ConfirmarBorrado
+      titulo="¿Eliminar este examen del archivo?"
+      detalle={`Se borrará el acta completa de ${etiqueta}, con sus respuestas y firmas. No podrá recuperarse.`}
+      onConfirm={() => mut.mutate()}
+      trigger={
+        <Button size="sm" variant="outline" className="text-destructive" disabled={mut.isPending}>
+          <Trash2 className="mr-1 h-4 w-4" />Eliminar examen
+        </Button>
+      }
+    />
+  );
+}
