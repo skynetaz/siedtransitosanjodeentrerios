@@ -151,12 +151,20 @@ export const listarCodigos = createServerFn({ method: "POST" })
     if (data.busqueda) q = q.or(`dni.ilike.%${data.busqueda}%,codigo.ilike.%${data.busqueda}%`);
     const { data: rows, error } = await q;
     if (error) throw error;
+    const slugs = Array.from(new Set((rows ?? []).map((r: any) => r.categoria_slug).filter(Boolean)));
+    const nombres = new Map<string, string>();
+    if (slugs.length > 0) {
+      const { data: cats } = await supabaseAdmin.from("exam_categories").select("slug, nombre").in("slug", slugs);
+      for (const c of cats ?? []) nombres.set(c.slug, c.nombre);
+    }
     return (rows ?? []).map((r: any) => ({
       id: r.id, codigo: r.codigo, dni: r.dni, clase: r.clase, categoria_slug: r.categoria_slug, status: r.status,
+      categoria_nombre: r.categoria_slug ? (nombres.get(r.categoria_slug) ?? r.categoria_slug) : null,
       created_at: r.created_at, expires_at: r.expires_at, used_at: r.used_at,
       exam_id: r.exam_id,
       nombre: [r.profiles?.nombre, r.profiles?.apellido].filter(Boolean).join(" ") || "—",
     }));
+
   });
 
 // ---------------------------------------------------------------

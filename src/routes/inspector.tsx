@@ -1,5 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useCurrentRole } from "@/lib/use-current-user";
+import { nombreCategoria } from "@/lib/categoria-label";
+
 import { AppShell } from "@/components/AppShell";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -201,7 +203,7 @@ function RecentExams() {
         {(q.data ?? []).map((e: any) => (
           <div key={e.id} className="text-sm border-b last:border-0 pb-2 last:pb-0">
             <div className="font-medium">{e.profiles?.apellido}, {e.profiles?.nombre}</div>
-            <div className="text-xs text-muted-foreground flex justify-between"><span>Clase {e.clase} · {e.status}</span><span>{new Date(e.created_at).toLocaleDateString("es-AR")}</span></div>
+            <div className="text-xs text-muted-foreground flex justify-between gap-2"><span>{nombreCategoria(e)} · {e.status}</span><span>{new Date(e.created_at).toLocaleDateString("es-AR")}</span></div>
           </div>
         ))}
         {(q.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">Sin actividad reciente.</p>}

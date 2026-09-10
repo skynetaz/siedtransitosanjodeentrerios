@@ -13,6 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignaturePad } from "@/components/SignaturePad";
 import { ExamProgress, OptionCard, esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { useExamGuard, requestFullscreen, exitFullscreen } from "@/components/exam/use-exam-guard";
+import { nombreCategoria, clasesDeExamen } from "@/lib/categoria-label";
+
 import { AlertTriangle, CheckCircle2, Clock, Eye, EyeOff, Loader2, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,7 +38,7 @@ export type SenalMarcada = { pregunta: string; imagen: string };
 
 function ExamenPage() {
   const [sesion, setSesion] = useState<Sesion | null>(null);
-  const [resultado, setResultado] = useState<{ status: string; examId: string; senales: SenalMarcada[] } | null>(null);
+  const [resultado, setResultado] = useState<{ status: string; examId: string; senales: SenalMarcada[]; exam: any } | null>(null);
 
   return (
     <div className="min-h-screen bg-background flex flex-col select-none">
@@ -51,13 +53,13 @@ function ExamenPage() {
       </header>
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-5">
         {resultado ? (
-          <Resultado status={resultado.status} examId={resultado.examId} senales={resultado.senales} />
+          <Resultado status={resultado.status} examId={resultado.examId} senales={resultado.senales} exam={resultado.exam} />
         ) : sesion ? (
           <Runner
             sesion={sesion}
             onFinish={(status, senales) => {
               exitFullscreen();
-              setResultado({ status, examId: sesion.exam.id, senales });
+              setResultado({ status, examId: sesion.exam.id, senales, exam: sesion.exam });
               setSesion(null);
             }}
           />
@@ -68,6 +70,7 @@ function ExamenPage() {
     </div>
   );
 }
+
 
 // ---------------------------------------------------------------
 // Pantalla de ingreso: DNI + código
@@ -319,9 +322,11 @@ function ExamProgressWrapper({ actual, total }: { actual: number; total: number 
 // ---------------------------------------------------------------
 // Resultado: solo aprobado / desaprobado + firma
 // ---------------------------------------------------------------
-function Resultado({ status, examId, senales }: { status: string; examId: string; senales: SenalMarcada[] }) {
+function Resultado({ status, examId, senales, exam }: { status: string; examId: string; senales: SenalMarcada[]; exam?: any }) {
   const aprobado = status === "aprobado";
   const cancelado = status === "cancelado";
+  const datos = exam?.datos_aspirante ?? {};
+
   const [firmado, setFirmado] = useState(false);
   const firmarFn = useServerFn(firmarAspirante);
   const firmar = useMutation({
@@ -340,6 +345,21 @@ function Resultado({ status, examId, senales }: { status: string; examId: string
           </p>
           {cancelado && <p className="text-sm text-muted-foreground">El intento se cerró por incumplir las condiciones del examen.</p>}
         </div>
+
+        <div className="rounded-lg border bg-muted/40 p-3 text-center">
+          {(datos.apellido || datos.nombre) && (
+            <p className="text-sm font-semibold">
+              {datos.apellido}{datos.apellido && datos.nombre ? ", " : ""}{datos.nombre}
+              {datos.dni ? ` · DNI ${datos.dni}` : ""}
+            </p>
+          )}
+          <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">Examen rendido</p>
+          <p className="text-base font-bold">{nombreCategoria(exam)}</p>
+          {clasesDeExamen(exam) && (
+            <p className="text-xs text-muted-foreground">Clases incluidas: {clasesDeExamen(exam)}</p>
+          )}
+        </div>
+
 
         {senales.length > 0 && (
           <div className="border-t pt-4">

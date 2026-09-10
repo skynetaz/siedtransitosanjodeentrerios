@@ -2,6 +2,8 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import { etiquetaExamen, nombreCategoria, clasesDeExamen } from "@/lib/categoria-label";
+
 
 export type ExamDetail = {
   exam: any;
@@ -68,7 +70,7 @@ export async function exportExamPDF(d: ExamDetail) {
   doc.text("Dirección de Tránsito — Examen de Licencia de Conducir", M, 30);
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.text(`Clase: ${ex.clase}   Estado: ${(ex.status ?? "").toUpperCase()}   Fecha: ${ex.finished_at ? new Date(ex.finished_at).toLocaleString("es-AR") : "—"}`, M, 43);
+  doc.text(`Examen: ${etiquetaExamen(ex)}   Estado: ${(ex.status ?? "").toUpperCase()}   Fecha: ${ex.finished_at ? new Date(ex.finished_at).toLocaleString("es-AR") : "—"}`, M, 43);
   doc.text(`${info.apellido}, ${info.nombre} — DNI ${info.dni}   ${info.email || "—"} · ${info.telefono || "—"}`, M, 54);
   doc.text(
     `Correctas: ${ex.correctas ?? 0} / ${ex.total_preguntas ?? 0}   Incorrectas: ${ex.incorrectas ?? 0}` +
@@ -154,7 +156,7 @@ export function exportExamExcel(d: ExamDetail) {
 
   const header = [
     ["Examen de Licencia de Conducir"],
-    ["Clase", ex.clase, "Estado", ex.status, "Fecha", ex.finished_at ? new Date(ex.finished_at).toLocaleString("es-AR") : ""],
+    ["Examen", nombreCategoria(ex), "Clases", clasesDeExamen(ex), "Estado", ex.status, "Fecha", ex.finished_at ? new Date(ex.finished_at).toLocaleString("es-AR") : ""],
     [],
     ["Apellido", info.apellido, "Nombre", info.nombre],
     ["DNI", info.dni, "Correo", info.email, "Teléfono", info.telefono],
@@ -180,7 +182,9 @@ export function exportListExcel(rows: any[], filename = "examenes.xlsx") {
     apellido: r.profiles?.apellido ?? r.datos_aspirante?.apellido ?? "",
     nombre: r.profiles?.nombre ?? r.datos_aspirante?.nombre ?? "",
     dni: r.profiles?.dni ?? r.datos_aspirante?.dni ?? "",
-    clase: r.clase,
+    examen: nombreCategoria(r),
+    clases: clasesDeExamen(r),
+
     estado: r.status,
     correctas: r.correctas ?? 0,
     incorrectas: r.incorrectas ?? 0,

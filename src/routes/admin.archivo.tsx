@@ -14,6 +14,8 @@ import { SignaturePad } from "@/components/SignaturePad";
 import { MiFirmaGuardada, useMiFirma } from "@/components/MiFirmaGuardada";
 import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { exportExamExcel, exportExamPDF, exportListExcel } from "@/lib/export-utils";
+import { etiquetaExamen, nombreCategoria, clasesDeExamen } from "@/lib/categoria-label";
+
 import { toast } from "sonner";
 import { Loader2, FileDown, FileText, Signature, Archive, CheckCircle2, XCircle, Printer, AlertTriangle, Trash2 } from "lucide-react";
 
@@ -83,7 +85,9 @@ function ArchiveList({ estado }: { estado: "aprobado"|"desaprobado"|"pendiente_f
                 <div>
                   <div className="font-semibold">{p.apellido}, {p.nombre} <span className="text-xs text-muted-foreground">· DNI {p.dni}</span></div>
                   <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap mt-1">
-                    <Badge variant="outline">Clase {e.clase}</Badge>
+                    <Badge variant="outline" className="font-semibold">{nombreCategoria(e)}</Badge>
+                    {clasesDeExamen(e) && <Badge variant="outline" className="text-xs">Clases {clasesDeExamen(e)}</Badge>}
+
                     {e.status === "aprobado" ? <Badge className="bg-success text-success-foreground"><CheckCircle2 className="h-3 w-3 mr-1" />Aprobado</Badge>
                       : <Badge className="bg-destructive text-destructive-foreground"><XCircle className="h-3 w-3 mr-1" />Desaprobado</Badge>}
                     <span>{e.correctas ?? 0}/{e.total_preguntas ?? 0}</span>
@@ -129,7 +133,10 @@ function ExamDetailDialog({ examId, onClose }: { examId: string; onClose: () => 
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Detalle del examen</DialogTitle>
-          <DialogDescription>Todas las preguntas, respuestas y firmas.</DialogDescription>
+          <DialogDescription>
+            {q.data ? `${etiquetaExamen(q.data.exam)} · ` : ""}Todas las preguntas, respuestas y firmas.
+          </DialogDescription>
+
         </DialogHeader>
         {q.isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : q.data && (
           <div className="space-y-4">
@@ -307,7 +314,7 @@ async function imprimirExamen(data: any) {
 <h1>Acta de examen teórico — SIED</h1>
 <div class="head">
   <div><b>${escapeHtml(`${d.apellido ?? p.apellido ?? ""}, ${d.nombre ?? p.nombre ?? ""}`)}</b> — DNI ${escapeHtml(d.dni ?? p.dni ?? "")}</div>
-  <div>Clase ${escapeHtml(data.exam.clase ?? "")} · Resultado: <b>${(data.exam.status ?? "").toUpperCase()}</b> · ${data.exam.correctas ?? 0}/${data.exam.total_preguntas ?? 0}</div>
+  <div><b>${escapeHtml(etiquetaExamen(data.exam))}</b> · Resultado: <b>${(data.exam.status ?? "").toUpperCase()}</b> · ${data.exam.correctas ?? 0}/${data.exam.total_preguntas ?? 0}</div>
   <div>${data.exam.finished_at ? new Date(data.exam.finished_at).toLocaleString("es-AR") : ""}</div>
 </div>
 <table><colgroup><col class="n" /><col /><col class="r" /><col class="r" /><col class="ok" /></colgroup><thead><tr><th>#</th><th>Pregunta</th><th>Respondió</th><th>Esperada</th><th>OK</th></tr></thead><tbody>${filas}</tbody></table>
