@@ -227,19 +227,124 @@ function Num({ label, value, onChange }: { label: string; value: number; onChang
   );
 }
 
-/** Diálogo con el examen de muestra armado con la configuración actual. */
+/** Texto normalizado para detectar preguntas repetidas. */
+function claveTexto(s: string) {
+  return (s ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+type Preg = {
+  orden: number; id: string; clase: string; tema: string | null; pregunta: string;
+  eliminatoria: boolean; activa?: boolean; peso: number; correcta: string; opciones: string[];
+};
+
+/** Diálogo de vista previa con edición de las preguntas de la categoría. */
 function VistaPrevia({ cat, className }: { cat: Cat; className?: string }) {
   const [open, setOpen] = useState(false);
   const previsualizar = useServerFn(previsualizarCategoria);
+  const listarSel = useServerFn(listarPreguntasCategoria);
+  const guardarSel = useServerFn(guardarPreguntasCategoria);
+  const qc = useQueryClient();
+
+  // ids === null → armado automático; array → selección propia (en edición).
+  const [ids, setIds] = useState<string[] | null>(null);
+  const [originales, setOriginales] = useState<string[] | null>(null);
+  const [cargado, setCargado] = useState(false);
+
+  const guardada = useQuery({
+    queryKey: ["categoria-preguntas", cat.slug],
+    queryFn: () => listarSel({ data: { slug: cat.slug } }),
+    enabled: open && !!cat.slug,
+  });
+
+  // Al abrir, tomo la selección guardada (si hay).
+  if (open && !cargado && cat.slug && guardada.isSuccess) {
+    const g = (guardada.data as string[]) ?? [];
+    setIds(g.length ? g : null);
+    setOriginales(g.length ? g : null);
+    setCargado(true);
+  }
+  if (open && !cargado && !cat.slug) setCargado(true);
+
   const q = useQuery({
-    queryKey: ["preview-categoria", cat.slug, cat.clases.join(","), cat.cantidad_preguntas, cat.preguntas_senales, cat.incluye_senales, open],
-    queryFn: () => previsualizar({ data: { ...cat, slug: cat.slug || "preview", nombre: cat.nombre || "Vista previa" } }),
-    enabled: open && cat.clases.length > 0,
+    queryKey: ["preview-categoria", cat.slug, cat.clases.join(","), cat.cantidad_preguntas, cat.preguntas_senales, cat.incluye_senales, ids?.join(",") ?? "auto"],
+    queryFn: () =>
+      previsualizar({
+        data: { ...cat, slug: cat.slug || "preview", nombre: cat.nombre || "Vista previa", ids: ids ?? null },
+      }),
+    enabled: open && cargado && cat.clases.length > 0,
   });
   const d = q.data as any;
+  const preguntas: Preg[] = (d?.preguntas ?? []) as Preg[];
+
+  // Detector de repetidas: mismo texto (o misma respuesta correcta) dentro de la categoría.
+  const conteoTexto = new Map<string, number>();
+  const conteoResp = new Map<string, number>();
+  for (const p of preguntas) {
+    const k = claveTexto(p.pregunta);
+    conteoTexto.set(k, (conteoTexto.get(k) ?? 0) + 1);
+    const r = `${k}::${claveTexto(p.correcta)}`;
+    conteoResp.set(r, (conteoResp.get(r) ?? 0) + 1);
+  }
+  const esRepetida = (p: Preg) => (conteoTexto.get(claveTexto(p.pregunta)) ?? 0) > 1;
+  const repetidas = preguntas.filter(esRepetida);
+  const gruposRepetidos = new Set(repetidas.map((p) => claveTexto(p.pregunta))).size;
+
+  const manual = ids !== null;
+  const pasarAManual = () => setIds(preguntas.map((p) => p.id));
+  const quitar = (id: string) => setIds((prev) => (prev ?? preguntas.map((p) => p.id)).filter((x) => x !== id));
+  const mover = (i: number, dir: -1 | 1) =>
+    setIds((prev) => {
+      const arr = [...(prev ?? preguntas.map((p) => p.id))];
+      const j = i + dir;
+      if (j < 0 || j >= arr.length) return arr;
+      [arr[i], arr[j]] = [arr[j]!, arr[i]!];
+      return arr;
+    });
+  const agregar = (nuevos: string[]) =>
+    setIds((prev) => {
+      const base = prev ?? preguntas.map((p) => p.id);
+      return [...base, ...nuevos.filter((n) => !base.includes(n))];
+    });
+  /** Deja una sola copia de cada pregunta repetida (la primera). */
+  const quitarRepetidas = () => {
+    const vistos = new Set<string>();
+    const limpio: string[] = [];
+    for (const p of preguntas) {
+      const k = claveTexto(p.pregunta);
+      if (vistos.has(k)) continue;
+      vistos.add(k);
+      limpio.push(p.id);
+    }
+    setIds(limpio);
+  };
+
+  const mut = useMutation({
+    mutationFn: async () => await guardarSel({ data: { slug: cat.slug, ids: ids ?? [] } }),
+    onSuccess: () => {
+      toast.success("Selección de preguntas guardada para esta categoría.");
+      setOriginales(ids);
+      qc.invalidateQueries({ queryKey: ["categoria-preguntas", cat.slug] });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const hayCambios = (originales ?? []).join(",") !== (ids ?? []).join(",");
+  const agregadas = (ids ?? []).filter((x) => !(originales ?? []).includes(x)).length;
+  const quitadas = (originales ?? []).filter((x) => !(ids ?? []).includes(x)).length;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) { setCargado(false); setIds(null); setOriginales(null); }
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className={className ?? "h-10"}>
           <Eye className="mr-1 h-4 w-4" />Vista previa
@@ -249,7 +354,8 @@ function VistaPrevia({ cat, className }: { cat: Cat; className?: string }) {
         <DialogHeader>
           <DialogTitle className="text-lg">Vista previa · {cat.nombre || "Sin nombre"}</DialogTitle>
           <DialogDescription>
-            Ejemplo de examen armado con clases {cat.clases.join(" + ")} · {cat.duracion_minutos} min · hasta {cat.max_errores} errores.
+            Clases {cat.clases.join(" + ")} · {cat.duracion_minutos} min · hasta {cat.max_errores} errores.
+            {manual ? " Selección propia de esta categoría." : " Armado automático (aleatorio)."}
           </DialogDescription>
         </DialogHeader>
 
@@ -260,38 +366,98 @@ function VistaPrevia({ cat, className }: { cat: Cat; className?: string }) {
         ) : d ? (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Dato label="Preguntas" valor={`${d.preguntas.length} / ${d.solicitadas}`} />
+              <Dato label="Preguntas" valor={`${preguntas.length}${manual ? "" : ` / ${d.solicitadas}`}`} />
               <Dato label="De señales" valor={String(d.senalesIncluidas)} />
               <Dato label="Eliminatorias" valor={String(d.eliminatorias)} />
               <Dato label="Puntaje total" valor={String(d.puntaje)} />
             </div>
 
-            {d.preguntas.length < d.solicitadas && (
+            {!manual && preguntas.length < d.solicitadas && (
               <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 <span>Faltan preguntas activas: hay {d.disponibles} disponibles para estas clases.</span>
               </div>
             )}
 
+            {gruposRepetidos > 0 && (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-warning/50 bg-warning/10 p-3 text-sm">
+                <Copy className="h-4 w-4 shrink-0 text-warning-foreground" />
+                <span className="flex-1 min-w-40">
+                  <strong>{gruposRepetidos}</strong> pregunta(s) repetida(s) en esta categoría
+                  ({repetidas.length} apariciones). Están marcadas abajo.
+                </span>
+                {cat.slug && (
+                  <Button size="sm" variant="outline" className="h-9" onClick={quitarRepetidas}>
+                    Dejar una sola copia
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {cat.slug && (
+              <div className="flex flex-wrap gap-2 rounded-lg border p-3">
+                {manual ? (
+                  <>
+                    <BancoDialog yaIncluidas={ids ?? []} clasesCategoria={cat.clases} onAgregar={agregar} />
+                    <Button variant="ghost" size="sm" className="h-10" onClick={() => setIds(originales)}>
+                      Restaurar
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-10"
+                      disabled={!hayCambios || mut.isPending}
+                      onClick={() => mut.mutate()}
+                    >
+                      {mut.isPending ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
+                      Guardar selección
+                    </Button>
+                    {hayCambios && (
+                      <span className="self-center text-xs text-muted-foreground">
+                        +{agregadas} agregada(s) · −{quitadas} quitada(s)
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <Button variant="outline" size="sm" className="h-10" onClick={pasarAManual}>
+                    <Pencil className="mr-1 h-4 w-4" />Editar preguntas de esta categoría
+                  </Button>
+                )}
+              </div>
+            )}
+
             <div className="space-y-3">
-              {d.preguntas.map((p: any) => (
-                <div key={p.id} className="rounded-lg border p-3">
+              {preguntas.map((p, i) => (
+                <div key={p.id} className={`rounded-lg border p-3 ${esRepetida(p) ? "border-warning bg-warning/5" : ""}`}>
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline">Clase {p.clase}</Badge>
                     {p.tema && <span>{p.tema}</span>}
                     <span>· peso {p.peso}</span>
                     {p.eliminatoria && <Badge className="bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
+                    {esRepetida(p) && <Badge className="bg-warning text-warning-foreground">Repetida</Badge>}
+                    {manual && (
+                      <span className="ml-auto flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => mover(i, -1)} disabled={i === 0}>
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => mover(i, 1)} disabled={i === preguntas.length - 1}>
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => quitar(p.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </span>
+                    )}
                   </div>
-                  <p className="mt-1 text-sm font-medium">{p.orden}. {p.pregunta}</p>
+                  <p className="mt-1 text-sm font-medium">{i + 1}. {p.pregunta}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {p.opciones.map((o: string, i: number) => {
+                    {p.opciones.map((o: string, k: number) => {
                       const ok = o === p.correcta;
                       return esSenal(o) ? (
-                        <div key={i} className={ok ? "rounded-md ring-2 ring-success" : ""}>
+                        <div key={k} className={ok ? "rounded-md ring-2 ring-success" : ""}>
                           <SenalImg src={o} className="h-16 w-16" />
                         </div>
                       ) : (
-                        <span key={i} className={`rounded-md border px-2 py-1 text-xs ${ok ? "border-success bg-success/10 font-semibold" : ""}`}>
+                        <span key={k} className={`rounded-md border px-2 py-1 text-xs ${ok ? "border-success bg-success/10 font-semibold" : ""}`}>
                           {o}
                         </span>
                       );
@@ -299,9 +465,115 @@ function VistaPrevia({ cat, className }: { cat: Cat; className?: string }) {
                   </div>
                 </div>
               ))}
+              {preguntas.length === 0 && (
+                <p className="py-6 text-center text-sm text-muted-foreground">No hay preguntas seleccionadas.</p>
+              )}
             </div>
           </div>
         ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Buscador del banco de preguntas para agregar a la categoría. */
+function BancoDialog({
+  yaIncluidas, clasesCategoria, onAgregar,
+}: { yaIncluidas: string[]; clasesCategoria: Clase[]; onAgregar: (ids: string[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const [texto, setTexto] = useState("");
+  const [clase, setClase] = useState<string>("cat");
+  const [tema, setTema] = useState<string>("all");
+  const [sel, setSel] = useState<string[]>([]);
+  const banco = useServerFn(listarBancoPreguntas);
+  const temasFn = useServerFn(listarTemas);
+
+  const temas = useQuery({ queryKey: ["temas"], queryFn: () => temasFn(), enabled: open });
+  const q = useQuery({
+    queryKey: ["banco-preguntas", clase, tema, texto, clasesCategoria.join(",")],
+    queryFn: () =>
+      banco({
+        data: {
+          clases: clase === "cat" ? clasesCategoria : clase === "all" ? [] : [clase as Clase],
+          topicId: tema === "all" ? null : tema,
+          texto,
+          soloActivas: true,
+          limite: 300,
+        },
+      }),
+    enabled: open,
+  });
+  const rows: Preg[] = (q.data ?? []) as Preg[];
+
+  const confirmar = () => { onAgregar(sel); setSel([]); setOpen(false); };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSel([]); }}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-10">
+          <Plus className="mr-1 h-4 w-4" />Agregar del banco de preguntas
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg">Banco de preguntas</DialogTitle>
+          <DialogDescription>Marcá las preguntas que querés sumar a esta categoría.</DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <Select value={clase} onValueChange={setClase}>
+            <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cat">Clases de la categoría</SelectItem>
+              <SelectItem value="all">Todas las clases</SelectItem>
+              {CLASES.map((c) => <SelectItem key={c} value={c}>Clase {c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={tema} onValueChange={setTema}>
+            <SelectTrigger className="h-11"><SelectValue placeholder="Tema" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los temas</SelectItem>
+              {((temas.data ?? []) as any[]).map((t) => <SelectItem key={t.id} value={t.id}>{t.nombre}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input className="h-11" placeholder="Buscar texto..." value={texto} onChange={(e) => setTexto(e.target.value)} />
+        </div>
+
+        {q.isLoading ? (
+          <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+        ) : (
+          <div className="space-y-2">
+            {rows.map((p) => {
+              const incluida = yaIncluidas.includes(p.id);
+              const marcada = sel.includes(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={incluida}
+                  onClick={() => setSel((s) => (s.includes(p.id) ? s.filter((x) => x !== p.id) : [...s, p.id]))}
+                  className={`w-full rounded-lg border p-3 text-left text-sm ${incluida ? "opacity-50" : marcada ? "border-primary bg-primary/10" : ""}`}
+                >
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline">Clase {p.clase}</Badge>
+                    {p.tema && <span>{p.tema}</span>}
+                    {p.eliminatoria && <Badge className="bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
+                    {incluida && <Badge variant="secondary">Ya incluida</Badge>}
+                  </div>
+                  <p className="mt-1 font-medium">{p.pregunta}</p>
+                </button>
+              );
+            })}
+            {rows.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Sin resultados.</p>}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <Button variant="outline" className="h-12 flex-1" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button className="h-12 flex-1" disabled={sel.length === 0} onClick={confirmar}>
+            Agregar {sel.length > 0 ? `(${sel.length})` : ""}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
