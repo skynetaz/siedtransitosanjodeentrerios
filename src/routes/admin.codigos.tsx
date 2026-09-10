@@ -104,7 +104,7 @@ function CodigosPage() {
                   <div className="min-w-0">
                     <p className="font-mono text-2xl font-bold tracking-[0.2em]">{c.codigo}</p>
                     <p className="truncate text-sm font-medium">{c.nombre}</p>
-                    <p className="text-xs text-muted-foreground">DNI {c.dni ?? "—"} · {c.categoria_slug ?? `Clase ${c.clase}`}</p>
+                    <p className="text-xs text-muted-foreground">DNI {c.dni ?? "—"} · <span className="font-semibold text-foreground">{c.categoria_nombre ?? c.categoria_slug ?? `Clase ${c.clase}`}</span></p>
                   </div>
                   <EstadoBadge status={c.status} />
                 </div>

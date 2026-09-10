@@ -11,6 +11,17 @@ async function assertStaff(context: any) {
   return { isAdmin: !!a, isInspector: !!i };
 }
 
+/** Resuelve el nombre visible de cada categoría de examen. */
+async function nombresDeCategorias(admin: any, slugs: (string | null | undefined)[]) {
+  const unicos = Array.from(new Set(slugs.filter((s): s is string => !!s)));
+  const mapa = new Map<string, string>();
+  if (unicos.length === 0) return mapa;
+  const { data } = await admin.from("exam_categories").select("slug, nombre").in("slug", unicos);
+  for (const c of data ?? []) mapa.set(c.slug, c.nombre);
+  return mapa;
+}
+
+
 export const listExamsArchive = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({
@@ -20,7 +31,7 @@ export const listExamsArchive = createServerFn({ method: "POST" })
     await assertStaff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     let query = supabaseAdmin.from("exams")
-      .select("id, clase, status, finished_at, correctas, incorrectas, total_preguntas, is_emulation, signature_aspirante, signature_inspector, datos_aspirante, segunda_oportunidad_usada, profiles!exams_aspirante_id_fkey(dni,nombre,apellido,email,telefono)")
+      .select("id, clase, categoria_slug, clases_incluidas, config_snapshot, status, finished_at, correctas, incorrectas, total_preguntas, is_emulation, signature_aspirante, signature_inspector, datos_aspirante, segunda_oportunidad_usada, profiles!exams_aspirante_id_fkey(dni,nombre,apellido,email,telefono)")
       .eq("is_emulation", false)
       .in("status", ["aprobado","desaprobado"])
       .order("finished_at", { ascending: false })
@@ -29,8 +40,13 @@ export const listExamsArchive = createServerFn({ method: "POST" })
     if (data.estado === "pendiente_firma") query = query.is("signature_inspector", null);
     const { data: rows, error } = await query;
     if (error) throw error;
-    return rows ?? [];
+    const nombres = await nombresDeCategorias(supabaseAdmin, (rows ?? []).map((r: any) => r.categoria_slug));
+    return (rows ?? []).map((r: any) => ({
+      ...r,
+      categoria_nombre: (r.categoria_slug ? nombres.get(r.categoria_slug) : null) ?? (r.config_snapshot as any)?.nombre ?? null,
+    }));
   });
+
 
 export const getExamDetail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -63,7 +79,12 @@ export const getExamDetail = createServerFn({ method: "POST" })
         respuesta_previa: e.respuesta_previa,
       };
     });
-    return { exam, preguntas };
+    const nombres = await nombresDeCategorias(supabaseAdmin, [(exam as any).categoria_slug]);
+    const categoria_nombre =
+      ((exam as any).categoria_slug ? nombres.get((exam as any).categoria_slug) : null) ??
+      ((exam as any).config_snapshot?.nombre ?? null);
+    return { exam: { ...exam, categoria_nombre }, preguntas };
+
   });
 
 export const firmarInspector = createServerFn({ method: "POST" })
