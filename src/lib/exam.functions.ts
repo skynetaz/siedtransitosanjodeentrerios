@@ -112,7 +112,9 @@ export const responderPregunta = createServerFn({ method: "POST" })
     const porEliminatoria = q.eliminatoria && !correcta;
     const porErrores = incorrectas > maxErrComunes;
 
-    if ((porEliminatoria || porErrores) && !eq.exams.segunda_oportunidad_usada) {
+    // La segunda oportunidad ya NO aplica a preguntas eliminatorias:
+    // si falla una eliminatoria, el examen se cierra de inmediato.
+    if (porErrores && !porEliminatoria && !eq.exams.segunda_oportunidad_usada) {
       // Segunda oportunidad: no se cuenta la respuesta, se marca la pregunta y se pide corregir.
       await supabaseAdmin.from("exam_questions").update({
         segunda_oportunidad: true, respuesta_previa: data.respuesta,
@@ -124,7 +126,7 @@ export const responderPregunta = createServerFn({ method: "POST" })
       return {
         correcta: false, terminado: false, segundaOportunidad: true,
         respuestaPrevia: data.respuesta,
-        motivo: (porEliminatoria ? "eliminatoria" : "max_errores") as "eliminatoria" | "max_errores",
+        motivo: "max_errores" as "eliminatoria" | "max_errores",
       };
     }
 
