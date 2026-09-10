@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listarCategorias, guardarCategoria, eliminarCategoria, previsualizarCategoria } from "@/lib/categorias.functions";
+import {
+  listarCategorias, guardarCategoria, eliminarCategoria, previsualizarCategoria,
+  listarPreguntasCategoria, guardarPreguntasCategoria, listarBancoPreguntas, listarTemas,
+} from "@/lib/categorias.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
