@@ -52,6 +52,37 @@ type Pregunta = {
  * señales de tránsito y después completa con el resto de las clases incluidas.
  */
 export async function seleccionarPreguntas(admin: any, cat: Categoria) {
+  // 1) Selección propia de la categoría (elegida a mano por el administrador).
+  const { data: fijas } = await admin
+    .from("exam_category_questions")
+    .select("question_id, orden")
+    .eq("categoria_slug", cat.slug)
+    .order("orden", { ascending: true });
+
+  if (fijas && fijas.length > 0) {
+    const ids = fijas.map((r: any) => r.question_id as string);
+    const { data: rows } = await admin
+      .from("questions")
+      .select("id, pregunta, eliminatoria, peso, respuesta_correcta, opciones_incorrectas, topic_id, activa")
+      .in("id", ids)
+      .eq("activa", true);
+    const byId = new Map(((rows ?? []) as Pregunta[]).map((q) => [q.id, q]));
+    const ordenadas = ids.map((id: string) => byId.get(id)).filter(Boolean) as Pregunta[];
+    if (ordenadas.length > 0) {
+      return ordenadas.map((q, i) => ({
+        question_id: q.id,
+        orden: i + 1,
+        snapshot: {
+          pregunta: q.pregunta,
+          eliminatoria: q.eliminatoria,
+          peso: q.peso,
+          opciones: buildOptions(q.respuesta_correcta, q.opciones_incorrectas ?? []),
+        },
+      }));
+    }
+  }
+
+  // 2) Armado automático (comportamiento histórico).
   const clases = cat.clases.length > 0 ? cat.clases : ["UNICA"];
   const { data: pool } = await admin
     .from("questions")
