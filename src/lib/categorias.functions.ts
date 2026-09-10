@@ -198,7 +198,7 @@ export const previsualizarCategoria = createServerFn({ method: "POST" })
     const clases = (data.clases.length ? data.clases : ["UNICA"]) as ("A"|"B"|"C"|"D"|"E"|"UNICA")[];
     const { data: pool } = await supabaseAdmin
       .from("questions")
-      .select("id, pregunta, clase, eliminatoria, peso, respuesta_correcta, opciones_incorrectas, topic_id, topics(nombre)")
+      .select(SELECT_PREGUNTA)
       .in("clase", clases)
       .eq("activa", true);
     const preguntas = (pool ?? []) as any[];
