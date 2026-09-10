@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2, Save, Pencil, Eye, AlertTriangle } from "lucide-react";
+import { Loader2, Plus, Trash2, Save, Pencil, Eye, AlertTriangle, Copy, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
