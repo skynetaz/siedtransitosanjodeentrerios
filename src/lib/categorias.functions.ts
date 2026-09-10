@@ -217,21 +217,12 @@ export const previsualizarCategoria = createServerFn({ method: "POST" })
     const seleccion = shuffle([...senales, ...resto.slice(0, faltan)]);
 
     return {
+      modo: "automatico" as const,
       disponibles: preguntas.length,
       solicitadas: data.cantidad_preguntas,
       senalesIncluidas: senales.length,
       puntaje: seleccion.reduce((s, q) => s + (q.peso ?? 1), 0),
       eliminatorias: seleccion.filter((q) => q.eliminatoria).length,
-      preguntas: seleccion.map((q, i) => ({
-        orden: i + 1,
-        id: q.id as string,
-        clase: q.clase as string,
-        tema: (q.topics?.nombre as string) ?? null,
-        pregunta: q.pregunta as string,
-        eliminatoria: !!q.eliminatoria,
-        peso: (q.peso ?? 1) as number,
-        correcta: q.respuesta_correcta as string,
-        opciones: buildOptions(q.respuesta_correcta, q.opciones_incorrectas ?? []),
-      })),
+      preguntas: seleccion.map((q, i) => mapPregunta(q, i + 1, buildOptions)),
     };
   });
