@@ -29,6 +29,13 @@
       "when": 1788876381901,
       "tag": "0003_segunda_oportunidad",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789048467207,
+      "tag": "0004_create_exam_category_questions",
+      "breakpoints": true
     }
   ]
 }

@@ -175,6 +175,42 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_category_questions: {
+        Row: {
+          categoria_slug: string
+          created_at: string
+          orden: number
+          question_id: string
+        }
+        Insert: {
+          categoria_slug: string
+          created_at?: string
+          orden?: number
+          question_id: string
+        }
+        Update: {
+          categoria_slug?: string
+          created_at?: string
+          orden?: number
+          question_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_category_questions_categoria_slug_fkey"
+            columns: ["categoria_slug"]
+            isOneToOne: false
+            referencedRelation: "exam_categories"
+            referencedColumns: ["slug"]
+          },
+          {
+            foreignKeyName: "exam_category_questions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exam_configs: {
         Row: {
           cantidad_preguntas: number
