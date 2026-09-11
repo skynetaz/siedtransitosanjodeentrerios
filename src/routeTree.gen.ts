@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PruebaEncuestaRouteImport } from './routes/prueba-encuesta'
 import { Route as PanelRouteImport } from './routes/panel'
 import { Route as InspectorRouteImport } from './routes/inspector'
 import { Route as ExamenRouteImport } from './routes/examen'
@@ -36,6 +37,11 @@ import { Route as ApiPublicSenalNameRouteImport } from './routes/api/public/sena
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PruebaEncuestaRoute = PruebaEncuestaRouteImport.update({
+  id: '/prueba-encuesta',
+  path: '/prueba-encuesta',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PanelRoute = PanelRouteImport.update({
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
+  '/prueba-encuesta': typeof PruebaEncuestaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/archivo': typeof AdminArchivoRoute
   '/admin/categorias': typeof AdminCategoriasRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
+  '/prueba-encuesta': typeof PruebaEncuestaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/archivo': typeof AdminArchivoRoute
   '/admin/categorias': typeof AdminCategoriasRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/examen': typeof ExamenRoute
   '/inspector': typeof InspectorRoute
   '/panel': typeof PanelRoute
+  '/prueba-encuesta': typeof PruebaEncuestaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin/archivo': typeof AdminArchivoRoute
   '/admin/categorias': typeof AdminCategoriasRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/examen'
     | '/inspector'
     | '/panel'
+    | '/prueba-encuesta'
     | '/reset-password'
     | '/admin/archivo'
     | '/admin/categorias'
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/examen'
     | '/inspector'
     | '/panel'
+    | '/prueba-encuesta'
     | '/reset-password'
     | '/admin/archivo'
     | '/admin/categorias'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/examen'
     | '/inspector'
     | '/panel'
+    | '/prueba-encuesta'
     | '/reset-password'
     | '/admin/archivo'
     | '/admin/categorias'
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   ExamenRoute: typeof ExamenRoute
   InspectorRoute: typeof InspectorRoute
   PanelRoute: typeof PanelRoute
+  PruebaEncuestaRoute: typeof PruebaEncuestaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicSenalNameRoute: typeof ApiPublicSenalNameRoute
 }
@@ -321,6 +334,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prueba-encuesta': {
+      id: '/prueba-encuesta'
+      path: '/prueba-encuesta'
+      fullPath: '/prueba-encuesta'
+      preLoaderRoute: typeof PruebaEncuestaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/panel': {
@@ -523,6 +543,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExamenRoute: ExamenRoute,
   InspectorRoute: InspectorRoute,
   PanelRoute: PanelRoute,
+  PruebaEncuestaRoute: PruebaEncuestaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicSenalNameRoute: ApiPublicSenalNameRoute,
 }
