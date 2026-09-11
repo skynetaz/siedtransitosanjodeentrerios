@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignaturePad } from "@/components/SignaturePad";
+import { EncuestaFinal } from "@/components/EncuestaFinal";
 import { ExamProgress, OptionCard, esSenal, SenalImg } from "@/components/exam/ExamPieces";
 import { useExamGuard, requestFullscreen, exitFullscreen } from "@/components/exam/use-exam-guard";
 import { nombreCategoria, clasesDeExamen } from "@/lib/categoria-label";
@@ -390,6 +391,12 @@ function Resultado({ status, examId, senales, exam }: { status: string; examId: 
                 <SignaturePad label="Firmá para dejar registro del examen" onSave={(url) => firmar.mutate(url)} />
               </>
             )}
+          </div>
+        )}
+
+        {(cancelado || firmado) && (
+          <div className="border-t pt-4">
+            <EncuestaFinal examId={examId} />
           </div>
         )}
 

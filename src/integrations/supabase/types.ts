@@ -273,6 +273,54 @@ export type Database = {
           },
         ]
       }
+      exam_feedback: {
+        Row: {
+          aspirante_id: string | null
+          comentario: string | null
+          comodidad: string
+          created_at: string
+          etiquetas: string[]
+          exam_id: string
+          facilidad: number
+          id: string
+        }
+        Insert: {
+          aspirante_id?: string | null
+          comentario?: string | null
+          comodidad: string
+          created_at?: string
+          etiquetas?: string[]
+          exam_id: string
+          facilidad: number
+          id?: string
+        }
+        Update: {
+          aspirante_id?: string | null
+          comentario?: string | null
+          comodidad?: string
+          created_at?: string
+          etiquetas?: string[]
+          exam_id?: string
+          facilidad?: number
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_feedback_aspirante_id_fkey"
+            columns: ["aspirante_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exam_feedback_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: true
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exam_questions: {
         Row: {
           answered_at: string | null

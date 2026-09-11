@@ -22,6 +22,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 import { Route as AdminSenalesRouteImport } from './routes/admin.senales'
 import { Route as AdminPreguntasRouteImport } from './routes/admin.preguntas'
+import { Route as AdminOpinionesRouteImport } from './routes/admin.opiniones'
 import { Route as AdminImportarRouteImport } from './routes/admin.importar'
 import { Route as AdminFirmaRouteImport } from './routes/admin.firma'
 import { Route as AdminEstadisticasRouteImport } from './routes/admin.estadisticas'
@@ -97,6 +98,11 @@ const AdminPreguntasRoute = AdminPreguntasRouteImport.update({
   path: '/preguntas',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOpinionesRoute = AdminOpinionesRouteImport.update({
+  id: '/opiniones',
+  path: '/opiniones',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminImportarRoute = AdminImportarRouteImport.update({
   id: '/importar',
   path: '/importar',
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/admin/estadisticas': typeof AdminEstadisticasRoute
   '/admin/firma': typeof AdminFirmaRoute
   '/admin/importar': typeof AdminImportarRoute
+  '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/preguntas': typeof AdminPreguntasRoute
   '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/admin/estadisticas': typeof AdminEstadisticasRoute
   '/admin/firma': typeof AdminFirmaRoute
   '/admin/importar': typeof AdminImportarRoute
+  '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/preguntas': typeof AdminPreguntasRoute
   '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/admin/estadisticas': typeof AdminEstadisticasRoute
   '/admin/firma': typeof AdminFirmaRoute
   '/admin/importar': typeof AdminImportarRoute
+  '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/preguntas': typeof AdminPreguntasRoute
   '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/admin/estadisticas'
     | '/admin/firma'
     | '/admin/importar'
+    | '/admin/opiniones'
     | '/admin/preguntas'
     | '/admin/senales'
     | '/admin/usuarios'
@@ -258,6 +268,7 @@ export interface FileRouteTypes {
     | '/admin/estadisticas'
     | '/admin/firma'
     | '/admin/importar'
+    | '/admin/opiniones'
     | '/admin/preguntas'
     | '/admin/senales'
     | '/admin/usuarios'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/estadisticas'
     | '/admin/firma'
     | '/admin/importar'
+    | '/admin/opiniones'
     | '/admin/preguntas'
     | '/admin/senales'
     | '/admin/usuarios'
@@ -395,6 +407,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPreguntasRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/opiniones': {
+      id: '/admin/opiniones'
+      path: '/opiniones'
+      fullPath: '/admin/opiniones'
+      preLoaderRoute: typeof AdminOpinionesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/importar': {
       id: '/admin/importar'
       path: '/importar'
@@ -470,6 +489,7 @@ interface AdminRouteChildren {
   AdminEstadisticasRoute: typeof AdminEstadisticasRoute
   AdminFirmaRoute: typeof AdminFirmaRoute
   AdminImportarRoute: typeof AdminImportarRoute
+  AdminOpinionesRoute: typeof AdminOpinionesRoute
   AdminPreguntasRoute: typeof AdminPreguntasRoute
   AdminSenalesRoute: typeof AdminSenalesRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
@@ -485,6 +505,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminEstadisticasRoute: AdminEstadisticasRoute,
   AdminFirmaRoute: AdminFirmaRoute,
   AdminImportarRoute: AdminImportarRoute,
+  AdminOpinionesRoute: AdminOpinionesRoute,
   AdminPreguntasRoute: AdminPreguntasRoute,
   AdminSenalesRoute: AdminSenalesRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
