@@ -19,6 +19,7 @@ const tabs = [
   { to: "/admin/usuarios", label: "Usuarios" },
   { to: "/admin/configuracion", label: "Configuración" },
   { to: "/admin/estadisticas", label: "Estadísticas" },
+  { to: "/admin/opiniones", label: "Opiniones" },
 ];
 
 function AdminLayout() {
