@@ -6,3 +6,4 @@
 - [x] Vista previa editable en Categorías (quitar, reordenar, agregar del banco, guardar)
 - [x] Detector automático de preguntas repetidas en la categoría, con aviso y "Dejar una sola copia"
 - [x] Typecheck + prueba en navegador + emulador verificado + limpieza de datos de prueba
+- [x] La pantalla apagada ya no cancela el examen (solo advertencia + wake lock)
