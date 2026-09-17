@@ -24,11 +24,14 @@ function useKeepScreenAwake(active: boolean) {
     };
 
     const onVisible = () => { if (!document.hidden) void pedir(); };
+    const onFocus = () => void pedir();
     void pedir();
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onFocus);
     return () => {
       cancelado = true;
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onFocus);
       if (sentinel) void sentinel.release().catch(() => {});
     };
   }, [active]);
