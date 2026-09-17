@@ -46,25 +46,24 @@ type GuardOpts = {
  * durante el examen. Además bloquea copiar/pegar/cortar/selección/menú.
  */
 export function useExamGuard({ active, onWarning, onCancel }: GuardOpts) {
-  const strikes = useRef(0);
   const cancelled = useRef(false);
+
+  useKeepScreenAwake(active);
 
   useEffect(() => {
     if (!active) return;
 
-    const strike = (motivo: string) => {
+    // La pantalla apagada del celular produce los mismos eventos que un
+    // cambio de aplicación, así que estos casos solo advierten: nunca
+    // cancelan el examen. La cancelación queda para recarga o cierre.
+    const avisar = (motivo: string) => {
       if (cancelled.current) return;
-      strikes.current += 1;
-      if (strikes.current === 1) onWarning(motivo);
-      else {
-        cancelled.current = true;
-        onCancel(motivo);
-      }
+      onWarning(motivo);
     };
 
-    const onVisibility = () => { if (document.hidden) strike("Cambio de pestaña o aplicación"); };
-    const onBlur = () => strike("Pérdida de foco de la pantalla");
-    const onFsChange = () => { if (!document.fullscreenElement) strike("Salida de pantalla completa"); };
+    const onVisibility = () => { if (document.hidden) avisar("Pantalla apagada o cambio de aplicación"); };
+    const onBlur = () => avisar("Pérdida de foco de la pantalla");
+    const onFsChange = () => { if (!document.fullscreenElement) avisar("Salida de pantalla completa"); };
     const block = (e: Event) => { e.preventDefault(); return false; };
     const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
 
