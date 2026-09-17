@@ -1,5 +1,39 @@
 import { useEffect, useRef } from "react";
 
+/**
+ * Mantiene la pantalla encendida mientras dura el examen (Wake Lock).
+ * Si el dispositivo no lo soporta, simplemente no hace nada.
+ */
+function useKeepScreenAwake(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    type Sentinel = { release: () => Promise<void> };
+    let sentinel: Sentinel | null = null;
+    let cancelado = false;
+
+    const pedir = async () => {
+      try {
+        const wl = (navigator as Navigator & { wakeLock?: { request: (t: "screen") => Promise<Sentinel> } }).wakeLock;
+        if (!wl) return;
+        const s = await wl.request("screen");
+        if (cancelado) { void s.release(); return; }
+        sentinel = s;
+      } catch {
+        /* no soportado o denegado */
+      }
+    };
+
+    const onVisible = () => { if (!document.hidden) void pedir(); };
+    void pedir();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelado = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      if (sentinel) void sentinel.release().catch(() => {});
+    };
+  }, [active]);
+}
+
 type GuardOpts = {
   active: boolean;
   /** Primera infracción: advertencia. Segunda: cancelación. */
