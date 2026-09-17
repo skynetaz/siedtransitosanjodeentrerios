@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SignaturePad } from "@/components/SignaturePad";
 import { EncuestaFinal } from "@/components/EncuestaFinal";
-import { ExamProgress, OptionCard, esSenal, SenalImg } from "@/components/exam/ExamPieces";
+import { ExamProgress, OptionCard, esSenal, SenalImg, precargarSenales } from "@/components/exam/ExamPieces";
 import { useExamGuard, requestFullscreen, exitFullscreen } from "@/components/exam/use-exam-guard";
 import { nombreCategoria, clasesDeExamen } from "@/lib/categoria-label";
 
@@ -203,6 +203,13 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
   }, [endTime]);
 
   useEffect(() => { if (restante === 0) cerrar(); }, [restante, cerrar]);
+
+  // Con internet lenta: va bajando en segundo plano las imágenes de las
+  // próximas preguntas para que aparezcan al instante.
+  useEffect(() => {
+    const proximas = questions.slice(idx, idx + 3).flatMap((q: any) => q?.snapshot?.opciones ?? []);
+    precargarSenales(proximas as string[]);
+  }, [idx, questions]);
 
   /** Segunda oportunidad activa sobre la pregunta actual (respuesta previa bloqueada). */
   const [segunda, setSegunda] = useState<{ previa: string; motivo: string } | null>(null);

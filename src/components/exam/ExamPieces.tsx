@@ -26,7 +26,29 @@ export const esSenal = (v: string) =>
 
 /** Miniatura de una señal de tránsito usada como opción de respuesta. */
 export function SenalImg({ src, className }: { src: string; className?: string }) {
-  return <img src={src} alt="Señal de tránsito" loading="lazy" draggable={false} className={cn("h-24 w-24 rounded-md object-contain", className)} />;
+  return (
+    <img
+      src={src}
+      alt="Señal de tránsito"
+      loading="lazy"
+      decoding="async"
+      width={96}
+      height={96}
+      draggable={false}
+      className={cn("h-24 w-24 rounded-md object-contain", className)}
+    />
+  );
+}
+
+/** Descarga por adelantado las señales de las próximas preguntas. */
+export function precargarSenales(valores: string[]) {
+  if (typeof window === "undefined") return;
+  for (const v of valores) {
+    if (!esSenal(v)) continue;
+    const img = new Image();
+    img.decoding = "async";
+    img.src = v;
+  }
 }
 
 /** Opción de respuesta: área de toque grande, un solo seleccionado. */
