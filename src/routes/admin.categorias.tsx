@@ -402,6 +402,7 @@ function VistaPrevia({ cat, className }: { cat: Cat; className?: string }) {
                 {manual ? (
                   <>
                     <BancoDialog yaIncluidas={ids ?? []} clasesCategoria={cat.clases} onAgregar={agregar} />
+                    <SenalesDialog yaIncluidas={ids ?? []} clasesCategoria={cat.clases} onAgregar={agregar} />
                     <Button variant="ghost" size="sm" className="h-10" onClick={() => setIds(originales)}>
                       Restaurar
                     </Button>
