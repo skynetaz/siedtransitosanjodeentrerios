@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2, Save, Pencil, Eye, AlertTriangle, Copy, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, Plus, Trash2, Save, Pencil, Eye, AlertTriangle, Copy, ArrowUp, ArrowDown, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
@@ -402,6 +402,7 @@ function VistaPrevia({ cat, className }: { cat: Cat; className?: string }) {
                 {manual ? (
                   <>
                     <BancoDialog yaIncluidas={ids ?? []} clasesCategoria={cat.clases} onAgregar={agregar} />
+                    <SenalesDialog yaIncluidas={ids ?? []} clasesCategoria={cat.clases} onAgregar={agregar} />
                     <Button variant="ghost" size="sm" className="h-10" onClick={() => setIds(originales)}>
                       Restaurar
                     </Button>
@@ -568,6 +569,122 @@ function BancoDialog({
               );
             })}
             {rows.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">Sin resultados.</p>}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <Button variant="outline" className="h-12 flex-1" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button className="h-12 flex-1" disabled={sel.length === 0} onClick={confirmar}>
+            Agregar {sel.length > 0 ? `(${sel.length})` : ""}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Selector visual de preguntas de señales (con las imágenes reales). */
+function SenalesDialog({
+  yaIncluidas, clasesCategoria, onAgregar,
+}: { yaIncluidas: string[]; clasesCategoria: Clase[]; onAgregar: (ids: string[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const [texto, setTexto] = useState("");
+  const [clase, setClase] = useState<string>("cat");
+  const [sel, setSel] = useState<string[]>([]);
+  const banco = useServerFn(listarBancoPreguntas);
+  const temasFn = useServerFn(listarTemas);
+
+  const temas = useQuery({ queryKey: ["temas"], queryFn: () => temasFn(), enabled: open });
+  const temaSenales = ((temas.data ?? []) as any[]).find((t) => t.slug === "senales")?.id as string | undefined;
+
+  const q = useQuery({
+    queryKey: ["banco-senales", clase, texto, clasesCategoria.join(","), temaSenales ?? ""],
+    queryFn: () =>
+      banco({
+        data: {
+          clases: clase === "cat" ? clasesCategoria : clase === "all" ? [] : [clase as Clase],
+          topicId: temaSenales ?? null,
+          texto,
+          soloActivas: true,
+          limite: 300,
+        },
+      }),
+    enabled: open && !!temaSenales,
+  });
+
+  // Me quedo solo con las que realmente tienen imágenes como opciones.
+  const rows: Preg[] = ((q.data ?? []) as Preg[]).filter((p) => p.opciones.some((o) => esSenal(o)));
+
+  const confirmar = () => { onAgregar(sel); setSel([]); setOpen(false); };
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSel([]); }}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-10">
+          <ImageIcon className="mr-1 h-4 w-4" />Agregar señales
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg">Señales de tránsito</DialogTitle>
+          <DialogDescription>Elegí las preguntas con imágenes de señales que querés sumar a esta categoría.</DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Select value={clase} onValueChange={setClase}>
+            <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cat">Clases de la categoría</SelectItem>
+              <SelectItem value="all">Todas las clases</SelectItem>
+              {CLASES.map((c) => <SelectItem key={c} value={c}>Clase {c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input className="h-11" placeholder="Buscar consigna..." value={texto} onChange={(e) => setTexto(e.target.value)} />
+        </div>
+
+        {q.isLoading || temas.isLoading ? (
+          <Loader2 className="mx-auto h-6 w-6 animate-spin" />
+        ) : (
+          <div className="space-y-2">
+            {rows.map((p) => {
+              const incluida = yaIncluidas.includes(p.id);
+              const marcada = sel.includes(p.id);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  disabled={incluida}
+                  onClick={() => setSel((s) => (s.includes(p.id) ? s.filter((x) => x !== p.id) : [...s, p.id]))}
+                  className={`w-full rounded-lg border p-3 text-left text-sm ${incluida ? "opacity-50" : marcada ? "border-primary bg-primary/10" : ""}`}
+                >
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <Badge variant="outline">Clase {p.clase}</Badge>
+                    {p.eliminatoria && <Badge className="bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
+                    {incluida && <Badge variant="secondary">Ya incluida</Badge>}
+                    {marcada && !incluida && <Badge className="bg-primary text-primary-foreground">Seleccionada</Badge>}
+                  </div>
+                  <p className="mt-1 font-medium">{p.pregunta}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {p.opciones.map((o, k) =>
+                      esSenal(o) ? (
+                        <div key={k} className={o === p.correcta ? "rounded-md ring-2 ring-success" : ""}>
+                          <SenalImg src={o} className="h-16 w-16" />
+                        </div>
+                      ) : (
+                        <span key={k} className={`rounded-md border px-2 py-1 text-xs ${o === p.correcta ? "border-success bg-success/10 font-semibold" : ""}`}>
+                          {o}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+            {rows.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                No hay señales disponibles para este filtro.
+              </p>
+            )}
           </div>
         )}
 
