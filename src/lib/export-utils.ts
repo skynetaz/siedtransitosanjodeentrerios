@@ -197,3 +197,101 @@ export function exportListExcel(rows: any[], filename = "examenes.xlsx") {
   XLSX.utils.book_append_sheet(wb, ws, "Exámenes");
   XLSX.writeFile(wb, filename);
 }
+
+// ===== Vista previa de categoría → PDF (descargar / compartir / imprimir) =====
+const esRutaSenal = (v?: string | null) =>
+  Boolean(v && (v.startsWith("/senales/") || v.startsWith("/api/public/senal/")));
+
+/** Carga cualquier imagen (jpg/png/webp/svg) y la devuelve como JPEG en data URL. */
+async function imagenJpeg(src: string): Promise<string | null> {
+  return await new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const c = document.createElement("canvas");
+        c.width = 256; c.height = 256;
+        const ctx = c.getContext("2d")!;
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, 256, 256);
+        const s = Math.min(256 / (img.naturalWidth || 256), 256 / (img.naturalHeight || 256));
+        const w = (img.naturalWidth || 256) * s, h = (img.naturalHeight || 256) * s;
+        ctx.drawImage(img, (256 - w) / 2, (256 - h) / 2, w, h);
+        resolve(c.toDataURL("image/jpeg", 0.9));
+      } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+export type CategoriaPdfPregunta = {
+  pregunta: string; clase: string; tema: string | null; peso: number;
+  eliminatoria: boolean; correcta: string; opciones: string[];
+};
+
+export async function crearPdfCategoria(
+  cat: { nombre: string; clases: string[]; duracion_minutos: number; max_errores: number },
+  preguntas: CategoriaPdfPregunta[],
+) {
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const rutas = Array.from(new Set(preguntas.flatMap((p) => p.opciones).filter(esRutaSenal)));
+  const imgs = new Map<string, string>();
+  await Promise.all(rutas.map(async (r) => { const d = await imagenJpeg(r); if (d) imgs.set(r, d); }));
+
+  const M = 36, W = 595 - M * 2, BOTTOM = 842 - 36;
+  let y = 40;
+  const nueva = (alto: number) => { if (y + alto > BOTTOM) { doc.addPage(); y = 40; } };
+
+  doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+  doc.text(`Vista previa · ${cat.nombre || "Categoría"}`, M, y); y += 15;
+  doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+  const elim = preguntas.filter((p) => p.eliminatoria).length;
+  const puntaje = preguntas.reduce((a, p) => a + (p.peso || 0), 0);
+  doc.text(
+    `Clases ${cat.clases.join(" + ")} · ${cat.duracion_minutos} min · hasta ${cat.max_errores} errores · ` +
+      `${preguntas.length} preguntas · ${elim} eliminatorias · puntaje ${puntaje} · ${new Date().toLocaleString("es-AR")}`,
+    M, y,
+  );
+  y += 8; doc.setDrawColor(200); doc.line(M, y, 595 - M, y); y += 14;
+
+  preguntas.forEach((p, i) => {
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
+    const enc = `${i + 1}. ${p.pregunta}${p.eliminatoria ? "  [ELIMINATORIA]" : ""}`;
+    const lineas = doc.splitTextToSize(enc, W);
+    nueva(lineas.length * 11 + 16);
+    doc.text(lineas, M, y); y += lineas.length * 11;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7);
+    doc.setTextColor(110);
+    doc.text(`Clase ${p.clase}${p.tema ? " · " + p.tema : ""} · peso ${p.peso}`, M, y); y += 10;
+    doc.setTextColor(0);
+
+    const conImg = p.opciones.some(esRutaSenal);
+    if (conImg) {
+      const L = 62; nueva(L + 16);
+      p.opciones.forEach((o, k) => {
+        const x = M + k * (L + 12);
+        const ok = o === p.correcta;
+        const d = imgs.get(o);
+        if (d) doc.addImage(d, "JPEG", x, y, L, L);
+        else if (!esRutaSenal(o)) doc.text(doc.splitTextToSize(o, L), x, y + 10);
+        if (ok) { doc.setDrawColor(22, 163, 74); doc.setLineWidth(2); doc.rect(x - 2, y - 2, L + 4, L + 4); doc.setLineWidth(0.5); }
+        doc.setFontSize(7); doc.text(`${String.fromCharCode(65 + k)}${ok ? " ✓ correcta" : ""}`.replace("✓ ", ""), x, y + L + 10);
+      });
+      y += L + 18;
+    } else {
+      doc.setFontSize(8.5);
+      p.opciones.forEach((o, k) => {
+        const ok = o === p.correcta;
+        const t = doc.splitTextToSize(`${String.fromCharCode(65 + k)}) ${o}${ok ? "   (correcta)" : ""}`, W - 10);
+        nueva(t.length * 10 + 2);
+        if (ok) { doc.setFont("helvetica", "bold"); doc.setTextColor(22, 120, 60); }
+        doc.text(t, M + 8, y); y += t.length * 10;
+        doc.setFont("helvetica", "normal"); doc.setTextColor(0);
+      });
+      y += 8;
+    }
+  });
+
+  const nombreArchivo = `vista_previa_${(cat.nombre || "categoria").replace(/[^\w]+/g, "_")}.pdf`;
+  return { doc, nombreArchivo };
+}
