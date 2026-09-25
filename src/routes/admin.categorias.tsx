@@ -14,10 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2, Save, Pencil, Eye, AlertTriangle, Copy, ArrowUp, ArrowDown, Image as ImageIcon } from "lucide-react";
+import { Loader2, Plus, Trash2, Save, Pencil, Eye, AlertTriangle, Copy, ArrowUp, ArrowDown, Image as ImageIcon, Download, Share2, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { esSenal, SenalImg } from "@/components/exam/ExamPieces";
+import { crearPdfCategoria } from "@/lib/export-utils";
 
 
 export const Route = createFileRoute("/admin/categorias")({ component: CategoriasPage });
@@ -336,6 +337,33 @@ function VistaPrevia({ cat, className }: { cat: Cat; className?: string }) {
     onError: (e) => toast.error((e as Error).message),
   });
 
+  const [pdfBusy, setPdfBusy] = useState<string | null>(null);
+  const accionPdf = async (modo: "descargar" | "compartir" | "imprimir") => {
+    setPdfBusy(modo);
+    try {
+      const { doc, nombreArchivo } = await crearPdfCategoria(cat, preguntas);
+      if (modo === "descargar") { doc.save(nombreArchivo); return; }
+      const blob = doc.output("blob");
+      if (modo === "compartir") {
+        const file = new File([blob], nombreArchivo, { type: "application/pdf" });
+        const nav = navigator as any;
+        if (nav.canShare?.({ files: [file] })) {
+          try { await nav.share({ files: [file], title: `Vista previa · ${cat.nombre}` }); } catch {}
+        } else {
+          doc.save(nombreArchivo);
+          toast.info("Este dispositivo no permite compartir archivos; se descargó el PDF.");
+        }
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const w = window.open(url, "_blank");
+      if (!w) { doc.save(nombreArchivo); toast.info("Se descargó el PDF para imprimir."); }
+      else setTimeout(() => { try { w.print(); } catch {} }, 800);
+    } catch (e) {
+      toast.error("No se pudo generar el PDF: " + (e as Error).message);
+    } finally { setPdfBusy(null); }
+  };
+
   const hayCambios = (originales ?? []).join(",") !== (ids ?? []).join(",");
   const agregadas = (ids ?? []).filter((x) => !(originales ?? []).includes(x)).length;
   const quitadas = (originales ?? []).filter((x) => !(ids ?? []).includes(x)).length;
@@ -373,6 +401,19 @@ function VistaPrevia({ cat, className }: { cat: Cat; className?: string }) {
               <Dato label="De señales" valor={String(d.senalesIncluidas)} />
               <Dato label="Eliminatorias" valor={String(d.eliminatorias)} />
               <Dato label="Puntaje total" valor={String(d.puntaje)} />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {([
+                ["descargar", "Descargar PDF", Download],
+                ["compartir", "Compartir", Share2],
+                ["imprimir", "Imprimir", Printer],
+              ] as const).map(([m, t, Ic]) => (
+                <Button key={m} variant="outline" size="sm" className="h-10 flex-1 min-w-28"
+                  disabled={!!pdfBusy || preguntas.length === 0} onClick={() => accionPdf(m)}>
+                  {pdfBusy === m ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Ic className="mr-1 h-4 w-4" />}{t}
+                </Button>
+              ))}
             </div>
 
             {!manual && preguntas.length < d.solicitadas && (
