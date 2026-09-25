@@ -275,7 +275,7 @@ export async function crearPdfCategoria(
         if (d) doc.addImage(d, "JPEG", x, y, L, L);
         else if (!esRutaSenal(o)) doc.text(doc.splitTextToSize(o, L), x, y + 10);
         if (ok) { doc.setDrawColor(22, 163, 74); doc.setLineWidth(2); doc.rect(x - 2, y - 2, L + 4, L + 4); doc.setLineWidth(0.5); }
-        doc.setFontSize(7); doc.text(`${String.fromCharCode(65 + k)}${ok ? " ✓ correcta" : ""}`.replace("✓ ", ""), x, y + L + 10);
+        doc.setFontSize(7); doc.text(`${String.fromCharCode(65 + k)}${ok ? " (correcta)" : ""}`, x, y + L + 10);
       });
       y += L + 18;
     } else {
