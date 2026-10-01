@@ -527,7 +527,7 @@ function BancoDialog({
 }: { yaIncluidas: string[]; clasesCategoria: Clase[]; onAgregar: (ids: string[]) => void }) {
   const [open, setOpen] = useState(false);
   const [texto, setTexto] = useState("");
-  const [clase, setClase] = useState<string>("cat");
+  const [clase, setClase] = useState<string>("all");
   const [tema, setTema] = useState<string>("all");
   const [sel, setSel] = useState<string[]>([]);
   const banco = useServerFn(listarBancoPreguntas);
@@ -570,7 +570,7 @@ function BancoDialog({
             <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="cat">Clases de la categoría</SelectItem>
-              <SelectItem value="all">Todas las clases</SelectItem>
+              <SelectItem value="all">Todas las clases (cualquier clase)</SelectItem>
               {CLASES.map((c) => <SelectItem key={c} value={c}>Clase {c}</SelectItem>)}
             </SelectContent>
           </Select>
@@ -630,7 +630,7 @@ function SenalesDialog({
 }: { yaIncluidas: string[]; clasesCategoria: Clase[]; onAgregar: (ids: string[]) => void }) {
   const [open, setOpen] = useState(false);
   const [texto, setTexto] = useState("");
-  const [clase, setClase] = useState<string>("cat");
+  const [clase, setClase] = useState<string>("all");
   const [sel, setSel] = useState<string[]>([]);
   const banco = useServerFn(listarBancoPreguntas);
   const temasFn = useServerFn(listarTemas);
@@ -676,7 +676,7 @@ function SenalesDialog({
             <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="cat">Clases de la categoría</SelectItem>
-              <SelectItem value="all">Todas las clases</SelectItem>
+              <SelectItem value="all">Todas las clases (cualquier clase)</SelectItem>
               {CLASES.map((c) => <SelectItem key={c} value={c}>Clase {c}</SelectItem>)}
             </SelectContent>
           </Select>
