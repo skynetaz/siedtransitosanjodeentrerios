@@ -603,7 +603,6 @@ function BancoDialog({
                     <Badge variant="outline">Clase {p.clase}</Badge>
                     {p.tema && <span>{p.tema}</span>}
                     {p.eliminatoria && <Badge className="bg-destructive text-destructive-foreground">Eliminatoria</Badge>}
-                    {incluida && <Badge variant="secondary">Ya incluida en esta categoría</Badge>}
                     {incluida && <Badge variant="secondary">Ya incluida</Badge>}
                   </div>
                   <p className="mt-1 font-medium">{p.pregunta}</p>
