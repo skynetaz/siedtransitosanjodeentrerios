@@ -23,7 +23,7 @@ const categoriaSchema = z.object({
   clases: z.array(z.enum(["A", "B", "C", "D", "E", "UNICA"])).min(1),
   incluye_senales: z.boolean().default(true),
   preguntas_senales: z.number().int().min(0).max(30).default(5),
-  cantidad_preguntas: z.number().int().min(1).max(80).default(20),
+  cantidad_preguntas: z.number().int().min(1).max(200).default(20),
   duracion_minutos: z.number().int().min(1).max(180).default(15),
   max_errores: z.number().int().min(0).max(40).default(4),
   activa: z.boolean().default(true),
