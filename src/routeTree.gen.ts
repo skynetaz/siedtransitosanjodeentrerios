@@ -9,63 +9,33 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AspiranteRouteImport } from './routes/aspirante'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as BootstrapRouteImport } from './routes/bootstrap'
-import { Route as ExamenRouteImport } from './routes/examen'
-import { Route as InspectorRouteImport } from './routes/inspector'
-import { Route as PanelRouteImport } from './routes/panel'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PanelRouteImport } from './routes/panel'
+import { Route as InspectorRouteImport } from './routes/inspector'
+import { Route as ExamenRouteImport } from './routes/examen'
+import { Route as BootstrapRouteImport } from './routes/bootstrap'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AspiranteRouteImport } from './routes/aspirante'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
-import { Route as AdminArchivoRouteImport } from './routes/admin.archivo'
-import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
-import { Route as AdminCodigosRouteImport } from './routes/admin.codigos'
-import { Route as AdminConfiguracionRouteImport } from './routes/admin.configuracion'
-import { Route as AdminEmuladorRouteImport } from './routes/admin.emulador'
-import { Route as AdminEstadisticasRouteImport } from './routes/admin.estadisticas'
-import { Route as AdminFirmaRouteImport } from './routes/admin.firma'
-import { Route as AdminImportarRouteImport } from './routes/admin.importar'
-import { Route as AdminOpinionesRouteImport } from './routes/admin.opiniones'
-import { Route as AdminPreguntasRouteImport } from './routes/admin.preguntas'
-import { Route as AdminSenalesRouteImport } from './routes/admin.senales'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
+import { Route as AdminSenalesRouteImport } from './routes/admin.senales'
+import { Route as AdminPreguntasRouteImport } from './routes/admin.preguntas'
+import { Route as AdminOpinionesRouteImport } from './routes/admin.opiniones'
+import { Route as AdminImportarRouteImport } from './routes/admin.importar'
+import { Route as AdminFirmaRouteImport } from './routes/admin.firma'
+import { Route as AdminEstadisticasRouteImport } from './routes/admin.estadisticas'
+import { Route as AdminEmuladorRouteImport } from './routes/admin.emulador'
+import { Route as AdminConfiguracionRouteImport } from './routes/admin.configuracion'
+import { Route as AdminCodigosRouteImport } from './routes/admin.codigos'
+import { Route as AdminCategoriasRouteImport } from './routes/admin.categorias'
+import { Route as AdminArchivoRouteImport } from './routes/admin.archivo'
 import { Route as ApiPublicSenalNameRouteImport } from './routes/api/public/senal.$name'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AspiranteRoute = AspiranteRouteImport.update({
-  id: '/aspirante',
-  path: '/aspirante',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BootstrapRoute = BootstrapRouteImport.update({
-  id: '/bootstrap',
-  path: '/bootstrap',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ExamenRoute = ExamenRouteImport.update({
-  id: '/examen',
-  path: '/examen',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InspectorRoute = InspectorRouteImport.update({
-  id: '/inspector',
-  path: '/inspector',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PanelRoute = PanelRouteImport.update({
@@ -73,9 +43,39 @@ const PanelRoute = PanelRouteImport.update({
   path: '/panel',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const InspectorRoute = InspectorRouteImport.update({
+  id: '/inspector',
+  path: '/inspector',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExamenRoute = ExamenRouteImport.update({
+  id: '/examen',
+  path: '/examen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BootstrapRoute = BootstrapRouteImport.update({
+  id: '/bootstrap',
+  path: '/bootstrap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AspiranteRoute = AspiranteRouteImport.update({
+  id: '/aspirante',
+  path: '/aspirante',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
@@ -83,54 +83,9 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminArchivoRoute = AdminArchivoRouteImport.update({
-  id: '/archivo',
-  path: '/archivo',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
-  id: '/categorias',
-  path: '/categorias',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminCodigosRoute = AdminCodigosRouteImport.update({
-  id: '/codigos',
-  path: '/codigos',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminConfiguracionRoute = AdminConfiguracionRouteImport.update({
-  id: '/configuracion',
-  path: '/configuracion',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEmuladorRoute = AdminEmuladorRouteImport.update({
-  id: '/emulador',
-  path: '/emulador',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEstadisticasRoute = AdminEstadisticasRouteImport.update({
-  id: '/estadisticas',
-  path: '/estadisticas',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminFirmaRoute = AdminFirmaRouteImport.update({
-  id: '/firma',
-  path: '/firma',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminImportarRoute = AdminImportarRouteImport.update({
-  id: '/importar',
-  path: '/importar',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminOpinionesRoute = AdminOpinionesRouteImport.update({
-  id: '/opiniones',
-  path: '/opiniones',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPreguntasRoute = AdminPreguntasRouteImport.update({
-  id: '/preguntas',
-  path: '/preguntas',
+const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminSenalesRoute = AdminSenalesRouteImport.update({
@@ -138,9 +93,54 @@ const AdminSenalesRoute = AdminSenalesRouteImport.update({
   path: '/senales',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
-  id: '/usuarios',
-  path: '/usuarios',
+const AdminPreguntasRoute = AdminPreguntasRouteImport.update({
+  id: '/preguntas',
+  path: '/preguntas',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOpinionesRoute = AdminOpinionesRouteImport.update({
+  id: '/opiniones',
+  path: '/opiniones',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminImportarRoute = AdminImportarRouteImport.update({
+  id: '/importar',
+  path: '/importar',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFirmaRoute = AdminFirmaRouteImport.update({
+  id: '/firma',
+  path: '/firma',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEstadisticasRoute = AdminEstadisticasRouteImport.update({
+  id: '/estadisticas',
+  path: '/estadisticas',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEmuladorRoute = AdminEmuladorRouteImport.update({
+  id: '/emulador',
+  path: '/emulador',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminConfiguracionRoute = AdminConfiguracionRouteImport.update({
+  id: '/configuracion',
+  path: '/configuracion',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCodigosRoute = AdminCodigosRouteImport.update({
+  id: '/codigos',
+  path: '/codigos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCategoriasRoute = AdminCategoriasRouteImport.update({
+  id: '/categorias',
+  path: '/categorias',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminArchivoRoute = AdminArchivoRouteImport.update({
+  id: '/archivo',
+  path: '/archivo',
   getParentRoute: () => AdminRoute,
 } as any)
 const ApiPublicSenalNameRoute = ApiPublicSenalNameRouteImport.update({
@@ -316,53 +316,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/aspirante': {
-      id: '/aspirante'
-      path: '/aspirante'
-      fullPath: '/aspirante'
-      preLoaderRoute: typeof AspiranteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bootstrap': {
-      id: '/bootstrap'
-      path: '/bootstrap'
-      fullPath: '/bootstrap'
-      preLoaderRoute: typeof BootstrapRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/examen': {
-      id: '/examen'
-      path: '/examen'
-      fullPath: '/examen'
-      preLoaderRoute: typeof ExamenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inspector': {
-      id: '/inspector'
-      path: '/inspector'
-      fullPath: '/inspector'
-      preLoaderRoute: typeof InspectorRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/panel': {
@@ -372,11 +330,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PanelRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
+    '/inspector': {
+      id: '/inspector'
+      path: '/inspector'
+      fullPath: '/inspector'
+      preLoaderRoute: typeof InspectorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/examen': {
+      id: '/examen'
+      path: '/examen'
+      fullPath: '/examen'
+      preLoaderRoute: typeof ExamenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bootstrap': {
+      id: '/bootstrap'
+      path: '/bootstrap'
+      fullPath: '/bootstrap'
+      preLoaderRoute: typeof BootstrapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aspirante': {
+      id: '/aspirante'
+      path: '/aspirante'
+      fullPath: '/aspirante'
+      preLoaderRoute: typeof AspiranteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/': {
@@ -386,74 +386,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/archivo': {
-      id: '/admin/archivo'
-      path: '/archivo'
-      fullPath: '/admin/archivo'
-      preLoaderRoute: typeof AdminArchivoRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/categorias': {
-      id: '/admin/categorias'
-      path: '/categorias'
-      fullPath: '/admin/categorias'
-      preLoaderRoute: typeof AdminCategoriasRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/codigos': {
-      id: '/admin/codigos'
-      path: '/codigos'
-      fullPath: '/admin/codigos'
-      preLoaderRoute: typeof AdminCodigosRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/configuracion': {
-      id: '/admin/configuracion'
-      path: '/configuracion'
-      fullPath: '/admin/configuracion'
-      preLoaderRoute: typeof AdminConfiguracionRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/emulador': {
-      id: '/admin/emulador'
-      path: '/emulador'
-      fullPath: '/admin/emulador'
-      preLoaderRoute: typeof AdminEmuladorRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/estadisticas': {
-      id: '/admin/estadisticas'
-      path: '/estadisticas'
-      fullPath: '/admin/estadisticas'
-      preLoaderRoute: typeof AdminEstadisticasRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/firma': {
-      id: '/admin/firma'
-      path: '/firma'
-      fullPath: '/admin/firma'
-      preLoaderRoute: typeof AdminFirmaRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/importar': {
-      id: '/admin/importar'
-      path: '/importar'
-      fullPath: '/admin/importar'
-      preLoaderRoute: typeof AdminImportarRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/opiniones': {
-      id: '/admin/opiniones'
-      path: '/opiniones'
-      fullPath: '/admin/opiniones'
-      preLoaderRoute: typeof AdminOpinionesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/preguntas': {
-      id: '/admin/preguntas'
-      path: '/preguntas'
-      fullPath: '/admin/preguntas'
-      preLoaderRoute: typeof AdminPreguntasRouteImport
+    '/admin/usuarios': {
+      id: '/admin/usuarios'
+      path: '/usuarios'
+      fullPath: '/admin/usuarios'
+      preLoaderRoute: typeof AdminUsuariosRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/senales': {
@@ -463,11 +400,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSenalesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/admin/usuarios': {
-      id: '/admin/usuarios'
-      path: '/usuarios'
-      fullPath: '/admin/usuarios'
-      preLoaderRoute: typeof AdminUsuariosRouteImport
+    '/admin/preguntas': {
+      id: '/admin/preguntas'
+      path: '/preguntas'
+      fullPath: '/admin/preguntas'
+      preLoaderRoute: typeof AdminPreguntasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/opiniones': {
+      id: '/admin/opiniones'
+      path: '/opiniones'
+      fullPath: '/admin/opiniones'
+      preLoaderRoute: typeof AdminOpinionesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/importar': {
+      id: '/admin/importar'
+      path: '/importar'
+      fullPath: '/admin/importar'
+      preLoaderRoute: typeof AdminImportarRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/firma': {
+      id: '/admin/firma'
+      path: '/firma'
+      fullPath: '/admin/firma'
+      preLoaderRoute: typeof AdminFirmaRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/estadisticas': {
+      id: '/admin/estadisticas'
+      path: '/estadisticas'
+      fullPath: '/admin/estadisticas'
+      preLoaderRoute: typeof AdminEstadisticasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/emulador': {
+      id: '/admin/emulador'
+      path: '/emulador'
+      fullPath: '/admin/emulador'
+      preLoaderRoute: typeof AdminEmuladorRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/configuracion': {
+      id: '/admin/configuracion'
+      path: '/configuracion'
+      fullPath: '/admin/configuracion'
+      preLoaderRoute: typeof AdminConfiguracionRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/codigos': {
+      id: '/admin/codigos'
+      path: '/codigos'
+      fullPath: '/admin/codigos'
+      preLoaderRoute: typeof AdminCodigosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/categorias': {
+      id: '/admin/categorias'
+      path: '/categorias'
+      fullPath: '/admin/categorias'
+      preLoaderRoute: typeof AdminCategoriasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/archivo': {
+      id: '/admin/archivo'
+      path: '/archivo'
+      fullPath: '/admin/archivo'
+      preLoaderRoute: typeof AdminArchivoRouteImport
       parentRoute: typeof AdminRoute
     }
     '/api/public/senal/$name': {
