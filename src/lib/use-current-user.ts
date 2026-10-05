@@ -8,14 +8,28 @@ export function useCurrentUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
+    let done = false;
+    const finish = (u: User | null) => {
+      if (done) return;
+      done = true;
+      setUser(u);
       setLoading(false);
-    });
+    };
+    // Sesión local (sin red) para no quedar colgado con conexión lenta o token vencido.
+    supabase.auth
+      .getSession()
+      .then(({ data }) => finish(data.session?.user ?? null))
+      .catch(() => finish(null));
+    // Seguro: nunca más de 4 s con la ruedita girando.
+    const t = setTimeout(() => finish(null), 4000);
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null);
+      if (!done) finish(session?.user ?? null);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      clearTimeout(t);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   return { user, loading };
@@ -36,7 +50,7 @@ export function useCurrentRole() {
   });
   return {
     user,
-    loading: userLoading || q.isLoading,
+    loading: userLoading || (q.isLoading && !q.isError),
     roles: q.data ?? [],
     isAdmin: (q.data ?? []).includes("admin"),
     isInspector: (q.data ?? []).includes("inspector"),
