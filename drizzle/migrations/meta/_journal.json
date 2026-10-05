@@ -50,6 +50,13 @@
       "when": 1790854015757,
       "tag": "0006_staff_delete_set_null",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791195219067,
+      "tag": "0007_restrict_reads_to_staff",
+      "breakpoints": true
     }
   ]
 }
