@@ -8,11 +8,16 @@ import type { ReactNode } from "react";
 export function AppShell({ title, subtitle, nav, children }: { title: string; subtitle?: string; nav?: ReactNode; children: ReactNode }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const signOut = async () => {
-    await qc.cancelQueries();
-    qc.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
+  const signOut = () => {
+    // 1) Borrar la sesión guardada en este dispositivo (instantáneo, sin red).
+    try {
+      Object.keys(localStorage).filter((k) => k.startsWith("sb-")).forEach((k) => localStorage.removeItem(k));
+    } catch { /* noop */ }
+    // 2) Avisar al servidor en segundo plano (si falla, no importa).
+    try { void supabase.auth.signOut({ scope: "local" }).catch(() => {}); } catch { /* noop */ }
+    // 3) Recarga completa a la pantalla de ingreso: no queda nada de la sesión anterior.
+    if (typeof window !== "undefined") window.location.replace("/auth");
+    else { qc.clear(); navigate({ to: "/auth", replace: true }); }
   };
   return (
     <div className="min-h-screen bg-background flex flex-col">
