@@ -1,4 +1,5 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { RedirectTo } from "@/components/RedirectTo";
 import { useCurrentRole } from "@/lib/use-current-user";
 import { nombreCategoria } from "@/lib/categoria-label";
 
@@ -25,8 +26,8 @@ function InspectorPanel() {
   const { loading, user, isInspector, isAdmin } = useCurrentRole();
   const [q, setQ] = useState("");
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
-  if (!user) return <Navigate to="/auth" replace />;
-  if (!isInspector && !isAdmin) return <Navigate to="/panel" replace />;
+  if (!user) return <RedirectTo to="/auth" />;
+  if (!isInspector && !isAdmin) return <RedirectTo to="/panel" />;
 
   return (
     <AppShell title="Panel Inspector" subtitle="Buscar aspirantes, habilitar exámenes y ver historial">

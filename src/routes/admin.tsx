@@ -1,4 +1,5 @@
-import { createFileRoute, Link, Navigate, Outlet, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
+import { RedirectTo } from "@/components/RedirectTo";
 import { useCurrentRole } from "@/lib/use-current-user";
 import { AppShell } from "@/components/AppShell";
 import { Loader2 } from "lucide-react";
@@ -26,8 +27,8 @@ function AdminLayout() {
   const { loading, user, isAdmin } = useCurrentRole();
   const location = useLocation();
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
-  if (!user) return <Navigate to="/auth" replace />;
-  if (!isAdmin) return <Navigate to="/panel" replace />;
+  if (!user) return <RedirectTo to="/auth" />;
+  if (!isAdmin) return <RedirectTo to="/panel" />;
   return (
     <AppShell title="Panel Administrador" subtitle="Gestión completa del sistema de evaluación">
       <nav className="no-print -mx-1 mb-4 flex flex-wrap gap-2 px-1">
