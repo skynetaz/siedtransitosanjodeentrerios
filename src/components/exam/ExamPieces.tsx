@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Check, X } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 
 /** Barra de progreso del examen: "Pregunta 8 de 40" + porcentaje. */
 export function ExamProgress({ actual, total }: { actual: number; total: number }) {
