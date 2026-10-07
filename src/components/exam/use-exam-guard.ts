@@ -65,7 +65,13 @@ export function useExamGuard({ active, onWarning, onCancel }: GuardOpts) {
     };
 
     const onVisibility = () => { if (document.hidden) avisar("Pantalla apagada o cambio de aplicación"); };
-    const onBlur = () => avisar("Pérdida de foco de la pantalla");
+    // En celulares (sobre todo iPhone) el "blur" salta solo al tocar la barra
+    // superior o al desplazarse; ahí se usa únicamente el cambio de visibilidad.
+    const esTactil = typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)").matches;
+    const onBlur = () => {
+      if (esTactil) return;
+      setTimeout(() => { if (!document.hasFocus() && !document.hidden) avisar("Pérdida de foco de la pantalla"); }, 1500);
+    };
     const onFsChange = () => { if (!document.fullscreenElement) avisar("Salida de pantalla completa"); };
     const block = (e: Event) => { e.preventDefault(); return false; };
     const onBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };

@@ -204,12 +204,18 @@ function Runner({ sesion, onFinish }: { sesion: Sesion; onFinish: (status: strin
 
   useEffect(() => { if (restante === 0) cerrar(); }, [restante, cerrar]);
 
-  // Con internet lenta: va bajando en segundo plano las imágenes de las
-  // próximas preguntas para que aparezcan al instante.
+  // Con internet lenta: primero las próximas preguntas y enseguida todas las
+  // señales del examen, para que ya estén descargadas al llegar.
   useEffect(() => {
     const proximas = questions.slice(idx, idx + 3).flatMap((q: any) => q?.snapshot?.opciones ?? []);
     precargarSenales(proximas as string[]);
   }, [idx, questions]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      precargarSenales(questions.flatMap((q: any) => q?.snapshot?.opciones ?? []) as string[]);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [questions]);
 
   /** Segunda oportunidad activa sobre la pregunta actual (respuesta previa bloqueada). */
   const [segunda, setSegunda] = useState<{ previa: string; motivo: string } | null>(null);
