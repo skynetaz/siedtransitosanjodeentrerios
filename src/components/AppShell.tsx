@@ -13,8 +13,6 @@ export function AppShell({ title, subtitle, nav, children }: { title: string; su
     try {
       Object.keys(localStorage).filter((k) => k.startsWith("sb-")).forEach((k) => localStorage.removeItem(k));
     } catch { /* noop */ }
-    // 2) Avisar al servidor en segundo plano (si falla, no importa).
-    try { void supabase.auth.signOut({ scope: "local" }).catch(() => {}); } catch { /* noop */ }
     // 3) Recarga completa a la pantalla de ingreso: no queda nada de la sesión anterior.
     if (typeof window !== "undefined") window.location.replace("/auth");
     else { qc.clear(); navigate({ to: "/auth", replace: true }); }
