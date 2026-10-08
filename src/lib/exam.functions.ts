@@ -162,19 +162,28 @@ export const finalizarExamen = createServerFn({ method: "POST" })
 
     const { data: allEq } = await supabaseAdmin.from("exam_questions").select("correcta").eq("exam_id", data.examId);
     const correctas = (allEq ?? []).filter((r) => r.correcta === true).length;
-    const incorrectas = (allEq ?? []).filter((r) => r.correcta === false).length;
-    const cfg = exam.config_snapshot as { max_errores?: number } | null;
+    const total = exam.total_preguntas || (allEq ?? []).length || 1;
+    // Regla estricta: toda pregunta sin responder cuenta como error.
+    const incorrectas = Math.max(0, total - correctas);
+    const sinResponder = (allEq ?? []).filter((r) => r.correcta === null).length;
+    const cfg = exam.config_snapshot as { max_errores?: number; duracion_minutos?: number } | null;
     const maxErr = cfg?.max_errores ?? 5;
     const status = incorrectas <= maxErr ? "aprobado" : "desaprobado";
     const finished = new Date();
     const started = exam.started_at ? new Date(exam.started_at) : finished;
-    const total = exam.total_preguntas || (allEq ?? []).length || 1;
+    const limiteSeg = (cfg?.duracion_minutos ?? 15) * 60;
+    const seg = Math.min(limiteSeg, Math.max(0, Math.round((finished.getTime() - started.getTime()) / 1000)));
+    const tiempoAgotado = seg >= limiteSeg - 2;
+    const motivo = exam.motivo_finalizacion
+      ?? (tiempoAgotado
+        ? `tiempo agotado${sinResponder ? ` (${sinResponder} sin responder)` : ""}`
+        : sinResponder ? `finalizado con ${sinResponder} sin responder` : "finalizado por el aspirante");
     await supabaseAdmin.from("exams").update({
       status, finished_at: finished.toISOString(),
       correctas, incorrectas, puntaje: correctas,
       porcentaje: Math.round((correctas / total) * 100),
-      tiempo_utilizado_seg: Math.round((finished.getTime() - started.getTime()) / 1000),
-      motivo_finalizacion: exam.motivo_finalizacion ?? "finalizado por el aspirante",
+      tiempo_utilizado_seg: seg,
+      motivo_finalizacion: motivo,
     }).eq("id", data.examId);
     return { ok: true, status, correctas, incorrectas };
   });
