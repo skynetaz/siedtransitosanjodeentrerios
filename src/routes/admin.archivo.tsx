@@ -92,6 +92,7 @@ function ArchiveList({ estado }: { estado: "aprobado"|"desaprobado"|"pendiente_f
                       : <Badge className="bg-destructive text-destructive-foreground"><XCircle className="h-3 w-3 mr-1" />Desaprobado</Badge>}
                     <span>{e.correctas ?? 0}/{e.total_preguntas ?? 0}</span>
                     <span>{e.finished_at ? new Date(e.finished_at).toLocaleString("es-AR") : ""}</span>
+                    {tiempoExamen(e) && <Badge variant="outline" className="text-xs">⏱ {tiempoExamen(e)}</Badge>}
                     {e.signature_aspirante && <Badge variant="outline" className="text-xs">Firmado aspirante</Badge>}
                     {e.signature_inspector && <Badge variant="outline" className="text-xs">Firmado inspector</Badge>}
                     {e.segunda_oportunidad_usada && <Badge className="bg-warning text-warning-foreground text-xs"><AlertTriangle className="mr-1 h-3 w-3" />Usó 2ª oportunidad</Badge>}
@@ -315,7 +316,7 @@ async function imprimirExamen(data: any) {
 <div class="head">
   <div><b>${escapeHtml(`${d.apellido ?? p.apellido ?? ""}, ${d.nombre ?? p.nombre ?? ""}`)}</b> — DNI ${escapeHtml(d.dni ?? p.dni ?? "")}</div>
   <div><b>${escapeHtml(etiquetaExamen(data.exam))}</b> · Resultado: <b>${(data.exam.status ?? "").toUpperCase()}</b> · ${data.exam.correctas ?? 0}/${data.exam.total_preguntas ?? 0}</div>
-  <div>${data.exam.finished_at ? new Date(data.exam.finished_at).toLocaleString("es-AR") : ""}</div>
+  <div>${data.exam.finished_at ? new Date(data.exam.finished_at).toLocaleString("es-AR") : ""}${tiempoExamen(data.exam) ? ` · Tiempo utilizado: <b>${tiempoExamen(data.exam)}</b>` : ""}</div>
 </div>
 <table><colgroup><col class="n" /><col /><col class="r" /><col class="r" /><col class="ok" /></colgroup><thead><tr><th>#</th><th>Pregunta</th><th>Respondió</th><th>Esperada</th><th>OK</th></tr></thead><tbody>${filas}</tbody></table>
 <div class="firmas">
@@ -333,6 +334,16 @@ async function imprimirExamen(data: any) {
   w.document.open();
   w.document.write(html);
   w.document.close();
+}
+
+/** Tiempo que tardó el aspirante, ej. "18 min 24 s de 30 min". */
+function tiempoExamen(e: any): string | null {
+  let s: number | null = e?.tiempo_utilizado_seg ?? null;
+  if (s == null && e?.started_at && e?.finished_at) s = Math.round((+new Date(e.finished_at) - +new Date(e.started_at)) / 1000);
+  if (s == null || s < 0) return null;
+  const lim = e?.config_snapshot?.duracion_minutos;
+  if (lim) s = Math.min(s, lim * 60);
+  return `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")} s${lim ? ` de ${lim} min` : ""}`;
 }
 
 function escapeHtml(s: string) {
