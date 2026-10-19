@@ -47,7 +47,18 @@ function ArchivoPage() {
 
 function ArchiveList({ estado }: { estado: "aprobado"|"desaprobado"|"pendiente_firma"|"todos" }) {
   const fn = useServerFn(listExamsArchive);
-  const q = useQuery({ queryKey: ["archive", estado], queryFn: () => fn({ data: { estado } }) });
+  // Actualización casi en tiempo real: se consulta cada 5 s mientras la pestaña está visible,
+  // y al volver a la pestaña o reconectar; sin caché vieja.
+  const q = useQuery({
+    queryKey: ["archive", estado],
+    queryFn: () => fn({ data: { estado } }),
+    staleTime: 0,
+    refetchInterval: 5000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    placeholderData: (prev) => prev,
+  });
   const permisoFn = useServerFn(puedeBorrarExamenes);
   const permiso = useQuery({ queryKey: ["puede-borrar-examenes"], queryFn: () => permisoFn() });
   const [openId, setOpenId] = useState<string | null>(null);
