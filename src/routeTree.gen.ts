@@ -33,6 +33,7 @@ import { Route as AdminSaasRouteImport } from './routes/admin.saas'
 import { Route as AdminSenalesRouteImport } from './routes/admin.senales'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 import { Route as ISlugRouteImport } from './routes/i.$slug'
+import { Route as ApiPublicHooksAsignarPendientesRouteImport } from './routes/api/public/hooks/asignar-pendientes'
 import { Route as ApiPublicSenalNameRouteImport } from './routes/api/public/senal.$name'
 
 const IndexRoute = IndexRouteImport.update({
@@ -155,6 +156,12 @@ const ISlugRoute = ISlugRouteImport.update({
   path: '/i/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksAsignarPendientesRoute =
+  ApiPublicHooksAsignarPendientesRouteImport.update({
+    id: '/api/public/hooks/asignar-pendientes',
+    path: '/api/public/hooks/asignar-pendientes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicSenalNameRoute = ApiPublicSenalNameRouteImport.update({
   id: '/api/public/senal/$name',
   path: '/api/public/senal/$name',
@@ -186,6 +193,7 @@ export interface FileRoutesByFullPath {
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/i/$slug': typeof ISlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/hooks/asignar-pendientes': typeof ApiPublicHooksAsignarPendientesRoute
   '/api/public/senal/$name': typeof ApiPublicSenalNameRoute
 }
 export interface FileRoutesByTo {
@@ -212,6 +220,7 @@ export interface FileRoutesByTo {
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/i/$slug': typeof ISlugRoute
   '/admin': typeof AdminIndexRoute
+  '/api/public/hooks/asignar-pendientes': typeof ApiPublicHooksAsignarPendientesRoute
   '/api/public/senal/$name': typeof ApiPublicSenalNameRoute
 }
 export interface FileRoutesById {
@@ -240,6 +249,7 @@ export interface FileRoutesById {
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/i/$slug': typeof ISlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/api/public/hooks/asignar-pendientes': typeof ApiPublicHooksAsignarPendientesRoute
   '/api/public/senal/$name': typeof ApiPublicSenalNameRoute
 }
 export interface FileRouteTypes {
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/i/$slug'
     | '/admin/'
+    | '/api/public/hooks/asignar-pendientes'
     | '/api/public/senal/$name'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/i/$slug'
     | '/admin'
+    | '/api/public/hooks/asignar-pendientes'
     | '/api/public/senal/$name'
   id:
     | '__root__'
@@ -322,6 +334,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/i/$slug'
     | '/admin/'
+    | '/api/public/hooks/asignar-pendientes'
     | '/api/public/senal/$name'
   fileRoutesById: FileRoutesById
 }
@@ -336,6 +349,7 @@ export interface RootRouteChildren {
   PanelRoute: typeof PanelRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ISlugRoute: typeof ISlugRoute
+  ApiPublicHooksAsignarPendientesRoute: typeof ApiPublicHooksAsignarPendientesRoute
   ApiPublicSenalNameRoute: typeof ApiPublicSenalNameRoute
 }
 
@@ -509,6 +523,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ISlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/asignar-pendientes': {
+      id: '/api/public/hooks/asignar-pendientes'
+      path: '/api/public/hooks/asignar-pendientes'
+      fullPath: '/api/public/hooks/asignar-pendientes'
+      preLoaderRoute: typeof ApiPublicHooksAsignarPendientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/senal/$name': {
       id: '/api/public/senal/$name'
       path: '/api/public/senal/$name'
@@ -566,6 +587,7 @@ const rootRouteChildren: RootRouteChildren = {
   PanelRoute: PanelRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ISlugRoute: ISlugRoute,
+  ApiPublicHooksAsignarPendientesRoute: ApiPublicHooksAsignarPendientesRoute,
   ApiPublicSenalNameRoute: ApiPublicSenalNameRoute,
 }
 export const routeTree = rootRouteImport

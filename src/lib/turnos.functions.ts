@@ -56,7 +56,7 @@ export const accionTurno = createServerFn({ method: "POST" }).middleware([requir
     else if (data.accion === "reasignar") { await llamarHoja("liberar", { id: t.id }); await reservarTurno(t.id); }
     else if (data.accion === "clase") { await supabaseAdmin.from("turnos_practicos").update({ clase: data.clase, motivo: null, updated_at: now }).eq("id", t.id); await reservarTurno(t.id); }
     else await supabaseAdmin.from("turnos_practicos").update({ estado: data.accion, updated_at: now }).eq("id", t.id);
-    await supabaseAdmin.from("audit_log").insert({ user_id: context.userId, action: `turno_${data.accion}`, entity: "turnos_practicos", entity_id: t.id } as any);
+    await supabaseAdmin.from("audit_log").insert({ user_id: context.userId, accion: `turno_${data.accion}`, target_type: "turnos_practicos", target_id: t.id } as any);
     return { ok: true };
   });
 

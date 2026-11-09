@@ -21,7 +21,7 @@ export async function reservarTurno(turnoId: string) {
   if (d.estado === "asignado") Object.assign(upd, { hoja: r.reserva.hoja, fila: r.reserva.fila, fecha: r.reserva.fecha, hora: r.reserva.hora });
   await sb.from("turnos_practicos").update(upd).eq("id", t.id);
   await bitacora(t.institucion_id, t.id, "sheets", r.ok ? "ok" : "error", r.ok ? (d.motivo ?? "reservado") : String(r.error ?? "error"));
-  await sb.from("audit_log").insert({ action: `turno_${d.estado}`, entity: "turnos_practicos", entity_id: t.id, details: { motivo: d.motivo } } as any);
+  await sb.from("audit_log").insert({ accion: `turno_${d.estado}`, target_type: "turnos_practicos", target_id: t.id, meta: { motivo: d.motivo } } as any);
 }
 
 export async function asignarTurnoParaExamen(examId: string) {
