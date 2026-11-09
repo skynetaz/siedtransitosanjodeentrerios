@@ -64,6 +64,13 @@
       "when": 1794238760107,
       "tag": "0008_saas_instituciones",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794241409451,
+      "tag": "0009_multi_tenant_instituciones",
+      "breakpoints": true
     }
   ]
 }
