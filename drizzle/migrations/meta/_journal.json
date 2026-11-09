@@ -71,6 +71,13 @@
       "when": 1794241409451,
       "tag": "0009_multi_tenant_instituciones",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794243039284,
+      "tag": "0010_saas_extras_ia_cupo",
+      "breakpoints": true
     }
   ]
 }

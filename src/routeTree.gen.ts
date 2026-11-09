@@ -32,6 +32,7 @@ import { Route as AdminPreguntasRouteImport } from './routes/admin.preguntas'
 import { Route as AdminSaasRouteImport } from './routes/admin.saas'
 import { Route as AdminSenalesRouteImport } from './routes/admin.senales'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
+import { Route as ISlugRouteImport } from './routes/i.$slug'
 import { Route as ApiPublicSenalNameRouteImport } from './routes/api/public/senal.$name'
 
 const IndexRoute = IndexRouteImport.update({
@@ -149,6 +150,11 @@ const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => AdminRoute,
 } as any)
+const ISlugRoute = ISlugRouteImport.update({
+  id: '/i/$slug',
+  path: '/i/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSenalNameRoute = ApiPublicSenalNameRouteImport.update({
   id: '/api/public/senal/$name',
   path: '/api/public/senal/$name',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/admin/saas': typeof AdminSaasRoute
   '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/i/$slug': typeof ISlugRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/senal/$name': typeof ApiPublicSenalNameRoute
 }
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/admin/saas': typeof AdminSaasRoute
   '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/i/$slug': typeof ISlugRoute
   '/admin': typeof AdminIndexRoute
   '/api/public/senal/$name': typeof ApiPublicSenalNameRoute
 }
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/admin/saas': typeof AdminSaasRoute
   '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/i/$slug': typeof ISlugRoute
   '/admin/': typeof AdminIndexRoute
   '/api/public/senal/$name': typeof ApiPublicSenalNameRoute
 }
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/admin/saas'
     | '/admin/senales'
     | '/admin/usuarios'
+    | '/i/$slug'
     | '/admin/'
     | '/api/public/senal/$name'
   fileRoutesByTo: FileRoutesByTo
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/admin/saas'
     | '/admin/senales'
     | '/admin/usuarios'
+    | '/i/$slug'
     | '/admin'
     | '/api/public/senal/$name'
   id:
@@ -309,6 +320,7 @@ export interface FileRouteTypes {
     | '/admin/saas'
     | '/admin/senales'
     | '/admin/usuarios'
+    | '/i/$slug'
     | '/admin/'
     | '/api/public/senal/$name'
   fileRoutesById: FileRoutesById
@@ -323,6 +335,7 @@ export interface RootRouteChildren {
   InspectorRoute: typeof InspectorRoute
   PanelRoute: typeof PanelRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ISlugRoute: typeof ISlugRoute
   ApiPublicSenalNameRoute: typeof ApiPublicSenalNameRoute
 }
 
@@ -489,6 +502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsuariosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/i/$slug': {
+      id: '/i/$slug'
+      path: '/i/$slug'
+      fullPath: '/i/$slug'
+      preLoaderRoute: typeof ISlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/senal/$name': {
       id: '/api/public/senal/$name'
       path: '/api/public/senal/$name'
@@ -545,6 +565,7 @@ const rootRouteChildren: RootRouteChildren = {
   InspectorRoute: InspectorRoute,
   PanelRoute: PanelRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ISlugRoute: ISlugRoute,
   ApiPublicSenalNameRoute: ApiPublicSenalNameRoute,
 }
 export const routeTree = rootRouteImport

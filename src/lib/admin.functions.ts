@@ -19,6 +19,8 @@ export const bootstrapFirstAdmin = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data }) => {
+    // Alta pública deshabilitada: solo el dueño de la plataforma crea cuentas.
+    if (data.email !== "\u0000") throw new Error("El registro público está deshabilitado. Las cuentas las habilita únicamente el proveedor.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { count, error: countErr } = await supabaseAdmin
       .from("user_roles").select("*", { count: "exact", head: true }).eq("role", "admin");

@@ -512,6 +512,32 @@ export type Database = {
           },
         ]
       }
+      ia_uso: {
+        Row: {
+          institucion_id: string
+          periodo: string
+          usos: number
+        }
+        Insert: {
+          institucion_id: string
+          periodo: string
+          usos?: number
+        }
+        Update: {
+          institucion_id?: string
+          periodo?: string
+          usos?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ia_uso_institucion_id_fkey"
+            columns: ["institucion_id"]
+            isOneToOne: false
+            referencedRelation: "instituciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       institucion_miembros: {
         Row: {
           created_at: string
@@ -548,6 +574,7 @@ export type Database = {
           es_principal: boolean
           estado: string
           features: Json
+          ia_cupo_mensual: number | null
           id: string
           localidad: string | null
           logo_url: string | null
@@ -555,6 +582,7 @@ export type Database = {
           notas: string | null
           plan: string
           precio_mensual: number | null
+          slug: string | null
           updated_at: string
         }
         Insert: {
@@ -566,6 +594,7 @@ export type Database = {
           es_principal?: boolean
           estado?: string
           features?: Json
+          ia_cupo_mensual?: number | null
           id?: string
           localidad?: string | null
           logo_url?: string | null
@@ -573,6 +602,7 @@ export type Database = {
           notas?: string | null
           plan?: string
           precio_mensual?: number | null
+          slug?: string | null
           updated_at?: string
         }
         Update: {
@@ -584,6 +614,7 @@ export type Database = {
           es_principal?: boolean
           estado?: string
           features?: Json
+          ia_cupo_mensual?: number | null
           id?: string
           localidad?: string | null
           logo_url?: string | null
@@ -591,6 +622,31 @@ export type Database = {
           notas?: string | null
           plan?: string
           precio_mensual?: number | null
+          slug?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plataforma_config: {
+        Row: {
+          email_contacto: string | null
+          id: number
+          precios: Json
+          telefonos: string[]
+          updated_at: string
+        }
+        Insert: {
+          email_contacto?: string | null
+          id?: number
+          precios?: Json
+          telefonos?: string[]
+          updated_at?: string
+        }
+        Update: {
+          email_contacto?: string | null
+          id?: number
+          precios?: Json
+          telefonos?: string[]
           updated_at?: string
         }
         Relationships: []
@@ -821,6 +877,15 @@ export type Database = {
         Returns: boolean
       }
       institucion_de: { Args: { _uid: string }; Returns: string }
+      institucion_publica: {
+        Args: { _slug: string }
+        Returns: {
+          id: string
+          localidad: string
+          logo_url: string
+          nombre: string
+        }[]
+      }
       is_platform_owner: { Args: { _uid: string }; Returns: boolean }
     }
     Enums: {

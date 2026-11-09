@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUser } from "@/lib/use-current-user";
 import { usePlataforma } from "@/lib/use-plataforma";
-import { FEATURES, PLANES, featuresDePlan, diasRestantesDemo, type PlanKey } from "@/lib/planes";
+import { FEATURES, PLANES, featuresDePlan, diasRestantesDemo, cupoIA, formatoARS, slugify, PRECIOS_ARS_DEFAULT, type PlanKey } from "@/lib/planes";
+import { DialogoCompartirAccesos, GeneradorMarketing, enlaceInstitucion } from "@/components/saas/Compartir";
+import { useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,8 +29,17 @@ export const Route = createFileRoute("/admin/saas")({
 type Inst = {
   id: string; nombre: string; localidad: string | null; contacto_email: string | null; contacto_nombre: string | null;
   plan: string; estado: string; es_principal: boolean; demo_vence: string | null; precio_mensual: number | null;
-  features: Record<string, boolean>;
+  features: Record<string, boolean>; slug: string | null; contacto_telefono: string | null; ia_cupo_mensual: number | null;
 };
+
+const DIAS_DEMO = [1, 2, 3, 5, 7, 14, 30];
+
+function useConfig() {
+  return useQuery({ queryKey: ["plataforma-config"], queryFn: async () => {
+    const { data } = await supabase.from("plataforma_config").select("*").eq("id", 1).maybeSingle();
+    return (data ?? { precios: PRECIOS_ARS_DEFAULT, telefonos: [], email_contacto: null }) as { precios: Record<string, number>; telefonos: string[]; email_contacto: string | null };
+  } });
+}
 
 function SaasPage() {
   const { user } = useCurrentUser();
@@ -56,6 +67,12 @@ function SaasPage() {
     onSuccess: () => { toast.success("Institución eliminada."); qc.invalidateQueries({ queryKey: ["instituciones"] }); },
   });
 
+  const cfg = useConfig();
+  const usoQ = useQuery({ queryKey: ["ia-uso"], enabled: isOwner, queryFn: async () => {
+    const { data } = await supabase.from("ia_uso").select("institucion_id, usos").eq("periodo", new Date().toISOString().slice(0, 7));
+    return Object.fromEntries((data ?? []).map((r) => [r.institucion_id, r.usos])) as Record<string, number>;
+  } });
+  const telefonos = cfg.data?.telefonos ?? [];
   if (!isOwner) return <p className="text-muted-foreground">Sección exclusiva del proveedor de la plataforma.</p>;
   const lista = q.data ?? [];
   const activas = lista.filter((i) => i.estado === "activa").length;
@@ -72,10 +89,12 @@ function SaasPage() {
         </div>
         <Stat label="Clientes activos" value={activas} />
         <Stat label="Demos" value={demos} />
-        <Stat label="Ingreso mensual" value={`$ ${mrr.toLocaleString("es-AR")}`} />
+        <Stat label="Ingreso mensual" value={formatoARS(mrr)} />
       </div>
 
-      <NuevaInstitucion />
+      <ConfigProveedor />
+      <NuevaInstitucion precios={cfg.data?.precios ?? PRECIOS_ARS_DEFAULT} />
+      <Card><CardHeader className="pb-3"><CardTitle className="text-lg">Mensaje de marketing</CardTitle><CardDescription>Propuesta profesional lista para enviar a intendentes y directores de tránsito.</CardDescription></CardHeader><CardContent><GeneradorMarketing telefonos={telefonos} email={cfg.data?.email_contacto} /></CardContent></Card>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {lista.map((i) => {
@@ -117,16 +136,34 @@ function SaasPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs">Abono mensual ($)</Label>
+                    <Label className="text-xs">Abono mensual (ARS)</Label>
                     <Input type="number" defaultValue={i.precio_mensual ?? ""} onBlur={(e) => upd.mutate({ id: i.id, patch: { precio_mensual: e.target.value ? Number(e.target.value) : null } })} />
                   </div>
                   <div>
                     <Label className="text-xs">Extender demo</Label>
                     <div className="flex gap-1">
-                      {[7, 14, 30].map((d) => (
+                      {DIAS_DEMO.map((d) => (
                         <Button key={d} size="sm" variant="outline" onClick={() => upd.mutate({ id: i.id, patch: { estado: "demo", demo_vence: new Date(Date.now() + d * 86400000).toISOString() } })}>+{d}d</Button>
                       ))}
                     </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Dirección propia</Label>
+                    <Input defaultValue={i.slug ?? ""} placeholder="ej. colon" onBlur={(e) => { const v = slugify(e.target.value); if (v !== (i.slug ?? "")) upd.mutate({ id: i.id, patch: { slug: v || null } }); }} />
+                    {i.slug && <p className="mt-1 truncate text-[11px] text-muted-foreground">{enlaceInstitucion(i.slug)}</p>}
+                  </div>
+                  <div>
+                    <Label className="text-xs">Teléfono de contacto</Label>
+                    <Input defaultValue={i.contacto_telefono ?? ""} placeholder="+54 9 343 ..." onBlur={(e) => upd.mutate({ id: i.id, patch: { contacto_telefono: e.target.value.trim() || null } })} />
+                  </div>
+                  <div className="col-span-2">
+                    {(() => { const tope = cupoIA(i.plan, i.estado, i.ia_cupo_mensual); const usados = usoQ.data?.[i.id] ?? 0; return (<>
+                      <div className="flex items-center justify-between text-xs"><Label className="text-xs">Uso de IA este mes</Label><span className={usados >= tope ? "font-bold text-destructive" : ""}>{usados} / {tope}</span></div>
+                      <div className="mt-1 h-2 overflow-hidden rounded bg-muted"><div className="h-full bg-primary" style={{ width: `${tope ? Math.min(100, (usados / tope) * 100) : 100}%` }} /></div>
+                      <div className="mt-2 flex items-center gap-2"><Label className="text-xs whitespace-nowrap">Cupo manual</Label><Input type="number" min={0} className="h-8" placeholder="según plan" defaultValue={i.ia_cupo_mensual ?? ""} onBlur={(e) => upd.mutate({ id: i.id, patch: { ia_cupo_mensual: e.target.value === "" ? null : Math.max(0, Number(e.target.value)) } })} /></div>
+                    </>); })()}
                   </div>
                 </div>
                 <div className="divide-y rounded-lg border">
@@ -137,7 +174,7 @@ function SaasPage() {
                     </label>
                   ))}
                 </div>
-                <HerramientasMunicipio inst={i} activa={(actual as any)?.id === i.id} />
+                <HerramientasMunicipio inst={i} activa={(actual as any)?.id === i.id} telefonos={telefonos} />
                 {!i.es_principal && (
                   <ConfirmarBorrado titulo={`¿Eliminar ${i.nombre}?`} detalle="Se borra la cuenta de la institución del listado de clientes." onConfirm={() => del.mutate(i.id)} trigger={<Button variant="ghost" size="sm" className="text-destructive"><Trash2 className="mr-1 h-4 w-4" />Eliminar cliente</Button>} />
                 )}
@@ -154,18 +191,19 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   return <div className="rounded-lg bg-muted px-4 py-2 text-center"><div className="text-xl font-bold">{value}</div><div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div></div>;
 }
 
-function NuevaInstitucion() {
+function NuevaInstitucion({ precios }: { precios: Record<string, number> }) {
   const qc = useQueryClient();
-  const [f, setF] = useState({ nombre: "", localidad: "", contacto_nombre: "", contacto_email: "", plan: "profesional" as PlanKey, dias: "14" });
+  const [f, setF] = useState({ nombre: "", localidad: "", contacto_nombre: "", contacto_email: "", contacto_telefono: "", plan: "profesional" as PlanKey, dias: "14" });
   const crear = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("instituciones").insert({
         nombre: f.nombre.trim(), localidad: f.localidad || null, contacto_nombre: f.contacto_nombre || null, contacto_email: f.contacto_email || null,
+        contacto_telefono: f.contacto_telefono || null, slug: slugify(f.localidad || f.nombre) || null, precio_mensual: precios[f.plan] ?? null,
         plan: f.plan, estado: "demo", features: featuresDePlan(f.plan), demo_vence: new Date(Date.now() + Number(f.dias) * 86400000).toISOString(),
       } as never);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Demo creada."); setF({ ...f, nombre: "", localidad: "", contacto_nombre: "", contacto_email: "" }); qc.invalidateQueries({ queryKey: ["instituciones"] }); },
+    onSuccess: () => { toast.success("Demo creada."); setF({ ...f, nombre: "", localidad: "", contacto_nombre: "", contacto_email: "", contacto_telefono: "" }); qc.invalidateQueries({ queryKey: ["instituciones"] }); },
     onError: (e) => toast.error((e as Error).message),
   });
   return (
@@ -176,14 +214,15 @@ function NuevaInstitucion() {
         <Input placeholder="Localidad" value={f.localidad} onChange={(e) => setF({ ...f, localidad: e.target.value })} />
         <Input placeholder="Contacto" value={f.contacto_nombre} onChange={(e) => setF({ ...f, contacto_nombre: e.target.value })} />
         <Input type="email" placeholder="Correo de contacto" value={f.contacto_email} onChange={(e) => setF({ ...f, contacto_email: e.target.value })} />
+        <Input placeholder="Teléfono / WhatsApp" value={f.contacto_telefono} onChange={(e) => setF({ ...f, contacto_telefono: e.target.value })} />
         <Select value={f.plan} onValueChange={(v) => setF({ ...f, plan: v as PlanKey })}>
           <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>{Object.entries(PLANES).map(([k, p]) => <SelectItem key={k} value={k}>Plan {p.nombre}</SelectItem>)}</SelectContent>
+          <SelectContent>{Object.entries(PLANES).map(([k, p]) => <SelectItem key={k} value={k}>Plan {p.nombre} · {formatoARS(precios[k] ?? 0)}</SelectItem>)}</SelectContent>
         </Select>
         <div className="flex gap-2">
           <Select value={f.dias} onValueChange={(v) => setF({ ...f, dias: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{["7", "14", "30"].map((d) => <SelectItem key={d} value={d}>Demo {d} días</SelectItem>)}</SelectContent>
+            <SelectContent>{DIAS_DEMO.map((d) => <SelectItem key={d} value={String(d)}>Demo {d} {d === 1 ? "día" : "días"}</SelectItem>)}</SelectContent>
           </Select>
           <Button disabled={f.nombre.trim().length < 3 || crear.isPending} onClick={() => crear.mutate()}>Crear</Button>
         </div>
@@ -192,7 +231,9 @@ function NuevaInstitucion() {
   );
 }
 
-function HerramientasMunicipio({ inst, activa }: { inst: Inst; activa: boolean }) {
+function HerramientasMunicipio({ inst, activa, telefonos }: { inst: Inst; activa: boolean; telefonos: string[] }) {
+  const navigate = useNavigate();
+  const [compartir, setCompartir] = useState<null | { nombre: string; email: string; password: string }>(null);
   const qc = useQueryClient();
   const activarFn = useServerFn(activarInstitucion);
   const adminFn = useServerFn(crearAdminInstitucion);
@@ -206,7 +247,7 @@ function HerramientasMunicipio({ inst, activa }: { inst: Inst; activa: boolean }
   });
   const crear = useMutation({
     mutationFn: () => adminFn({ data: { institucionId: inst.id, ...f } }),
-    onSuccess: () => { toast.success("Administrador creado. Ya puede ingresar con su correo y contraseña."); setF({ nombre: "", apellido: "", email: "", password: "" }); setAbierto(false); },
+    onSuccess: () => { toast.success("Administrador creado. Compartí los accesos."); setCompartir({ nombre: f.nombre, email: f.email, password: f.password }); setF({ nombre: "", apellido: "", email: "", password: "" }); setAbierto(false); },
     onError: (e) => toast.error((e as Error).message),
   });
   const plantilla = useMutation({
@@ -221,7 +262,10 @@ function HerramientasMunicipio({ inst, activa }: { inst: Inst; activa: boolean }
         <Button size="sm" variant={activa ? "default" : "outline"} disabled={activa || activar.isPending} onClick={() => activar.mutate()}>
           {activa ? "Trabajando aquí" : "Entrar a este municipio"}
         </Button>
+        <Button size="sm" variant="outline" disabled={activar.isPending} onClick={async () => { if (!activa) await activar.mutateAsync(); navigate({ to: "/admin/preguntas" }); }}>Cargar preguntas por ellos</Button>
         <Button size="sm" variant="outline" onClick={() => setAbierto((v) => !v)}>Crear administrador</Button>
+        <DialogoCompartirAccesos institucion={inst.nombre} slug={inst.slug} telefonoDestino={inst.contacto_telefono} emailDestino={inst.contacto_email} telefonos={telefonos} trigger={<Button size="sm" variant="outline">Compartir accesos</Button>} />
+        {compartir && <DialogoCompartirAccesos key={compartir.email} open onOpenChange={(v) => !v && setCompartir(null)} institucion={inst.nombre} slug={inst.slug} telefonoDestino={inst.contacto_telefono} emailDestino={inst.contacto_email} telefonos={telefonos} inicial={compartir} />}
         {!inst.es_principal && (
           <Button size="sm" variant="outline" disabled={plantilla.isPending} onClick={() => plantilla.mutate()}>
             {plantilla.isPending ? "Cargando…" : "Cargar plantilla base"}
@@ -240,5 +284,37 @@ function HerramientasMunicipio({ inst, activa }: { inst: Inst; activa: boolean }
         </div>
       )}
     </div>
+  );
+}
+
+function ConfigProveedor() {
+  const qc = useQueryClient();
+  const cfg = useConfig();
+  const guardar = useMutation({
+    mutationFn: async (patch: Record<string, unknown>) => { const { error } = await supabase.from("plataforma_config").update({ ...patch, updated_at: new Date().toISOString() } as never).eq("id", 1); if (error) throw error; },
+    onSuccess: () => { toast.success("Guardado."); qc.invalidateQueries({ queryKey: ["plataforma-config"] }); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  if (!cfg.data) return null;
+  const c = cfg.data;
+  return (
+    <Card>
+      <CardHeader className="pb-3"><CardTitle className="text-lg">Precios y contacto del proveedor</CardTitle><CardDescription>Precios en pesos argentinos, editables. Se usan al crear cada nueva institución.</CardDescription></CardHeader>
+      <CardContent className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-3 gap-2">
+          {Object.entries(PLANES).map(([k, p]) => (
+            <div key={k}><Label className="text-xs">{p.nombre} (ARS/mes)</Label>
+              <Input type="number" min={0} defaultValue={c.precios?.[k] ?? 0} onBlur={(e) => { const v = Math.max(0, Number(e.target.value || 0)); if (v !== c.precios?.[k]) guardar.mutate({ precios: { ...c.precios, [k]: v } }); }} />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div><Label className="text-xs">Teléfonos (separados por coma)</Label>
+            <Input defaultValue={(c.telefonos ?? []).join(", ")} placeholder="+54 9 343 ..., +54 9 ..." onBlur={(e) => guardar.mutate({ telefonos: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} /></div>
+          <div><Label className="text-xs">Correo de contacto</Label>
+            <Input type="email" defaultValue={c.email_contacto ?? ""} onBlur={(e) => guardar.mutate({ email_contacto: e.target.value.trim() || null })} /></div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
