@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { bootstrapFirstAdmin } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,8 +49,6 @@ function AuthPage() {
         <div className="mt-4 text-center text-sm text-muted-foreground">
           <Link to="/" className="hover:underline">Volver al inicio</Link>
           <PoweredBy className="mt-4" />
-          {" · "}
-          <Link to="/bootstrap" className="hover:underline">Primera vez (crear administrador)</Link>
         </div>
       </div>
     </div>
