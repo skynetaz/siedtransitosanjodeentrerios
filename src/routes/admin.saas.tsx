@@ -102,7 +102,7 @@ function SaasPage() {
           return (
             <Card key={i.id} className={i.es_principal ? "border-primary" : ""}>
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-wrap items-start justify-between gap-2 min-w-0">
                   <div>
                     <CardTitle className="flex items-center gap-2 text-lg"><Building2 className="h-5 w-5" />{i.nombre}</CardTitle>
                     <CardDescription>{i.localidad ?? "—"}{i.contacto_email ? ` · ${i.contacto_email}` : ""}</CardDescription>
@@ -141,7 +141,7 @@ function SaasPage() {
                   </div>
                   <div>
                     <Label className="text-xs">Extender demo</Label>
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap gap-1">
                       {DIAS_DEMO.map((d) => (
                         <Button key={d} size="sm" variant="outline" onClick={() => upd.mutate({ id: i.id, patch: { estado: "demo", demo_vence: new Date(Date.now() + d * 86400000).toISOString() } })}>+{d}d</Button>
                       ))}
@@ -219,7 +219,7 @@ function NuevaInstitucion({ precios }: { precios: Record<string, number> }) {
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>{Object.entries(PLANES).map(([k, p]) => <SelectItem key={k} value={k}>Plan {p.nombre} · {formatoARS(precios[k] ?? 0)}</SelectItem>)}</SelectContent>
         </Select>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Select value={f.dias} onValueChange={(v) => setF({ ...f, dias: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>{DIAS_DEMO.map((d) => <SelectItem key={d} value={String(d)}>Demo {d} {d === 1 ? "día" : "días"}</SelectItem>)}</SelectContent>
