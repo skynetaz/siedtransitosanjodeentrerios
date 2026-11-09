@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ShieldCheck, LogOut } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";
+import { PoweredBy } from "@/components/brand/PoweredBy";
 
 export function AppShell({ title, subtitle, nav, children }: { title: string; subtitle?: string; nav?: ReactNode; children: ReactNode }) {
   const navigate = useNavigate();
@@ -41,6 +42,7 @@ export function AppShell({ title, subtitle, nav, children }: { title: string; su
         </div>
       </div>
       <main className="flex-1 mx-auto max-w-7xl w-full px-4 md:px-6 py-6">{children}</main>
+      <footer className="border-t py-3"><PoweredBy /></footer>
     </div>
   );
 }

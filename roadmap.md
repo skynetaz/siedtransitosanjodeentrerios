@@ -7,3 +7,4 @@
 - [x] Detector automático de preguntas repetidas en la categoría, con aviso y "Dejar una sola copia"
 - [x] Typecheck + prueba en navegador + emulador verificado + limpieza de datos de prueba
 - [x] La pantalla apagada ya no cancela el examen (solo advertencia + wake lock)
+- [x] Panel SaaS: instituciones, demos, planes y funciones por plan + logo IA Triunfar

@@ -4,6 +4,8 @@ import { useCurrentRole } from "@/lib/use-current-user";
 import { AppShell } from "@/components/AppShell";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePlataforma } from "@/lib/use-plataforma";
+import { featureActiva, TAB_FEATURE } from "@/lib/planes";
 
 export const Route = createFileRoute("/admin")({ component: AdminLayout });
 
@@ -26,13 +28,16 @@ const tabs = [
 function AdminLayout() {
   const { loading, user, isAdmin } = useCurrentRole();
   const location = useLocation();
+  const { isOwner, features } = usePlataforma(user?.id);
+  const visibles = [...tabs.filter((t) => !TAB_FEATURE[t.to] || featureActiva(features, TAB_FEATURE[t.to])), ...(isOwner ? [{ to: "/admin/saas", label: "★ Clientes y planes" }] : [])];
+  const bloqueada = TAB_FEATURE[location.pathname] && !featureActiva(features, TAB_FEATURE[location.pathname]);
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
   if (!user) return <RedirectTo to="/auth" />;
   if (!isAdmin) return <RedirectTo to="/panel" />;
   return (
     <AppShell title="Panel Administrador" subtitle="Gestión completa del sistema de evaluación">
       <nav className="no-print -mx-1 mb-4 flex flex-wrap gap-2 px-1">
-        {tabs.map((t) => {
+        {visibles.map((t: { to: string; label: string; exact?: boolean }) => {
           const active = t.exact ? location.pathname === t.to : location.pathname.startsWith(t.to);
           return (
             <Link
@@ -48,7 +53,7 @@ function AdminLayout() {
           );
         })}
       </nav>
-      <Outlet />
+      {bloqueada ? <div className="rounded-lg border bg-card p-8 text-center text-muted-foreground">Esta función no está incluida en el plan actual de la institución.</div> : <Outlet />}
     </AppShell>
   );
 }

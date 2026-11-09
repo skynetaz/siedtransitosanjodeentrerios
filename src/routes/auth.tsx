@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ShieldCheck, Loader2, Eye, EyeOff } from "lucide-react";
+import { PoweredBy } from "@/components/brand/PoweredBy";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Ingresar — SIED" }] }),
@@ -48,6 +49,7 @@ function AuthPage() {
         </Card>
         <div className="mt-4 text-center text-sm text-muted-foreground">
           <Link to="/" className="hover:underline">Volver al inicio</Link>
+          <PoweredBy className="mt-4" />
           {" · "}
           <Link to="/bootstrap" className="hover:underline">Primera vez (crear administrador)</Link>
         </div>
