@@ -5,6 +5,12 @@ import * as XLSX from "xlsx";
 import { etiquetaExamen, nombreCategoria, clasesDeExamen } from "@/lib/categoria-label";
 
 
+let encabezadoActa = "Dirección de Tránsito";
+/** Nombre de la institución en el membrete del acta (plan con actas personalizadas). */
+export function setEncabezadoActa(nombre: string | null | undefined) {
+  encabezadoActa = nombre?.trim() || "Dirección de Tránsito";
+}
+
 export type ExamDetail = {
   exam: any;
   preguntas: Array<{
@@ -67,7 +73,7 @@ export async function exportExamPDF(d: ExamDetail) {
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.text("Dirección de Tránsito — Examen de Licencia de Conducir", M, 30);
+  doc.text(`${encabezadoActa} — Examen de Licencia de Conducir`, M, 30);
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.text(`Examen: ${etiquetaExamen(ex)}   Estado: ${(ex.status ?? "").toUpperCase()}   Fecha: ${ex.finished_at ? new Date(ex.finished_at).toLocaleString("es-AR") : "—"}`, M, 43);

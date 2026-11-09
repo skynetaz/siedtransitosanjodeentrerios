@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { setEncabezadoActa } from "@/lib/export-utils";
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { RedirectTo } from "@/components/RedirectTo";
 import { useCurrentRole } from "@/lib/use-current-user";
@@ -28,7 +30,12 @@ const tabs = [
 function AdminLayout() {
   const { loading, user, isAdmin } = useCurrentRole();
   const location = useLocation();
-  const { isOwner, features } = usePlataforma(user?.id);
+  const { isOwner, features, institucion } = usePlataforma(user?.id);
+  useEffect(() => {
+    setEncabezadoActa(featureActiva(features, "actas_personalizadas") ? institucion?.nombre : null);
+  }, [features, institucion?.nombre]);
+  const vencida = institucion?.estado === "demo" && institucion?.demo_vence && new Date(institucion.demo_vence) < new Date();
+  const cuentaBloqueada = !isOwner && (institucion?.estado === "suspendida" || !!vencida);
   const visibles = [...tabs.filter((t) => !TAB_FEATURE[t.to] || featureActiva(features, TAB_FEATURE[t.to])), ...(isOwner ? [{ to: "/admin/saas", label: "★ Clientes y planes" }] : [])];
   const bloqueada = TAB_FEATURE[location.pathname] && !featureActiva(features, TAB_FEATURE[location.pathname]);
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>;
@@ -53,7 +60,7 @@ function AdminLayout() {
           );
         })}
       </nav>
-      {bloqueada ? <div className="rounded-lg border bg-card p-8 text-center text-muted-foreground">Esta función no está incluida en el plan actual de la institución.</div> : <Outlet />}
+      {cuentaBloqueada ? <div className="rounded-lg border border-destructive bg-card p-8 text-center font-semibold text-destructive">{vencida ? "La demo de esta institución venció. Contacte al proveedor para activar un plan." : "La cuenta de esta institución está suspendida. Contacte al proveedor."}</div> : bloqueada ? <div className="rounded-lg border bg-card p-8 text-center text-muted-foreground">Esta función no está incluida en el plan actual de la institución.</div> : <Outlet />}
     </AppShell>
   );
 }

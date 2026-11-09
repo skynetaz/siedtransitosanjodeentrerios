@@ -8,6 +8,9 @@ import { z } from "zod";
 async function assertAdmin(context: { supabase: any; userId: string }) {
   const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
   if (!isAdmin) throw new Error("Solo administradores.");
+  const { data: inst } = await context.supabase.from("instituciones").select("features").eq("es_principal", true).maybeSingle();
+  const f = (inst?.features ?? {}) as Record<string, boolean>;
+  if ("ia" in f && f.ia !== true) throw new Error("El asistente con IA no está incluido en el plan actual.");
 }
 
 export const generarOpcionesIA = createServerFn({ method: "POST" })

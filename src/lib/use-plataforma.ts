@@ -14,7 +14,7 @@ export function usePlataforma(userId: string | undefined) {
     queryKey: ["institucion-principal"],
     enabled: !!userId,
     queryFn: async () => {
-      const { data } = await supabase.from("instituciones").select("nombre, features, logo_url").eq("es_principal", true).maybeSingle();
+      const { data } = await supabase.from("instituciones").select("nombre, features, logo_url, estado, demo_vence").eq("es_principal", true).maybeSingle();
       return data;
     },
   });
