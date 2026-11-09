@@ -1,13 +1,13 @@
 # Roadmap
-- [ ] Bloquear autorregistro público (solo alta autorizada por el dueño)
-- [ ] Quitar mensaje de registro en página de aspirantes
-- [ ] Cuenta maestra skynetaz@gmail.com (admin + platform owner)
-- [ ] Precios en ARS editables
-- [ ] Demos 1/2/3/5 días
-- [ ] Enlace por institución (?inst=slug)
-- [ ] Compartir accesos por WhatsApp/correo
-- [ ] Carga delegada de preguntas por el dueño
-- [ ] Clientes y planes solo dueño (ya filtrado por platform_owners)
-- [ ] Teléfonos de contacto
-- [ ] Generador de mensaje de marketing
-- [ ] Limitador de uso de IA por institución
+- [x] Bloquear autorregistro público (solo alta autorizada por el dueño)
+- [x] Quitar mensaje de registro en página de aspirantes
+- [x] Cuenta maestra skynetaz@gmail.com (admin + platform owner)
+- [x] Precios en ARS editables
+- [x] Demos 1/2/3/5 días
+- [x] Enlace por institución (?inst=slug)
+- [x] Compartir accesos por WhatsApp/correo
+- [x] Carga delegada de preguntas por el dueño
+- [x] Clientes y planes solo dueño (ya filtrado por platform_owners)
+- [x] Teléfonos de contacto
+- [x] Generador de mensaje de marketing
+- [x] Limitador de uso de IA por institución
