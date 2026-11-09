@@ -8,9 +8,11 @@ import { z } from "zod";
 async function assertAdmin(context: { supabase: any; userId: string }) {
   const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
   if (!isAdmin) throw new Error("Solo administradores.");
-  const { data: inst } = await context.supabase.from("instituciones").select("features").eq("es_principal", true).maybeSingle();
+  const { data: instId } = await context.supabase.rpc("current_institucion");
+  const { data: inst } = await context.supabase.from("instituciones").select("features").eq("id", instId).maybeSingle();
   const f = (inst?.features ?? {}) as Record<string, boolean>;
   if ("ia" in f && f.ia !== true) throw new Error("El asistente con IA no está incluido en el plan actual.");
+  return instId as string;
 }
 
 export const generarOpcionesIA = createServerFn({ method: "POST" })
@@ -23,7 +25,7 @@ export const generarOpcionesIA = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    const instId = await assertAdmin(context);
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("Falta la clave de IA.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -32,6 +34,7 @@ export const generarOpcionesIA = createServerFn({ method: "POST" })
       .from("questions")
       .select("id, pregunta, respuesta_correcta, opciones_incorrectas, clase")
       .eq("activa", true)
+      .eq("institucion_id", instId)
       .limit(data.limite);
     if (data.clase !== "TODAS") q = q.eq("clase", data.clase);
     if (data.soloFaltantes) q = q.eq("opciones_revisadas", false);

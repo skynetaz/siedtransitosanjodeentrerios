@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { EscanerExamen } from "@/components/EscanerExamen";
 import { Loader2, Upload, FileJson } from "lucide-react";
 
 export const Route = createFileRoute("/admin/importar")({ component: ImportarPage });
@@ -65,6 +66,7 @@ function ImportarPage() {
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto">
+      <EscanerExamen />
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><FileJson className="h-5 w-5" />Importar banco de preguntas (JSON)</CardTitle>

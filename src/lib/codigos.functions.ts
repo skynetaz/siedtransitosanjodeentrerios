@@ -49,6 +49,7 @@ export const generarCodigo = createServerFn({ method: "POST" })
     await assertStaff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { resolverCategoria } = await import("@/lib/seleccion.server");
+    const { data: instId } = await context.supabase.rpc("current_institucion");
     await expirarVencidos(supabaseAdmin);
     const cat = await resolverCategoria(supabaseAdmin, data.categoria, "UNICA");
     const clase = (cat.clases.find((c) => c !== "UNICA") ?? "UNICA") as "A"|"B"|"C"|"D"|"E"|"UNICA";
@@ -102,6 +103,7 @@ export const generarCodigo = createServerFn({ method: "POST" })
       categoria_slug: cat.slug,
       clases_incluidas: cat.clases,
       status: "habilitado",
+      institucion_id: instId,
       codigo_utilizado: codigo,
       datos_aspirante: {
         nombre: data.nombre, apellido: data.apellido, dni: data.dni,
@@ -115,7 +117,7 @@ export const generarCodigo = createServerFn({ method: "POST" })
       aspirante_id: uid, inspector_id: context.userId, created_by: context.userId,
       clase, categoria_slug: cat.slug, clases_incluidas: cat.clases,
       codigo, dni: data.dni, status: "disponible",
-      expires_at, exam_id: exam.id,
+      expires_at, exam_id: exam.id, institucion_id: instId,
     }).select("*").single();
     if (cErr) throw cErr;
 
@@ -141,10 +143,12 @@ export const listarCodigos = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertStaff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: instId } = await context.supabase.rpc("current_institucion");
     await expirarVencidos(supabaseAdmin);
     let q = supabaseAdmin
       .from("exam_access_codes")
       .select("id, codigo, dni, clase, categoria_slug, status, created_at, expires_at, used_at, exam_id, aspirante_id, profiles!exam_access_codes_aspirante_id_fkey(nombre, apellido)")
+      .eq("institucion_id", instId as string)
       .order("created_at", { ascending: false })
       .limit(200);
     if (data.estado !== "todos") q = q.eq("status", data.estado);

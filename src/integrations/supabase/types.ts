@@ -58,6 +58,7 @@ export type Database = {
           expires_at: string | null
           id: string
           inspector_id: string | null
+          institucion_id: string | null
           status: string
           used_at: string | null
         }
@@ -74,6 +75,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           inspector_id?: string | null
+          institucion_id?: string | null
           status?: string
           used_at?: string | null
         }
@@ -90,6 +92,7 @@ export type Database = {
           expires_at?: string | null
           id?: string
           inspector_id?: string | null
+          institucion_id?: string | null
           status?: string
           used_at?: string | null
         }
@@ -133,6 +136,7 @@ export type Database = {
           duracion_minutos: number
           grupo: string
           incluye_senales: boolean
+          institucion_id: string | null
           max_errores: number
           nombre: string
           orden: number
@@ -149,6 +153,7 @@ export type Database = {
           duracion_minutos?: number
           grupo?: string
           incluye_senales?: boolean
+          institucion_id?: string | null
           max_errores?: number
           nombre: string
           orden?: number
@@ -165,6 +170,7 @@ export type Database = {
           duracion_minutos?: number
           grupo?: string
           incluye_senales?: boolean
+          institucion_id?: string | null
           max_errores?: number
           nombre?: string
           orden?: number
@@ -392,6 +398,7 @@ export type Database = {
           id: string
           incorrectas: number
           inspector_id: string | null
+          institucion_id: string | null
           is_emulation: boolean
           motivo_finalizacion: string | null
           porcentaje: number | null
@@ -424,6 +431,7 @@ export type Database = {
           id?: string
           incorrectas?: number
           inspector_id?: string | null
+          institucion_id?: string | null
           is_emulation?: boolean
           motivo_finalizacion?: string | null
           porcentaje?: number | null
@@ -456,6 +464,7 @@ export type Database = {
           id?: string
           incorrectas?: number
           inspector_id?: string | null
+          institucion_id?: string | null
           is_emulation?: boolean
           motivo_finalizacion?: string | null
           porcentaje?: number | null
@@ -499,6 +508,32 @@ export type Database = {
             columns: ["segunda_oportunidad_question_id"]
             isOneToOne: false
             referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institucion_miembros: {
+        Row: {
+          created_at: string
+          institucion_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          institucion_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          institucion_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institucion_miembros_institucion_id_fkey"
+            columns: ["institucion_id"]
+            isOneToOne: false
+            referencedRelation: "instituciones"
             referencedColumns: ["id"]
           },
         ]
@@ -622,6 +657,7 @@ export type Database = {
           eliminatoria: boolean
           fuente: string | null
           id: string
+          institucion_id: string | null
           nivel: string
           opciones_incorrectas: string[]
           opciones_revisadas: boolean
@@ -640,6 +676,7 @@ export type Database = {
           eliminatoria?: boolean
           fuente?: string | null
           id?: string
+          institucion_id?: string | null
           nivel?: string
           opciones_incorrectas?: string[]
           opciones_revisadas?: boolean
@@ -658,6 +695,7 @@ export type Database = {
           eliminatoria?: boolean
           fuente?: string | null
           id?: string
+          institucion_id?: string | null
           nivel?: string
           opciones_incorrectas?: string[]
           opciones_revisadas?: boolean
@@ -770,6 +808,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      current_institucion: { Args: never; Returns: string }
       current_role_any: {
         Args: { _roles: Database["public"]["Enums"]["app_role"][] }
         Returns: boolean
@@ -781,6 +820,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      institucion_de: { Args: { _uid: string }; Returns: string }
       is_platform_owner: { Args: { _uid: string }; Returns: boolean }
     }
     Enums: {
