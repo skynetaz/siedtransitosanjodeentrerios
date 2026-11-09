@@ -66,6 +66,8 @@ export const createStaff = createServerFn({ method: "POST" })
     await supabaseAdmin.from("profiles").upsert({ id: uid, email: data.email, nombre: data.nombre, apellido: data.apellido });
     const { error: rErr } = await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
     if (rErr) throw rErr;
+    const { data: instId } = await context.supabase.rpc("current_institucion");
+    if (instId) await supabaseAdmin.from("institucion_miembros").upsert({ user_id: uid, institucion_id: instId as string });
     return { ok: true, user_id: uid };
   });
 
