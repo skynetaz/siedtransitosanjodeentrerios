@@ -838,6 +838,138 @@ export type Database = {
         }
         Relationships: []
       }
+      turno_envios: {
+        Row: {
+          canal: string
+          created_at: string
+          destino: string | null
+          detalle: string | null
+          estado: string
+          id: string
+          institucion_id: string
+          turno_id: string | null
+        }
+        Insert: {
+          canal: string
+          created_at?: string
+          destino?: string | null
+          detalle?: string | null
+          estado: string
+          id?: string
+          institucion_id?: string
+          turno_id?: string | null
+        }
+        Update: {
+          canal?: string
+          created_at?: string
+          destino?: string | null
+          detalle?: string | null
+          estado?: string
+          id?: string
+          institucion_id?: string
+          turno_id?: string | null
+        }
+        Relationships: []
+      }
+      turnos_config: {
+        Row: {
+          aviso_sin_cupo: string | null
+          dias_minimos_antes: number
+          enviar_email: boolean
+          institucion_id: string
+          lugar: string
+          mensaje_reglas: string
+          regla_lluvia_moto: boolean
+          sheet_url: string | null
+          updated_at: string
+          whatsapp_modo: string
+        }
+        Insert: {
+          aviso_sin_cupo?: string | null
+          dias_minimos_antes?: number
+          enviar_email?: boolean
+          institucion_id?: string
+          lugar?: string
+          mensaje_reglas?: string
+          regla_lluvia_moto?: boolean
+          sheet_url?: string | null
+          updated_at?: string
+          whatsapp_modo?: string
+        }
+        Update: {
+          aviso_sin_cupo?: string | null
+          dias_minimos_antes?: number
+          enviar_email?: boolean
+          institucion_id?: string
+          lugar?: string
+          mensaje_reglas?: string
+          regla_lluvia_moto?: boolean
+          sheet_url?: string | null
+          updated_at?: string
+          whatsapp_modo?: string
+        }
+        Relationships: []
+      }
+      turnos_practicos: {
+        Row: {
+          aprobado_teorico_at: string | null
+          aspirante_id: string
+          categoria_slug: string | null
+          clase: string | null
+          created_at: string
+          email_enviado_at: string | null
+          estado: string
+          exam_id: string
+          fecha: string | null
+          fila: number | null
+          hoja: string | null
+          hora: string | null
+          id: string
+          inspector_id: string | null
+          institucion_id: string
+          motivo: string | null
+          updated_at: string
+        }
+        Insert: {
+          aprobado_teorico_at?: string | null
+          aspirante_id: string
+          categoria_slug?: string | null
+          clase?: string | null
+          created_at?: string
+          email_enviado_at?: string | null
+          estado?: string
+          exam_id: string
+          fecha?: string | null
+          fila?: number | null
+          hoja?: string | null
+          hora?: string | null
+          id?: string
+          inspector_id?: string | null
+          institucion_id?: string
+          motivo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aprobado_teorico_at?: string | null
+          aspirante_id?: string
+          categoria_slug?: string | null
+          clase?: string | null
+          created_at?: string
+          email_enviado_at?: string | null
+          estado?: string
+          exam_id?: string
+          fecha?: string | null
+          fila?: number | null
+          hoja?: string | null
+          hora?: string | null
+          id?: string
+          inspector_id?: string | null
+          institucion_id?: string
+          motivo?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

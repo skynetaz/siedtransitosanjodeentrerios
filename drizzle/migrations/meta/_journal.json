@@ -78,6 +78,13 @@
       "when": 1794243039284,
       "tag": "0010_saas_extras_ia_cupo",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794264373569,
+      "tag": "0011_turnos_practicos",
+      "breakpoints": true
     }
   ]
 }

@@ -25,6 +25,7 @@ const tabs = [
   { to: "/admin/configuracion", label: "Configuración" },
   { to: "/admin/estadisticas", label: "Estadísticas" },
   { to: "/admin/opiniones", label: "Opiniones" },
+  { to: "/admin/turnos", label: "Turnos prácticos" },
 ];
 
 function AdminLayout() {

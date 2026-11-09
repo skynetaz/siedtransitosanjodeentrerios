@@ -185,6 +185,12 @@ export const finalizarExamen = createServerFn({ method: "POST" })
       tiempo_utilizado_seg: seg,
       motivo_finalizacion: motivo,
     }).eq("id", data.examId);
+    if (status === "aprobado" && !exam.is_emulation) {
+      try {
+        const { asignarTurnoParaExamen } = await import("./turnos.server");
+        await asignarTurnoParaExamen(data.examId);
+      } catch (e) { console.error("turno: fallo asignación", (e as Error).message); }
+    }
     return { ok: true, status, correctas, incorrectas };
   });
 

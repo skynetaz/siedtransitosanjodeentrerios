@@ -1,4 +1,4 @@
-export type FeatureKey = "encuestas" | "estadisticas" | "emulador" | "importador" | "ia" | "senales_hd" | "actas_personalizadas";
+export type FeatureKey = "encuestas" | "estadisticas" | "emulador" | "importador" | "ia" | "senales_hd" | "actas_personalizadas" | "turnos";
 export type PlanKey = "basico" | "profesional" | "enterprise";
 
 export const FEATURES: { key: FeatureKey; nombre: string; detalle: string }[] = [
@@ -9,6 +9,7 @@ export const FEATURES: { key: FeatureKey; nombre: string; detalle: string }[] = 
   { key: "importador", nombre: "Importador masivo", detalle: "Preguntas desde PDF / Excel / JSON" },
   { key: "ia", nombre: "Asistente con IA", detalle: "Genera opciones automáticamente" },
   { key: "actas_personalizadas", nombre: "Actas personalizadas", detalle: "Membrete y escudo propio" },
+  { key: "turnos", nombre: "Turnos prácticos", detalle: "Asigna y notifica turnos del examen práctico" },
 ];
 
 export const PLANES: Record<PlanKey, { nombre: string; precio: number; features: FeatureKey[] }> = {
@@ -39,6 +40,7 @@ export const TAB_FEATURE: Record<string, FeatureKey> = {
   "/admin/importar": "importador",
   "/admin/estadisticas": "estadisticas",
   "/admin/opiniones": "encuestas",
+  "/admin/turnos": "turnos",
 };
 
 /** Cupo mensual de usos de IA: el valor manual del proveedor manda sobre el del plan. */
