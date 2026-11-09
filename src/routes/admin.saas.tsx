@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmarBorrado } from "@/components/ConfirmarBorrado";
 import { Building2, Crown, Sparkles, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { activarInstitucion, crearAdminInstitucion, cargarPlantillaBase } from "@/lib/instituciones.functions";
 import logo from "@/assets/ia-triunfar-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/admin/saas")({
@@ -30,7 +32,7 @@ type Inst = {
 
 function SaasPage() {
   const { user } = useCurrentUser();
-  const { isOwner } = usePlataforma(user?.id);
+  const { isOwner, institucion: actual } = usePlataforma(user?.id);
   const qc = useQueryClient();
   const q = useQuery({
     queryKey: ["instituciones"],
@@ -135,6 +137,7 @@ function SaasPage() {
                     </label>
                   ))}
                 </div>
+                <HerramientasMunicipio inst={i} activa={(actual as any)?.id === i.id} />
                 {!i.es_principal && (
                   <ConfirmarBorrado titulo={`¿Eliminar ${i.nombre}?`} detalle="Se borra la cuenta de la institución del listado de clientes." onConfirm={() => del.mutate(i.id)} trigger={<Button variant="ghost" size="sm" className="text-destructive"><Trash2 className="mr-1 h-4 w-4" />Eliminar cliente</Button>} />
                 )}
@@ -186,5 +189,56 @@ function NuevaInstitucion() {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function HerramientasMunicipio({ inst, activa }: { inst: Inst; activa: boolean }) {
+  const qc = useQueryClient();
+  const activarFn = useServerFn(activarInstitucion);
+  const adminFn = useServerFn(crearAdminInstitucion);
+  const plantillaFn = useServerFn(cargarPlantillaBase);
+  const [abierto, setAbierto] = useState(false);
+  const [f, setF] = useState({ nombre: "", apellido: "", email: "", password: "" });
+  const activar = useMutation({
+    mutationFn: () => activarFn({ data: { institucionId: inst.id } }),
+    onSuccess: () => { toast.success(`Ahora trabajás en ${inst.nombre}.`); qc.invalidateQueries(); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  const crear = useMutation({
+    mutationFn: () => adminFn({ data: { institucionId: inst.id, ...f } }),
+    onSuccess: () => { toast.success("Administrador creado. Ya puede ingresar con su correo y contraseña."); setF({ nombre: "", apellido: "", email: "", password: "" }); setAbierto(false); },
+    onError: (e) => toast.error((e as Error).message),
+  });
+  const plantilla = useMutation({
+    mutationFn: () => plantillaFn({ data: { institucionId: inst.id } }),
+    onSuccess: (r) => toast.success(`Cargadas ${r.preguntas} preguntas y ${r.categorias} categorías base.`),
+    onError: (e) => toast.error((e as Error).message),
+  });
+  return (
+    <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Datos propios del municipio</p>
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant={activa ? "default" : "outline"} disabled={activa || activar.isPending} onClick={() => activar.mutate()}>
+          {activa ? "Trabajando aquí" : "Entrar a este municipio"}
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => setAbierto((v) => !v)}>Crear administrador</Button>
+        {!inst.es_principal && (
+          <Button size="sm" variant="outline" disabled={plantilla.isPending} onClick={() => plantilla.mutate()}>
+            {plantilla.isPending ? "Cargando…" : "Cargar plantilla base"}
+          </Button>
+        )}
+      </div>
+      {abierto && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Input placeholder="Nombre" value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })} />
+          <Input placeholder="Apellido" value={f.apellido} onChange={(e) => setF({ ...f, apellido: e.target.value })} />
+          <Input type="email" placeholder="Correo" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+          <Input type="password" placeholder="Contraseña (mín. 8)" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} />
+          <Button className="sm:col-span-2" disabled={crear.isPending || !f.nombre || !f.apellido || !f.email || f.password.length < 8} onClick={() => crear.mutate()}>
+            Crear administrador de {inst.nombre}
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
