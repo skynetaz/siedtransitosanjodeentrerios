@@ -88,7 +88,8 @@ export async function seleccionarPreguntas(admin: any, cat: Categoria) {
     .from("questions")
     .select("id, pregunta, eliminatoria, peso, respuesta_correcta, opciones_incorrectas, topic_id")
     .in("clase", clases)
-    .eq("activa", true);
+    .eq("activa", true)
+    .eq("institucion_id", (cat as any).institucion_id ?? (await admin.from("instituciones").select("id").eq("es_principal", true).single()).data?.id);
   const preguntas = (pool ?? []) as Pregunta[];
   if (preguntas.length === 0) throw new Error("No hay preguntas disponibles para esta categoría.");
 

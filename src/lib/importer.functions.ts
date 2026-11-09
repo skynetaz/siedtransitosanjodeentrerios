@@ -13,6 +13,7 @@ const itemSchema = z.object({
   activa: z.boolean().optional().default(true),
   peso: z.number().int().min(1).max(10).optional().default(1),
   nivel: z.enum(["facil","medio","dificil"]).optional().default("medio"),
+  opciones_incorrectas: z.array(z.string()).optional().default([]),
 });
 
 export const importarPreguntas = createServerFn({ method: "POST" })
@@ -24,11 +25,12 @@ export const importarPreguntas = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Solo administradores.");
+    const { data: instId } = await context.supabase.rpc("current_institucion");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     if (data.reemplazarPorClase) {
       const clases = [...new Set(data.items.map((i) => i.clase))] as ("A"|"B"|"C"|"D"|"E"|"UNICA")[];
-      await supabaseAdmin.from("questions").update({ activa: false }).in("clase", clases);
+      await supabaseAdmin.from("questions").update({ activa: false }).in("clase", clases).eq("institucion_id", instId);
     }
 
     const nombres = [...new Set(data.items.map((i) => i.tema.trim()))];
@@ -46,7 +48,8 @@ export const importarPreguntas = createServerFn({ method: "POST" })
       respuesta_correcta: it.respuesta_correcta,
       respuestas_aceptadas: it.respuestas_aceptadas,
       eliminatoria: it.eliminatoria, activa: it.activa,
-      peso: it.peso, nivel: it.nivel,
+      peso: it.peso, nivel: it.nivel, institucion_id: instId,
+      opciones_incorrectas: it.opciones_incorrectas, fuente: "importador",
     }));
     const { error, count } = await supabaseAdmin.from("questions").insert(rows, { count: "exact" });
     if (error) throw error;
