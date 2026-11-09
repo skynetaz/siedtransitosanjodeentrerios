@@ -1,5 +1,6 @@
 # Roadmap
 - [ ] Bloquear autorregistro público (solo alta autorizada por el dueño)
+- [ ] Quitar mensaje de registro en página de aspirantes
 - [ ] Cuenta maestra skynetaz@gmail.com (admin + platform owner)
 - [ ] Precios en ARS editables
 - [ ] Demos 1/2/3/5 días
