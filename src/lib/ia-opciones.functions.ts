@@ -53,6 +53,7 @@ export const generarOpcionesIA = createServerFn({ method: "POST" })
       JSON.stringify(pendientes.map((p) => ({ id: p.id, pregunta: p.pregunta, correcta: p.respuesta_correcta }))),
     ].join("\n");
 
+    { const { consumirCupoIA } = await import("./ia-cupo.server"); await consumirCupoIA(context); }
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },

@@ -52,6 +52,7 @@ export const escanearDocumento = createServerFn({ method: "POST" })
       else content.push({ type: "file", file: { filename: data.nombre ?? "examen.pdf", file_data: url } });
     }
 
+    { const { consumirCupoIA } = await import("./ia-cupo.server"); await consumirCupoIA(context); }
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },

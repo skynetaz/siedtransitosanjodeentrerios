@@ -40,3 +40,19 @@ export const TAB_FEATURE: Record<string, FeatureKey> = {
   "/admin/estadisticas": "estadisticas",
   "/admin/opiniones": "encuestas",
 };
+
+/** Cupo mensual de usos de IA: el valor manual del proveedor manda sobre el del plan. */
+export const CUPO_IA_PLAN: Record<string, number> = { demo: 3, basico: 0, profesional: 15, enterprise: 60 };
+export function cupoIA(plan: string, estado: string, manual: number | null | undefined): number {
+  if (manual !== null && manual !== undefined) return manual;
+  if (estado === "demo") return CUPO_IA_PLAN.demo;
+  return CUPO_IA_PLAN[plan] ?? 0;
+}
+
+/** Precios de referencia en pesos argentinos (editables desde la consola). */
+export const PRECIOS_ARS_DEFAULT: Record<PlanKey, number> = { basico: 45000, profesional: 95000, enterprise: 180000 };
+export const formatoARS = (n: number) => n.toLocaleString("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+
+export function slugify(s: string) {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+}
