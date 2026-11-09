@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { PoweredBy } from "@/components/brand/PoweredBy";
 import { ShieldCheck, FileCheck2, Users, ClipboardList } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -56,6 +57,7 @@ function Landing() {
           <span>SIED · Dirección de Tránsito y Transporte</span>
           <span>Ley Nacional de Tránsito Nº 24.449</span>
         </div>
+        <PoweredBy className="pb-4" />
       </footer>
     </div>
   );
