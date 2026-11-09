@@ -43,6 +43,12 @@ function AdminLayout() {
   if (!isAdmin) return <RedirectTo to="/panel" />;
   return (
     <AppShell title="Panel Administrador" subtitle="Gestión completa del sistema de evaluación">
+      {isOwner && institucion && !institucion.es_principal && (
+        <div className="no-print mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm">
+          <span>Operando como administrador en: <strong>{institucion.nombre}</strong></span>
+          <Link to="/admin/saas" className="font-semibold underline">Volver a Clientes y planes</Link>
+        </div>
+      )}
       <nav className="no-print -mx-1 mb-4 flex flex-wrap gap-2 px-1">
         {visibles.map((t: { to: string; label: string; exact?: boolean }) => {
           const active = t.exact ? location.pathname === t.to : location.pathname.startsWith(t.to);
