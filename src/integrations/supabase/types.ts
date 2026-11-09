@@ -503,6 +503,78 @@ export type Database = {
           },
         ]
       }
+      instituciones: {
+        Row: {
+          contacto_email: string | null
+          contacto_nombre: string | null
+          contacto_telefono: string | null
+          created_at: string
+          demo_vence: string | null
+          es_principal: boolean
+          estado: string
+          features: Json
+          id: string
+          localidad: string | null
+          logo_url: string | null
+          nombre: string
+          notas: string | null
+          plan: string
+          precio_mensual: number | null
+          updated_at: string
+        }
+        Insert: {
+          contacto_email?: string | null
+          contacto_nombre?: string | null
+          contacto_telefono?: string | null
+          created_at?: string
+          demo_vence?: string | null
+          es_principal?: boolean
+          estado?: string
+          features?: Json
+          id?: string
+          localidad?: string | null
+          logo_url?: string | null
+          nombre: string
+          notas?: string | null
+          plan?: string
+          precio_mensual?: number | null
+          updated_at?: string
+        }
+        Update: {
+          contacto_email?: string | null
+          contacto_nombre?: string | null
+          contacto_telefono?: string | null
+          created_at?: string
+          demo_vence?: string | null
+          es_principal?: boolean
+          estado?: string
+          features?: Json
+          id?: string
+          localidad?: string | null
+          logo_url?: string | null
+          nombre?: string
+          notas?: string | null
+          plan?: string
+          precio_mensual?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_owners: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           apellido: string
@@ -709,6 +781,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_platform_owner: { Args: { _uid: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "inspector" | "aspirante"
