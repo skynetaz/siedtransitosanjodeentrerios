@@ -1,3 +1,6 @@
+import { useCurrentUser } from "@/lib/use-current-user";
+import { usePlataforma } from "@/lib/use-plataforma";
+import { featureActiva } from "@/lib/planes";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +29,9 @@ type Q = {
 };
 
 function Preguntas() {
+  const { user } = useCurrentUser();
+  const { features } = usePlataforma(user?.id);
+  const iaActiva = featureActiva(features, "ia");
   const qc = useQueryClient();
   const [filterClase, setFilterClase] = useState<string>("all");
   const [filterTopic, setFilterTopic] = useState<string>("all");
