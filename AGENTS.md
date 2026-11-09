@@ -8,3 +8,4 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+- Plan feature flags live in public.instituciones.features (row es_principal = this install); platform owner = public.platform_owners. Why: lets the provider sell plans without code changes.
