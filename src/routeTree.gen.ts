@@ -31,6 +31,7 @@ import { Route as AdminOpinionesRouteImport } from './routes/admin.opiniones'
 import { Route as AdminPreguntasRouteImport } from './routes/admin.preguntas'
 import { Route as AdminSaasRouteImport } from './routes/admin.saas'
 import { Route as AdminSenalesRouteImport } from './routes/admin.senales'
+import { Route as AdminTurnosRouteImport } from './routes/admin.turnos'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 import { Route as ISlugRouteImport } from './routes/i.$slug'
 import { Route as ApiPublicHooksAsignarPendientesRouteImport } from './routes/api/public/hooks/asignar-pendientes'
@@ -146,6 +147,11 @@ const AdminSenalesRoute = AdminSenalesRouteImport.update({
   path: '/senales',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTurnosRoute = AdminTurnosRouteImport.update({
+  id: '/turnos',
+  path: '/turnos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/admin/preguntas': typeof AdminPreguntasRoute
   '/admin/saas': typeof AdminSaasRoute
   '/admin/senales': typeof AdminSenalesRoute
+  '/admin/turnos': typeof AdminTurnosRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/i/$slug': typeof ISlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/admin/preguntas': typeof AdminPreguntasRoute
   '/admin/saas': typeof AdminSaasRoute
   '/admin/senales': typeof AdminSenalesRoute
+  '/admin/turnos': typeof AdminTurnosRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/i/$slug': typeof ISlugRoute
   '/admin': typeof AdminIndexRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/admin/preguntas': typeof AdminPreguntasRoute
   '/admin/saas': typeof AdminSaasRoute
   '/admin/senales': typeof AdminSenalesRoute
+  '/admin/turnos': typeof AdminTurnosRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/i/$slug': typeof ISlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/admin/preguntas'
     | '/admin/saas'
     | '/admin/senales'
+    | '/admin/turnos'
     | '/admin/usuarios'
     | '/i/$slug'
     | '/admin/'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/admin/preguntas'
     | '/admin/saas'
     | '/admin/senales'
+    | '/admin/turnos'
     | '/admin/usuarios'
     | '/i/$slug'
     | '/admin'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/admin/preguntas'
     | '/admin/saas'
     | '/admin/senales'
+    | '/admin/turnos'
     | '/admin/usuarios'
     | '/i/$slug'
     | '/admin/'
@@ -509,6 +521,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSenalesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/turnos': {
+      id: '/admin/turnos'
+      path: '/turnos'
+      fullPath: '/admin/turnos'
+      preLoaderRoute: typeof AdminTurnosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/usuarios': {
       id: '/admin/usuarios'
       path: '/usuarios'
@@ -553,6 +572,7 @@ interface AdminRouteChildren {
   AdminPreguntasRoute: typeof AdminPreguntasRoute
   AdminSaasRoute: typeof AdminSaasRoute
   AdminSenalesRoute: typeof AdminSenalesRoute
+  AdminTurnosRoute: typeof AdminTurnosRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -570,6 +590,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPreguntasRoute: AdminPreguntasRoute,
   AdminSaasRoute: AdminSaasRoute,
   AdminSenalesRoute: AdminSenalesRoute,
+  AdminTurnosRoute: AdminTurnosRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
