@@ -6,7 +6,7 @@ import { z } from "zod";
 const itemSchema = z.object({
   clase: z.enum(["A","B","C","D","E","UNICA"]),
   tema: z.string().min(1),
-  pregunta: z.string().min(3),
+  pregunta: z.string().min(3).max(1000),
   respuesta_correcta: z.string().min(1),
   respuestas_aceptadas: z.array(z.string()).optional().default([]),
   eliminatoria: z.boolean().optional().default(false),
