@@ -34,7 +34,7 @@ export const listExamsArchive = createServerFn({ method: "POST" })
     let query = supabaseAdmin.from("exams")
       .select("id, clase, categoria_slug, clases_incluidas, config_snapshot, status, started_at, finished_at, tiempo_utilizado_seg, correctas, incorrectas, total_preguntas, is_emulation, signature_aspirante, signature_inspector, datos_aspirante, segunda_oportunidad_usada, profiles!exams_aspirante_id_fkey(dni,nombre,apellido,email,telefono)")
       .eq("is_emulation", false)
-      .eq("institucion_id", instId)
+      .eq("institucion_id", instId as string)
       .in("status", ["aprobado","desaprobado"])
       .order("finished_at", { ascending: false })
       .limit(200);

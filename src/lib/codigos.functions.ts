@@ -148,7 +148,7 @@ export const listarCodigos = createServerFn({ method: "POST" })
     let q = supabaseAdmin
       .from("exam_access_codes")
       .select("id, codigo, dni, clase, categoria_slug, status, created_at, expires_at, used_at, exam_id, aspirante_id, profiles!exam_access_codes_aspirante_id_fkey(nombre, apellido)")
-      .eq("institucion_id", instId)
+      .eq("institucion_id", instId as string)
       .order("created_at", { ascending: false })
       .limit(200);
     if (data.estado !== "todos") q = q.eq("status", data.estado);

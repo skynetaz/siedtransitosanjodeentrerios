@@ -30,7 +30,7 @@ export const importarPreguntas = createServerFn({ method: "POST" })
 
     if (data.reemplazarPorClase) {
       const clases = [...new Set(data.items.map((i) => i.clase))] as ("A"|"B"|"C"|"D"|"E"|"UNICA")[];
-      await supabaseAdmin.from("questions").update({ activa: false }).in("clase", clases).eq("institucion_id", instId);
+      await supabaseAdmin.from("questions").update({ activa: false }).in("clase", clases).eq("institucion_id", instId as string);
     }
 
     const nombres = [...new Set(data.items.map((i) => i.tema.trim()))];
