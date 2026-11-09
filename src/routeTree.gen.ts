@@ -29,6 +29,7 @@ import { Route as AdminFirmaRouteImport } from './routes/admin.firma'
 import { Route as AdminImportarRouteImport } from './routes/admin.importar'
 import { Route as AdminOpinionesRouteImport } from './routes/admin.opiniones'
 import { Route as AdminPreguntasRouteImport } from './routes/admin.preguntas'
+import { Route as AdminSaasRouteImport } from './routes/admin.saas'
 import { Route as AdminSenalesRouteImport } from './routes/admin.senales'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 import { Route as ApiPublicSenalNameRouteImport } from './routes/api/public/senal.$name'
@@ -133,6 +134,11 @@ const AdminPreguntasRoute = AdminPreguntasRouteImport.update({
   path: '/preguntas',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminSaasRoute = AdminSaasRouteImport.update({
+  id: '/saas',
+  path: '/saas',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSenalesRoute = AdminSenalesRouteImport.update({
   id: '/senales',
   path: '/senales',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/admin/importar': typeof AdminImportarRoute
   '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/preguntas': typeof AdminPreguntasRoute
+  '/admin/saas': typeof AdminSaasRoute
   '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin/': typeof AdminIndexRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/admin/importar': typeof AdminImportarRoute
   '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/preguntas': typeof AdminPreguntasRoute
+  '/admin/saas': typeof AdminSaasRoute
   '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin': typeof AdminIndexRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/admin/importar': typeof AdminImportarRoute
   '/admin/opiniones': typeof AdminOpinionesRoute
   '/admin/preguntas': typeof AdminPreguntasRoute
+  '/admin/saas': typeof AdminSaasRoute
   '/admin/senales': typeof AdminSenalesRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin/': typeof AdminIndexRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/admin/importar'
     | '/admin/opiniones'
     | '/admin/preguntas'
+    | '/admin/saas'
     | '/admin/senales'
     | '/admin/usuarios'
     | '/admin/'
@@ -270,6 +280,7 @@ export interface FileRouteTypes {
     | '/admin/importar'
     | '/admin/opiniones'
     | '/admin/preguntas'
+    | '/admin/saas'
     | '/admin/senales'
     | '/admin/usuarios'
     | '/admin'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/admin/importar'
     | '/admin/opiniones'
     | '/admin/preguntas'
+    | '/admin/saas'
     | '/admin/senales'
     | '/admin/usuarios'
     | '/admin/'
@@ -456,6 +468,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPreguntasRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/saas': {
+      id: '/admin/saas'
+      path: '/saas'
+      fullPath: '/admin/saas'
+      preLoaderRoute: typeof AdminSaasRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/senales': {
       id: '/admin/senales'
       path: '/senales'
@@ -491,6 +510,7 @@ interface AdminRouteChildren {
   AdminImportarRoute: typeof AdminImportarRoute
   AdminOpinionesRoute: typeof AdminOpinionesRoute
   AdminPreguntasRoute: typeof AdminPreguntasRoute
+  AdminSaasRoute: typeof AdminSaasRoute
   AdminSenalesRoute: typeof AdminSenalesRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -507,6 +527,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminImportarRoute: AdminImportarRoute,
   AdminOpinionesRoute: AdminOpinionesRoute,
   AdminPreguntasRoute: AdminPreguntasRoute,
+  AdminSaasRoute: AdminSaasRoute,
   AdminSenalesRoute: AdminSenalesRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
   AdminIndexRoute: AdminIndexRoute,
