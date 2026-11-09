@@ -1,10 +1,12 @@
 # Roadmap
-
-- [x] Tabla `exam_category_questions` (selección propia por categoría)
-- [x] Server functions: listar/guardar preguntas de categoría, banco de preguntas, temas
-- [x] `seleccion.server.ts` usa la selección propia cuando existe
-- [x] Vista previa editable en Categorías (quitar, reordenar, agregar del banco, guardar)
-- [x] Detector automático de preguntas repetidas en la categoría, con aviso y "Dejar una sola copia"
-- [x] Typecheck + prueba en navegador + emulador verificado + limpieza de datos de prueba
-- [x] La pantalla apagada ya no cancela el examen (solo advertencia + wake lock)
-- [x] Panel SaaS: instituciones, demos, planes y funciones por plan + logo IA Triunfar
+- [ ] Bloquear autorregistro público (solo alta autorizada por el dueño)
+- [ ] Cuenta maestra skynetaz@gmail.com (admin + platform owner)
+- [ ] Precios en ARS editables
+- [ ] Demos 1/2/3/5 días
+- [ ] Enlace por institución (?inst=slug)
+- [ ] Compartir accesos por WhatsApp/correo
+- [ ] Carga delegada de preguntas por el dueño
+- [ ] Clientes y planes solo dueño (ya filtrado por platform_owners)
+- [ ] Teléfonos de contacto
+- [ ] Generador de mensaje de marketing
+- [ ] Limitador de uso de IA por institución
