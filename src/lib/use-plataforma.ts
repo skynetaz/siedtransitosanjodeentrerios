@@ -11,10 +11,11 @@ export function usePlataforma(userId: string | undefined) {
     },
   });
   const principal = useQuery({
-    queryKey: ["institucion-principal"],
+    queryKey: ["institucion-principal", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data } = await supabase.from("instituciones").select("nombre, features, logo_url, estado, demo_vence").eq("es_principal", true).maybeSingle();
+      const { data: instId } = await supabase.rpc("current_institucion");
+      const { data } = await supabase.from("instituciones").select("id, nombre, features, logo_url, estado, demo_vence, es_principal").eq("id", instId as string).maybeSingle();
       return data;
     },
   });
