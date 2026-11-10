@@ -81,9 +81,9 @@ function TurnosPage() {
             {reasig?.id === t.id && <div className="space-y-2 rounded-md border bg-muted/40 p-3">
               <p className="text-xs text-muted-foreground">Elegí la nueva fecha. Si dejás la hora vacía, se toma el primer lugar libre desde ese día (por ejemplo, la semana siguiente). Si ponés hora, se reserva en ese día y hora exactos (y se crea la pestaña del día si no existe).</p>
               <div className="flex flex-wrap gap-2">
-                <Input type="date" className="w-auto" value={reasig.fecha} onChange={(e) => setReasig((r) => r && { ...r, fecha: e.target.value })} />
-                <Input type="time" className="w-auto" value={reasig.hora} onChange={(e) => setReasig((r) => r && { ...r, hora: e.target.value })} />
-                <Button size="sm" disabled={!reasig.fecha} onClick={async () => { const r = reasig!; await hacer(t.id, "reasignar", undefined, { fecha: r.fecha, hora: r.hora || undefined }); setReasig(null); }}>Confirmar nuevo turno</Button>
+                <Input type="date" className="w-auto" value={reasig?.fecha ?? ""} onChange={(e) => setReasig((r) => r && { ...r, fecha: e.target.value })} />
+                <Input type="time" className="w-auto" value={reasig?.hora ?? ""} onChange={(e) => setReasig((r) => r && { ...r, hora: e.target.value })} />
+                <Button size="sm" disabled={!reasig?.fecha} onClick={async () => { const r = reasig!; await hacer(t.id, "reasignar", undefined, { fecha: r.fecha, hora: r.hora || undefined }); setReasig(null); }}>Confirmar nuevo turno</Button>
                 <Button size="sm" variant="ghost" onClick={() => setReasig(null)}>Cerrar</Button>
               </div>
             </div>}
