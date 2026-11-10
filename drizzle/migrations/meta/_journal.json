@@ -92,6 +92,13 @@
       "when": 1794265687503,
       "tag": "0012_restrict_plataforma_config_read",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794320866015,
+      "tag": "0013_turnos_por_clase",
+      "breakpoints": true
     }
   ]
 }
