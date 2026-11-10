@@ -12,3 +12,14 @@ describe("turnos", () => {
     expect(decidirEstado(null).motivo).toBe("error_hoja");
   });
 });
+import { armarMensajeTurnos, clasesDeExamen } from "./turnos-utils";
+describe("dos clases", () => {
+  it("toma ambas clases del examen", () => expect(clasesDeExamen("A", ["A", "B"])).toEqual(["A", "B"]));
+  it("ignora UNICA", () => expect(clasesDeExamen("UNICA", ["UNICA"])).toEqual([]));
+  it("mensaje incluye ambas clases en mayúsculas", () => {
+    const m = armarMensajeTurnos({ apellido: "Perez", nombre: "Cielo", turnos: [{ clase: "D", fecha: "2026-11-12", hora: "14:00" }, { clase: "A", fecha: "2026-11-11", hora: "14:00" }], lugar: "X", reglas: "R" });
+    expect(m).toContain("TURNO PRÁCTICO CLASES A Y D");
+    expect(m).toContain("DÍAS MIÉRCOLES Y JUEVES");
+    expect(m.indexOf("11/11/2026")).toBeLessThan(m.indexOf("12/11/2026"));
+  });
+});

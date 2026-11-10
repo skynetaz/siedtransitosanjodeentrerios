@@ -35,3 +35,24 @@ export function armarMensajeTurno(t: { nombre: string; apellido: string; categor
   const f = new Intl.DateTimeFormat("es-AR", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date(Date.UTC(y, m - 1, d)));
   return `Hola ${t.nombre} ${t.apellido}: ¡felicitaciones, aprobaste el examen teórico de ${t.categoria}!\nTu turno para el examen práctico es el ${f} a las ${t.hora.slice(0, 5)} hs.\n\nLugar: ${t.lugar}\n\n${t.reglas}`;
 }
+
+export function clasesDeExamen(clase?: string | null, incluidas?: string[] | null) {
+  const v = [...(incluidas ?? []), clase ?? ""].map((c) => String(c).toUpperCase().trim()).filter((c) => /^[A-E]$/.test(c));
+  return [...new Set(v)].sort();
+}
+
+const DIAS = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+function ddmmyyyy(f: string) { const [y, m, d] = f.split("-"); return `${d}/${m}/${y}`; }
+function diaSemana(f: string) { const [y, m, d] = f.split("-").map(Number); return DIAS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]; }
+
+/** Mensaje oficial del turno práctico; agrupa una o varias clases del mismo aspirante. */
+export function armarMensajeTurnos(t: { apellido: string; nombre: string; turnos: { clase: string; fecha: string; hora: string; anexo?: string | null }[]; lugar: string; reglas: string }) {
+  const ts = [...t.turnos].filter((x) => x.fecha).sort((a, b) => `${a.fecha}${a.hora}`.localeCompare(`${b.fecha}${b.hora}`));
+  const clases = ts.map((x) => x.clase.toUpperCase());
+  const titulo = clases.length > 1 ? `CLASES ${clases.slice(0, -1).join(", ")} Y ${clases[clases.length - 1]}` : `CLASE ${clases[0] ?? ""}`;
+  const dias = [...new Set(ts.map((x) => diaSemana(x.fecha)))];
+  const diasTxt = dias.length > 1 ? `DÍAS ${dias.slice(0, -1).join(", ")} Y ${dias[dias.length - 1]}` : `DÍA ${dias[0] ?? ""}`;
+  const sep = "______________________________";
+  const bloques = ts.map((x, i) => `FECHA DE PRÁCTICA: ${ddmmyyyy(x.fecha)}${i === 0 ? `   ${diasTxt}` : ""}\nCLASE A RENDIR: *${x.clase.toUpperCase()}*   ANEXO: ${x.anexo ?? ""}\nHORA: ${String(x.hora ?? "").slice(0, 5)} HS\n${sep}`);
+  return `*TURNO PRÁCTICO ${titulo}*\nAPELLIDO Y NOMBRE: ${formatoApellidoNombre(t.apellido, t.nombre)}\n${bloques.join("\n")}\nLugar: ${t.lugar}\n${t.reglas}`;
+}

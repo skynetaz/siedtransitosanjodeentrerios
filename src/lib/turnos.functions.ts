@@ -12,7 +12,7 @@ async function staff(ctx: any) {
 export const listarTurnos = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const inst = await staff(context);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: turnos } = await supabaseAdmin.from("turnos_practicos").select("*").eq("institucion_id", inst).order("fecha", { ascending: true, nullsFirst: false }).limit(500);
+  const { data: turnos } = await supabaseAdmin.from("turnos_practicos").select("*").eq("institucion_id", inst).order("fecha", { ascending: true, nullsFirst: false }).order("hora", { ascending: true, nullsFirst: false }).order("aprobado_teorico_at", { ascending: true }).limit(500);
   const ids = [...new Set((turnos ?? []).map((t) => t.aspirante_id))];
   const { data: perfiles } = ids.length ? await supabaseAdmin.from("profiles").select("id, nombre, apellido, dni, telefono, email").in("id", ids) : { data: [] as any[] };
   const pm = new Map((perfiles ?? []).map((p: any) => [p.id, p]));
@@ -43,7 +43,7 @@ export const disponibilidadHoja = createServerFn({ method: "POST" }).middleware(
 });
 
 export const accionTurno = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), accion: z.enum(["cancelar", "reasignar", "presente", "ausente", "clase"]), clase: z.enum(["A", "B", "C", "D", "E"]).optional() }).parse(i))
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), accion: z.enum(["cancelar", "reasignar", "presente", "ausente", "clase"]), clase: z.enum(["A", "B", "C", "D", "E"]).optional(), fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), hora: z.string().regex(/^\d{1,2}:\d{2}$/).optional() }).parse(i))
   .handler(async ({ data, context }) => {
     const inst = await staff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -53,7 +53,7 @@ export const accionTurno = createServerFn({ method: "POST" }).middleware([requir
     const { reservarTurno } = await import("./turnos.server");
     const now = new Date().toISOString();
     if (data.accion === "cancelar") { await llamarHoja("liberar", { id: t.id }); await supabaseAdmin.from("turnos_practicos").update({ estado: "cancelado", updated_at: now }).eq("id", t.id); }
-    else if (data.accion === "reasignar") { await llamarHoja("liberar", { id: t.id }); await reservarTurno(t.id); }
+    else if (data.accion === "reasignar") { const r: any = await llamarHoja("liberar", { id: t.id }); if (r && r.ok === false) throw new Error(r.error ?? "No se pudo liberar el lugar en la hoja."); await reservarTurno(t.id, { fecha: data.fecha, hora: data.hora }); const { data: n } = await supabaseAdmin.from("turnos_practicos").select("estado, motivo").eq("id", t.id).single(); if (n?.estado !== "asignado") throw new Error(n?.motivo === "sin_cupo" ? "No hay lugar libre desde esa fecha. Habilitá un día nuevo en la hoja o elegí otra hora." : "La hoja no confirmó el nuevo turno."); }
     else if (data.accion === "clase") { await supabaseAdmin.from("turnos_practicos").update({ clase: data.clase, motivo: null, updated_at: now }).eq("id", t.id); await reservarTurno(t.id); }
     else await supabaseAdmin.from("turnos_practicos").update({ estado: data.accion, updated_at: now }).eq("id", t.id);
     await supabaseAdmin.from("audit_log").insert({ user_id: context.userId, accion: `turno_${data.accion}`, target_type: "turnos_practicos", target_id: t.id } as any);
@@ -69,7 +69,7 @@ export const asignarPendientesFn = createServerFn({ method: "POST" }).middleware
 export const miTurno = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ examId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { data: t } = await context.supabase.from("turnos_practicos").select("estado, fecha, hora, clase, institucion_id").eq("exam_id", data.examId).eq("aspirante_id", context.userId).maybeSingle();
+    const { data: t } = await context.supabase.from("turnos_practicos").select("estado, fecha, hora, clase, institucion_id").eq("exam_id", data.examId).eq("aspirante_id", context.userId).order("fecha", { ascending: true, nullsFirst: false }).limit(1).maybeSingle();
     if (!t) return null;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: c } = await supabaseAdmin.from("turnos_config").select("lugar, mensaje_reglas, aviso_sin_cupo").eq("institucion_id", t.institucion_id).maybeSingle();
