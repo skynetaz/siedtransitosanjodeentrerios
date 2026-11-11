@@ -23,3 +23,16 @@ describe("dos clases", () => {
     expect(m.indexOf("11/11/2026")).toBeLessThan(m.indexOf("12/11/2026"));
   });
 });
+
+import { diffConHoja } from "./turnos-utils";
+describe("diffConHoja", () => {
+  it("detecta cambio de fecha hecho a mano en la hoja", () => {
+    expect(diffConHoja({ fecha: "2026-11-11", hora: "14:15:00", hoja: "CLASE A 11-11-2026", fila: 7 }, { hoja: "CLASE B,C,D 12-11-2026", fila: 6, fecha: "2026-11-12", hora: "14:15" })).toEqual({ fecha: "2026-11-12", hora: "14:15", hoja: "CLASE B,C,D 12-11-2026", fila: 6 });
+  });
+  it("no cambia nada si coincide", () => {
+    expect(diffConHoja({ fecha: "2026-11-11", hora: "14:00:00", hoja: "X", fila: 3 }, { hoja: "X", fila: 3, fecha: "2026-11-11", hora: "14:00" })).toBeNull();
+  });
+  it("si el turno no está en la hoja, no borra los datos", () => {
+    expect(diffConHoja({ fecha: "2026-11-11", hora: "14:00", hoja: "X", fila: 3 }, undefined)).toBeNull();
+  });
+});

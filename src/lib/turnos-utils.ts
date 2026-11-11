@@ -56,3 +56,11 @@ export function armarMensajeTurnos(t: { apellido: string; nombre: string; turnos
   const bloques = ts.map((x, i) => `FECHA DE PRÁCTICA: ${ddmmyyyy(x.fecha)}${i === 0 ? `   ${diasTxt}` : ""}\nCLASE A RENDIR: *${x.clase.toUpperCase()}*   ANEXO: ${x.anexo ?? ""}\nHORA: ${String(x.hora ?? "").slice(0, 5)} HS\n${sep}`);
   return `*TURNO PRÁCTICO ${titulo}*\nAPELLIDO Y NOMBRE: ${formatoApellidoNombre(t.apellido, t.nombre)}\n${bloques.join("\n")}\nLugar: ${t.lugar}\n${t.reglas}`;
 }
+
+/** Compara el turno del sistema con lo que dice la hoja. Devuelve los cambios a guardar o null. */
+export function diffConHoja(db: { fecha?: string | null; hora?: string | null; hoja?: string | null; fila?: number | null }, h?: { hoja: string; fila: number; fecha: string; hora: string | null } | null) {
+  if (!h || !h.fecha) return null;
+  const hDb = String(db.hora ?? "").slice(0, 5); const hH = String(h.hora ?? "").slice(0, 5);
+  if (db.fecha === h.fecha && hDb === hH && db.hoja === h.hoja && db.fila === h.fila) return null;
+  return { fecha: h.fecha, hora: hH || null, hoja: h.hoja, fila: h.fila };
+}

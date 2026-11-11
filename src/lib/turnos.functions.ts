@@ -12,12 +12,14 @@ async function staff(ctx: any) {
 export const listarTurnos = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const inst = await staff(context);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { sincronizarDesdeHoja } = await import("./turnos.server");
+  const sync = await sincronizarDesdeHoja(inst).catch(() => ({ ok: false, cambios: 0 }));
   const { data: turnos } = await supabaseAdmin.from("turnos_practicos").select("*").eq("institucion_id", inst).order("fecha", { ascending: true, nullsFirst: false }).order("hora", { ascending: true, nullsFirst: false }).order("aprobado_teorico_at", { ascending: true }).limit(500);
   const ids = [...new Set((turnos ?? []).map((t) => t.aspirante_id))];
   const { data: perfiles } = ids.length ? await supabaseAdmin.from("profiles").select("id, nombre, apellido, dni, telefono, email").in("id", ids) : { data: [] as any[] };
   const pm = new Map((perfiles ?? []).map((p: any) => [p.id, p]));
   const { data: config } = await supabaseAdmin.from("turnos_config").select("*").eq("institucion_id", inst).maybeSingle();
-  return { config, turnos: (turnos ?? []).map((t) => ({ ...t, persona: pm.get(t.aspirante_id) ?? null })) };
+  return { sync, config, turnos: (turnos ?? []).map((t) => ({ ...t, persona: pm.get(t.aspirante_id) ?? null })) };
 });
 
 export const guardarConfigTurnos = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
@@ -53,9 +55,27 @@ export const accionTurno = createServerFn({ method: "POST" }).middleware([requir
     const { reservarTurno } = await import("./turnos.server");
     const now = new Date().toISOString();
     if (data.accion === "cancelar") { await llamarHoja("liberar", { id: t.id }); await supabaseAdmin.from("turnos_practicos").update({ estado: "cancelado", updated_at: now }).eq("id", t.id); }
-    else if (data.accion === "reasignar") { const r: any = await llamarHoja("liberar", { id: t.id }); if (r && r.ok === false) throw new Error(r.error ?? "No se pudo liberar el lugar en la hoja."); await reservarTurno(t.id, { fecha: data.fecha, hora: data.hora }); const { data: n } = await supabaseAdmin.from("turnos_practicos").select("estado, motivo").eq("id", t.id).single(); if (n?.estado !== "asignado") throw new Error(n?.motivo === "sin_cupo" ? "No hay lugar libre desde esa fecha. Habilitá un día nuevo en la hoja o elegí otra hora." : "La hoja no confirmó el nuevo turno."); }
+    else if (data.accion === "reasignar") {
+      const { data: prev } = await supabaseAdmin.from("turnos_practicos").select("fecha, hora").eq("id", t.id).single();
+      let res: any;
+      if (data.fecha && data.hora) {
+        // reservarEn mueve el lugar en la hoja (libera el anterior solo si consigue el nuevo día)
+        res = await reservarTurno(t.id, { fecha: data.fecha, hora: data.hora, conservarSiFalla: true });
+      } else {
+        const lib: any = await llamarHoja("liberar", { id: t.id });
+        if (lib && lib.ok === false) throw new Error(lib.error ?? "No se pudo liberar el lugar en la hoja.");
+        res = await reservarTurno(t.id, { fecha: data.fecha, conservarSiFalla: true });
+      }
+      if (!res.ok) {
+        // la hoja pudo haber borrado el lugar anterior: se vuelve a anotar en el mismo día y hora
+        if (prev?.fecha && prev?.hora) await reservarTurno(t.id, { fecha: prev.fecha, hora: String(prev.hora).slice(0, 5), conservarSiFalla: true });
+        const m: Record<string, string> = { sin_cupo: "No hay lugar libre desde esa fecha. Elegí otra fecha u hora.", sin_horario: "Ese horario no existe en la pestaña de ese día. Elegí uno de los horarios de la hoja (ej. 14:00, 14:15).", sin_hoja: "No hay ninguna pestaña de esa clase para copiar." };
+        throw new Error((m[res.motivo] ?? res.error ?? "La hoja no confirmó el nuevo turno.") + " El turno anterior se mantiene.");
+      }
+    }
     else if (data.accion === "clase") { await supabaseAdmin.from("turnos_practicos").update({ clase: data.clase, motivo: null, updated_at: now }).eq("id", t.id); await reservarTurno(t.id); }
     else await supabaseAdmin.from("turnos_practicos").update({ estado: data.accion, updated_at: now }).eq("id", t.id);
+    if (data.accion !== "reasignar") { const { registrarEnHoja } = await import("./turnos.server"); await registrarEnHoja(t.id); }
     await supabaseAdmin.from("audit_log").insert({ user_id: context.userId, accion: `turno_${data.accion}`, target_type: "turnos_practicos", target_id: t.id } as any);
     return { ok: true };
   });
