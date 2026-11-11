@@ -17,7 +17,7 @@ export async function reservarTurno(turnoId: string, opt: { fecha?: string; hora
   const { data: cfg } = await sb.from("turnos_config").select("dias_minimos_antes").eq("institucion_id", t.institucion_id).maybeSingle();
   const base = { id: t.id, clase: t.clase, apellidoNombre: formatoApellidoNombre(p?.apellido ?? "", p?.nombre ?? ""), claseTexto: t.clase };
   const r = opt.fecha && opt.hora ? await llamarHoja("reservarEn", { ...base, fecha: opt.fecha, hora: opt.hora })
-    : await llamarHoja("reservar", { ...base, desde: opt.fecha ? `${opt.fecha}T00:00` : calcularDesde(cfg?.dias_minimos_antes ?? 1) });
+    : await llamarHoja("reservar", { ...base, desde: opt.fecha ? `${opt.fecha}T00:00` : calcularDesde(cfg?.dias_minimos_antes ?? 0) });
   const d = decidirEstado(r);
   if (d.estado !== "asignado" && opt.conservarSiFalla) {
     await bitacora(t.institucion_id, t.id, "sheets", "error", String(r?.error ?? d.motivo ?? "error"));
