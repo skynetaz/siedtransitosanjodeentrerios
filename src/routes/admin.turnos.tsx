@@ -34,8 +34,9 @@ function TurnosPage() {
   const [busca, setBusca] = useState(""); const [reasig, setReasig] = useState<{ id: string; fecha: string; hora: string } | null>(null); const [libres, setLibres] = useState<any[] | null>(null); const [cargando, setCargando] = useState(false);
   const turnos = q.data?.turnos ?? [];
   const clave = (t: any) => `${t.fecha ?? "9999-99-99"} ${t.hora ?? "99:99"} ${t.aprobado_teorico_at ?? ""}`;
-  const asignados = useMemo(() => turnos.filter((t: any) => t.estado !== "pendiente").filter((t: any) => !busca || `${t.persona?.apellido} ${t.persona?.nombre} ${t.persona?.dni}`.toLowerCase().includes(busca.toLowerCase())).sort((a: any, b: any) => clave(a).localeCompare(clave(b))), [turnos, busca]);
+  const asignados = useMemo(() => turnos.filter((t: any) => t.estado !== "pendiente" && t.estado !== "cancelado").filter((t: any) => !busca || `${t.persona?.apellido} ${t.persona?.nombre} ${t.persona?.dni}`.toLowerCase().includes(busca.toLowerCase())).sort((a: any, b: any) => clave(a).localeCompare(clave(b))), [turnos, busca]);
   const pendientes = turnos.filter((t: any) => t.estado === "pendiente").sort((a: any, b: any) => String(a.aprobado_teorico_at ?? "").localeCompare(String(b.aprobado_teorico_at ?? "")));
+  const cancelados = turnos.filter((t: any) => t.estado === "cancelado").sort((a: any, b: any) => String(b.updated_at ?? "").localeCompare(String(a.updated_at ?? "")));
   const hermanos = (t: any) => turnos.filter((x: any) => x.exam_id === t.exam_id && x.fecha && ["asignado", "reprogramado", "presente"].includes(x.estado));
   const refrescar = () => qc.invalidateQueries({ queryKey: ["turnos"] });
   const hacer = async (id: string, a: any, clase?: any, extra: { fecha?: string; hora?: string } = {}) => { try { await accion({ data: { id, accion: a, clase, ...extra } }); toast.success("Listo"); refrescar(); } catch (e) { toast.error((e as Error).message); } };
@@ -48,6 +49,7 @@ function TurnosPage() {
         <TabsTrigger value="libres">Horarios libres</TabsTrigger>
         <TabsTrigger value="asignados">Turnos asignados</TabsTrigger>
         <TabsTrigger value="pendientes">Pendientes {pendientes.length > 0 && <Badge variant="destructive" className="ml-1">{pendientes.length}</Badge>}</TabsTrigger>
+        <TabsTrigger value="cancelados">Cancelados {cancelados.length > 0 && <Badge variant="secondary" className="ml-1">{cancelados.length}</Badge>}</TabsTrigger>
         <TabsTrigger value="config">Configuración</TabsTrigger>
       </TabsList>
 
@@ -99,6 +101,24 @@ function TurnosPage() {
           {t.motivo === "sin_clase" && <div className="flex gap-1">{["A", "B", "C", "D", "E"].map((c) => <Button key={c} size="sm" variant="outline" onClick={() => hacer(t.id, "clase", c)}>{c}</Button>)}</div>}
         </div>)}
         {pendientes.length === 0 && <p className="text-sm text-muted-foreground">No hay pendientes.</p>}
+      </CardContent></Card></TabsContent>
+
+      <TabsContent value="cancelados"><Card><CardContent className="space-y-3 pt-6">
+        <p className="text-sm text-muted-foreground">Personas que cancelaron. Podés darles un turno nuevo o eliminarlas definitivamente.</p>
+        {cancelados.length === 0 && <p className="text-sm text-muted-foreground">No hay turnos cancelados.</p>}
+        {cancelados.map((t: any) => <div key={t.id} className="rounded-lg border p-3 text-sm space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2"><strong>{t.persona?.apellido} {t.persona?.nombre} · DNI {t.persona?.dni}</strong><Badge variant="outline">cancelado</Badge></div>
+          <div><span className="text-base font-extrabold uppercase text-primary">CLASE {t.clase}</span> · Cancelado el {t.updated_at ? new Date(t.updated_at).toLocaleDateString("es-AR") : "—"}</div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => setReasig(reasig?.id === t.id ? null : { id: t.id, fecha: "", hora: "" })}>Reasignar turno</Button>
+            <Button size="sm" variant="destructive" onClick={() => confirm("¿Eliminar definitivamente a esta persona de los cancelados?") && confirm("PELIGRO: esta acción no se puede deshacer. ¿Confirmás?") && hacer(t.id, "eliminar")}>Eliminar</Button>
+          </div>
+          {reasig?.id === t.id && <div className="flex flex-wrap gap-2 rounded-md border bg-muted/40 p-3">
+            <Input type="date" className="w-auto" value={reasig.fecha} onChange={(e) => setReasig((r) => r && { ...r, fecha: e.target.value })} />
+            <Input type="time" className="w-auto" value={reasig.hora} onChange={(e) => setReasig((r) => r && { ...r, hora: e.target.value })} />
+            <Button size="sm" disabled={!reasig.fecha} onClick={async () => { const r = reasig!; await hacer(t.id, "reasignar", undefined, { fecha: r.fecha, hora: r.hora || undefined }); setReasig(null); }}>Confirmar nuevo turno</Button>
+          </div>}
+        </div>)}
       </CardContent></Card></TabsContent>
 
       <TabsContent value="config"><ConfigForm cfg={cfg} onSaved={refrescar} /></TabsContent>

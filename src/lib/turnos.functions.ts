@@ -45,12 +45,20 @@ export const disponibilidadHoja = createServerFn({ method: "POST" }).middleware(
 });
 
 export const accionTurno = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), accion: z.enum(["cancelar", "reasignar", "presente", "ausente", "clase"]), clase: z.enum(["A", "B", "C", "D", "E"]).optional(), fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), hora: z.string().regex(/^\d{1,2}:\d{2}$/).optional() }).parse(i))
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid(), accion: z.enum(["cancelar", "reasignar", "presente", "ausente", "clase", "eliminar"]), clase: z.enum(["A", "B", "C", "D", "E"]).optional(), fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), hora: z.string().regex(/^\d{1,2}:\d{2}$/).optional() }).parse(i))
   .handler(async ({ data, context }) => {
     const inst = await staff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: t } = await supabaseAdmin.from("turnos_practicos").select("id, institucion_id").eq("id", data.id).eq("institucion_id", inst).maybeSingle();
+    const { data: t } = await supabaseAdmin.from("turnos_practicos").select("id, institucion_id, estado").eq("id", data.id).eq("institucion_id", inst).maybeSingle();
     if (!t) throw new Error("Turno no encontrado.");
+    if (data.accion === "eliminar") {
+      if (t.estado !== "cancelado") throw new Error("Solo se pueden eliminar turnos cancelados.");
+      await supabaseAdmin.from("audit_log").insert({ user_id: context.userId, accion: "turno_eliminar", target_type: "turnos_practicos", target_id: t.id } as any);
+      await supabaseAdmin.from("turno_envios").update({ turno_id: null }).eq("turno_id", t.id);
+      const { error } = await supabaseAdmin.from("turnos_practicos").delete().eq("id", t.id).eq("institucion_id", inst);
+      if (error) throw new Error("No se pudo eliminar: " + error.message);
+      return { ok: true };
+    }
     const { llamarHoja } = await import("./canales/sheets.server");
     const { reservarTurno } = await import("./turnos.server");
     const now = new Date().toISOString();
@@ -62,7 +70,7 @@ export const accionTurno = createServerFn({ method: "POST" }).middleware([requir
         // reservarEn mueve el lugar en la hoja (libera el anterior solo si consigue el nuevo día)
         res = await reservarTurno(t.id, { fecha: data.fecha, hora: data.hora, conservarSiFalla: true });
       } else {
-        const lib: any = await llamarHoja("liberar", { id: t.id });
+        const lib: any = t.estado === "cancelado" ? null : await llamarHoja("liberar", { id: t.id });
         if (lib && lib.ok === false) throw new Error(lib.error ?? "No se pudo liberar el lugar en la hoja.");
         res = await reservarTurno(t.id, { fecha: data.fecha, conservarSiFalla: true });
       }
