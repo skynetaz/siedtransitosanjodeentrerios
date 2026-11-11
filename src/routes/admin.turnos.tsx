@@ -30,7 +30,7 @@ function TurnosPage() {
   const qc = useQueryClient();
   const listar = useServerFn(listarTurnos); const accion = useServerFn(accionTurno);
   const pend = useServerFn(asignarPendientesFn); const disp = useServerFn(disponibilidadHoja);
-  const q = useQuery({ queryKey: ["turnos"], queryFn: () => listar() });
+  const q = useQuery({ queryKey: ["turnos"], queryFn: () => listar(), refetchInterval: 60000, refetchOnWindowFocus: true });
   const [busca, setBusca] = useState(""); const [reasig, setReasig] = useState<{ id: string; fecha: string; hora: string } | null>(null); const [libres, setLibres] = useState<any[] | null>(null); const [cargando, setCargando] = useState(false);
   const turnos = q.data?.turnos ?? [];
   const clave = (t: any) => `${t.fecha ?? "9999-99-99"} ${t.hora ?? "99:99"} ${t.aprobado_teorico_at ?? ""}`;
@@ -63,6 +63,7 @@ function TurnosPage() {
       </CardContent></Card></TabsContent>
 
       <TabsContent value="asignados"><Card><CardContent className="space-y-3 pt-6">
+        <div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={q.isFetching} onClick={() => refrescar()}>{q.isFetching && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Sincronizar con la hoja</Button>{(q.data as any)?.sync?.ok === false && <span className="text-xs text-destructive">No se pudo leer la hoja; se muestran los últimos datos guardados.</span>}{(q.data as any)?.sync?.cambios > 0 && <span className="text-xs text-primary">{(q.data as any).sync.cambios} turno(s) actualizados desde la hoja.</span>}</div>
         <Input placeholder="Buscar por DNI o apellido" value={busca} onChange={(e) => setBusca(e.target.value)} />
         {asignados.length === 0 && <p className="text-sm text-muted-foreground">Todavía no hay turnos asignados.</p>}
         {asignados.map((t: any) => {
