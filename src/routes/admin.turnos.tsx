@@ -114,9 +114,9 @@ function TurnosPage() {
             <Button size="sm" variant="destructive" onClick={() => confirm("¿Eliminar definitivamente a esta persona de los cancelados?") && confirm("PELIGRO: esta acción no se puede deshacer. ¿Confirmás?") && hacer(t.id, "eliminar")}>Eliminar</Button>
           </div>
           {reasig?.id === t.id && <div className="flex flex-wrap gap-2 rounded-md border bg-muted/40 p-3">
-            <Input type="date" className="w-auto" value={reasig.fecha} onChange={(e) => setReasig((r) => r && { ...r, fecha: e.target.value })} />
-            <Input type="time" className="w-auto" value={reasig.hora} onChange={(e) => setReasig((r) => r && { ...r, hora: e.target.value })} />
-            <Button size="sm" disabled={!reasig.fecha} onClick={async () => { const r = reasig!; await hacer(t.id, "reasignar", undefined, { fecha: r.fecha, hora: r.hora || undefined }); setReasig(null); }}>Confirmar nuevo turno</Button>
+            <Input type="date" className="w-auto" value={reasig!.fecha} onChange={(e) => setReasig((r) => r && { ...r, fecha: e.target.value })} />
+            <Input type="time" className="w-auto" value={reasig!.hora} onChange={(e) => setReasig((r) => r && { ...r, hora: e.target.value })} />
+            <Button size="sm" disabled={!reasig!.fecha} onClick={async () => { const r = reasig!; await hacer(t.id, "reasignar", undefined, { fecha: r.fecha, hora: r.hora || undefined }); setReasig(null); }}>Confirmar nuevo turno</Button>
           </div>}
         </div>)}
       </CardContent></Card></TabsContent>
