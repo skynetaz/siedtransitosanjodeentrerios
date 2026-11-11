@@ -65,11 +65,10 @@ export const accionTurno = createServerFn({ method: "POST" }).middleware([requir
         const lib: any = await llamarHoja("liberar", { id: t.id });
         if (lib && lib.ok === false) throw new Error(lib.error ?? "No se pudo liberar el lugar en la hoja.");
         res = await reservarTurno(t.id, { fecha: data.fecha, conservarSiFalla: true });
-        if (!res.ok && prev?.fecha && prev?.hora) await reservarTurno(t.id, { fecha: prev.fecha, hora: String(prev.hora).slice(0, 5), conservarSiFalla: true });
       }
       if (!res.ok) {
-        const { data: cur } = await supabaseAdmin.from("turnos_practicos").select("estado").eq("id", t.id).single();
-        if (cur?.estado !== "asignado" && prev?.fecha && prev?.hora) await reservarTurno(t.id, { fecha: prev.fecha, hora: String(prev.hora).slice(0, 5), conservarSiFalla: true });
+        // la hoja pudo haber borrado el lugar anterior: se vuelve a anotar en el mismo día y hora
+        if (prev?.fecha && prev?.hora) await reservarTurno(t.id, { fecha: prev.fecha, hora: String(prev.hora).slice(0, 5), conservarSiFalla: true });
         const m: Record<string, string> = { sin_cupo: "No hay lugar libre desde esa fecha. Elegí otra fecha u hora.", sin_horario: "Ese horario no existe en la pestaña de ese día. Elegí uno de los horarios de la hoja (ej. 14:00, 14:15).", sin_hoja: "No hay ninguna pestaña de esa clase para copiar." };
         throw new Error((m[res.motivo] ?? res.error ?? "La hoja no confirmó el nuevo turno.") + " El turno anterior se mantiene.");
       }
