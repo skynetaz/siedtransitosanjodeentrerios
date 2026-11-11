@@ -14,7 +14,7 @@ export const listarTurnos = createServerFn({ method: "POST" }).middleware([requi
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { sincronizarDesdeHoja } = await import("./turnos.server");
   const sync = await sincronizarDesdeHoja(inst).catch(() => ({ ok: false, cambios: 0 }));
-  const { data: turnos } = await supabaseAdmin.from("turnos_practicos").select("*").eq("institucion_id", inst).order("fecha", { ascending: true, nullsFirst: false }).order("hora", { ascending: true, nullsFirst: false }).order("aprobado_teorico_at", { ascending: true }).limit(500);
+  const { data: turnos } = await supabaseAdmin.from("turnos_practicos").select("*").eq("institucion_id", inst).order("aprobado_teorico_at", { ascending: false, nullsFirst: false }).order("created_at", { ascending: false }).limit(500);
   const ids = [...new Set((turnos ?? []).map((t) => t.aspirante_id))];
   const { data: perfiles } = ids.length ? await supabaseAdmin.from("profiles").select("id, nombre, apellido, dni, telefono, email").in("id", ids) : { data: [] as any[] };
   const pm = new Map((perfiles ?? []).map((p: any) => [p.id, p]));
