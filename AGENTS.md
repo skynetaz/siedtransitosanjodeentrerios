@@ -12,3 +12,4 @@
 - Multi-tenant: each municipality owns its questions, categories, exams and codes via institucion_id; staff are tied through institucion_miembros and current_institucion(). Server code using the admin client must filter/set institucion_id explicitly. Why: admin client bypasses the RLS isolation.
 - AI calls must go through consumirCupoIA (src/lib/ia-cupo.server.ts) before hitting the gateway. Why: hard monthly cap per institution protects provider costs.
 - Public self-registration is disabled; staff accounts are created only by platform owners via server functions. Why: prevents anyone from creating admin accounts.
+- Turnos: the Google Sheet is the source of truth for date/time; listarTurnos syncs sheet→DB before reading and every change rewrites the REGISTRO row. Why: staff edit the sheet by hand.

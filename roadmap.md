@@ -11,4 +11,4 @@
 - [x] Teléfonos de contacto
 - [x] Generador de mensaje de marketing
 - [x] Limitador de uso de IA por institución
-- [ ] Turnos: reasignación anota en la hoja, sincroniza hoja→sistema, pestaña REGISTRO automática, blindaje y pruebas
+- [x] Turnos: reasignación anota en la hoja, sincroniza hoja→sistema, pestaña REGISTRO automática, blindaje y pruebas
